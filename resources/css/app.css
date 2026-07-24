@@ -1,0 +1,243 @@
+@import 'tailwindcss';
+
+/* ======================================
+   AUTOBOX — Global Design Tokens
+   Color Palette: White · Violet · Blue
+   ====================================== */
+
+@layer base {
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Form element base styles (replaces @tailwindcss/forms) */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="time"],
+    input[type="date"],
+    select,
+    textarea {
+        appearance: none;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        color: #1e293b;
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="number"]:focus,
+    input[type="time"]:focus,
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
+        border-color: #6d28d9;
+        box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15);
+    }
+
+    input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 0.25rem;
+        border: 1px solid #cbd5e1;
+        accent-color: #6d28d9;
+        cursor: pointer;
+    }
+}
+
+
+@layer components {
+    /* Gradient Violet → Blue */
+    .gradient-violet-blue {
+        background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
+    }
+
+    /* Subtle background gradient */
+    .gradient-violet-subtle {
+        background: linear-gradient(135deg, rgba(109,40,217,0.05) 0%, rgba(37,99,235,0.08) 100%);
+    }
+
+    /* Text gradient */
+    .text-gradient {
+        background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Active sidebar item */
+    .sidebar-active {
+        background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px 0 rgba(109, 40, 217, 0.35);
+    }
+
+    /* Glassmorphism card */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    /* Premium button base */
+    .btn-primary {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(109, 40, 217, 0.25);
+        transition: all 0.2s;
+        background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary:hover { opacity: 0.95; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-secondary {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #334155;
+        background: #f1f5f9;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-secondary:active { transform: scale(0.98); }
+
+    /* Status badge base */
+    .badge {
+        padding: 0.125rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.625rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
+    .badge-available { background: #dcfce7; color: #166534; }
+    .badge-borrowed  { background: #fef3c7; color: #92400e; }
+    .badge-missing   { background: #fee2e2; color: #991b1b; }
+    .badge-granted   { background: #dcfce7; color: #166534; }
+    .badge-denied    { background: #fee2e2; color: #991b1b; }
+
+    /* Card base */
+    .card {
+        background: #ffffff;
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
+    }
+
+    /* Pulse dot (live indicator) */
+    .live-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 9999px;
+        background: #22c55e;
+        display: inline-block;
+        animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+}
+
+@layer utilities {
+    /* Soft violet shadow */
+    .shadow-violet {
+        box-shadow: 0 4px 20px 0 rgba(109, 40, 217, 0.15);
+    }
+
+    /* Progress bar animation */
+    .progress-bar {
+        transition: width 0.5s ease-in-out;
+    }
+
+    /* Slot card hover lift */
+    .slot-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px 0 rgba(109, 40, 217, 0.12);
+    }
+}
+
+/* ======================================
+   Print Styles (for QR Badge Printing)
+   ====================================== */
+@media print {
+    .no-print,
+    aside,
+    header,
+    nav {
+        display: none !important;
+    }
+
+    #printableQr {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 2rem;
+    }
+}
+
+/* ======================================
+   Scrollbar Styling
+   ====================================== */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c4b5fd;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #7c3aed;
+}
+
+/* ======================================
+   Page Transitions
+   ====================================== */
+main {
+    animation: fadeInUp 0.25s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -4,17 +4,17 @@
 
 @section('content')
 <div class="max-w-xl mx-auto">
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-        <div class="border-b border-slate-100 pb-4">
-            <h2 class="text-lg font-heading font-bold text-slate-900">Add Schedule Rule</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Assign a faculty or staff member access to a key for a specific day and time window</p>
+    <div class="card card-body space-y-6">
+        <div class="form-header pb-4">
+            <h2 class="form-title">Add Schedule Rule</h2>
+            <p class="form-subtitle">Assign a faculty or staff member access to a key for a specific day and time window</p>
         </div>
 
         <form action="{{ route('schedules.store') }}" method="POST" class="space-y-4">
             @csrf
 
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">User (Faculty / Staff)</label>
+                <label class="form-label">User (Faculty / Staff)</label>
                 <select name="user_id" required class="w-full text-xs rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500">
                     <option value="">-- Select User --</option>
                     @foreach($users as $user)
@@ -24,7 +24,7 @@
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Key / Room</label>
+                <label class="form-label">Key / Room</label>
                 <select name="key_id" required class="w-full text-xs rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500">
                     <option value="">-- Select Key Slot --</option>
                     @foreach($keys as $key)
@@ -35,7 +35,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Day of Week</label>
+                    <label class="form-label">Day of Week</label>
                     <select name="day_of_week" required class="w-full text-xs rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500">
                         <option value="monday">Monday</option>
                         <option value="tuesday">Tuesday</option>
@@ -48,19 +48,19 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Start Time</label>
+                    <label class="form-label">Start Time</label>
                     <input type="time" name="start_time" required class="w-full text-xs rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">End Time</label>
+                    <label class="form-label">End Time</label>
                     <input type="time" name="end_time" required class="w-full text-xs rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500">
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                <a href="{{ route('schedules.index') }}" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold text-xs hover:bg-slate-200">Cancel</a>
-                <button type="submit" class="px-5 py-2 rounded-xl gradient-violet-blue text-white font-semibold text-xs shadow-md shadow-violet-200">Save Schedule</button>
+            <div class="form-footer flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{{ route('schedules.index') }}" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Save Schedule</button>
             </div>
         </form>
     </div>

@@ -1,110 +1,80 @@
 @extends('layouts.app')
 
-@section('title', 'Key Transaction Audit Trail')
+@section('title', 'Transaction Logs')
 
 @section('content')
 <div class="space-y-6">
 
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h2 class="text-xl font-heading font-bold text-slate-900">Transaction History</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Complete log of all borrow and return transactions</p>
+            <h2 class="mockup-card-title text-xl flex items-center gap-2">
+                <i class="fa-solid fa-right-left text-[var(--purple-primary)] text-lg"></i>
+                Transaction Logs
+            </h2>
+            <p class="text-xs text-[var(--text-muted)] mt-0.5">Complete history of all key borrow and return activities.</p>
         </div>
-
-        <div class="flex items-center gap-3">
-            <a href="{{ route('transactions.export') }}" class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-xs shadow-sm hover:bg-slate-50 flex items-center gap-2">
-                <i class="fa-solid fa-file-csv text-emerald-600"></i> Export CSV
-            </a>
-        </div>
+        <a href="{{ route('transactions.export') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-md">
+            <i class="fa-solid fa-file-csv text-xs"></i> Export CSV
+        </a>
     </div>
 
-    <!-- Filters Bar -->
-    <form method="GET" action="{{ route('transactions.index') }}" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center justify-between">
-        <div class="flex flex-wrap gap-3 items-center flex-1">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search user, key, room..." class="text-xs rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500 w-full sm:w-64">
-
-            <select name="action" class="text-xs rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500">
-                <option value="">All Actions</option>
-                <option value="borrow" {{ request('action') === 'borrow' ? 'selected' : '' }}>Borrow</option>
-                <option value="return" {{ request('action') === 'return' ? 'selected' : '' }}>Return</option>
-            </select>
-
-            <select name="status" class="text-xs rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500">
-                <option value="">All Statuses</option>
-                <option value="success" {{ request('status') === 'success' ? 'selected' : '' }}>Success</option>
-                <option value="denied" {{ request('status') === 'denied' ? 'selected' : '' }}>Denied</option>
-                <option value="missing" {{ request('status') === 'missing' ? 'selected' : '' }}>Missing</option>
-            </select>
-
-            <button type="submit" class="px-4 py-2 rounded-xl gradient-violet-blue text-white font-semibold text-xs">Filter</button>
-        </div>
-    </form>
-
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <!-- Transactions Table -->
+    <div class="mockup-card overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                    <tr>
-                        <th class="p-4">Transaction ID</th>
-                        <th class="p-4">User</th>
-                        <th class="p-4">Key / Room</th>
-                        <th class="p-4">Action</th>
-                        <th class="p-4">Status</th>
-                        <th class="p-4">Borrowed At</th>
-                        <th class="p-4">Returned At</th>
-                        <th class="p-4">Notes</th>
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="border-b border-[var(--border-subtle)]">
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">User</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Key / Room</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Action</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Date & Time</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-[var(--border-subtle)]">
                     @forelse($transactions as $t)
-                        <tr class="hover:bg-slate-50/60 transition-colors">
-                            <td class="p-4 font-mono font-bold text-slate-400">#{{ $t->id }}</td>
-                            <td class="p-4">
-                                <span class="font-bold text-slate-900 block text-sm">{{ $t->user->name ?? 'N/A' }}</span>
-                                <span class="text-slate-400 text-xs">{{ $t->user->employee_id ?? '' }}</span>
+                        <tr class="hover:bg-[var(--purple-soft)] transition-colors">
+                            <td class="px-5 py-3.5">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-full bg-[var(--purple-soft)] text-[var(--purple-primary)] font-extrabold text-xs flex items-center justify-center ring-2 ring-[var(--purple-primary)]/20">
+                                        {{ strtoupper(substr($t->user->name ?? 'U', 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-[var(--text-heading)] text-sm">{{ $t->user->name ?? 'System' }}</p>
+                                        <p class="text-xs text-[var(--text-muted)]">{{ $t->user->employee_id ?? '' }}</p>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="p-4">
-                                <span class="font-semibold text-slate-800">{{ $t->key->key_name ?? 'N/A' }}</span>
-                                <span class="block text-violet-600 font-medium text-xs">{{ $t->key->room_name ?? '' }} (Slot #{{ $t->key->slot_number ?? '' }})</span>
+                            <td class="px-5 py-3.5">
+                                <p class="font-bold text-[var(--text-heading)] text-sm">{{ $t->key->key_name ?? 'N/A' }}</p>
+                                <p class="text-xs font-semibold text-[var(--purple-primary)]">{{ $t->key->room_name ?? '' }} · Slot #{{ $t->key->slot_number ?? '' }}</p>
                             </td>
-                            <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase
-                                    @if($t->action === 'borrow') bg-amber-100 text-amber-800
-                                    @else bg-blue-100 text-blue-800 @endif">
+                            <td class="px-5 py-3.5">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider
+                                    {{ $t->action === 'borrow'
+                                        ? 'bg-amber-100 text-amber-800'
+                                        : 'bg-blue-100 text-blue-800' }}">
                                     {{ $t->action }}
                                 </span>
                             </td>
-                            <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase
-                                    @if($t->status === 'success') bg-emerald-100 text-emerald-800
-                                    @elseif($t->status === 'denied') bg-rose-100 text-rose-800
-                                    @else bg-amber-100 text-amber-800 @endif">
-                                    {{ $t->status }}
-                                </span>
-                            </td>
-                            <td class="p-4 font-mono text-slate-600">
-                                {{ $t->borrowed_at ? $t->borrowed_at->format('M d, Y h:i A') : 'N/A' }}
-                            </td>
-                            <td class="p-4 font-mono text-slate-600">
-                                {{ $t->returned_at ? $t->returned_at->format('M d, Y h:i A') : '—' }}
-                            </td>
-                            <td class="p-4 text-slate-500 italic max-w-xs truncate">
-                                {{ $t->notes ?? '—' }}
+                            <td class="px-5 py-3.5 text-sm font-mono text-[var(--text-muted)]">
+                                {{ $t->created_at->format('M d, Y · h:i A') }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="p-8 text-center text-slate-400">No transactions matching criteria.</td>
+                            <td colspan="4" class="px-5 py-12 text-center text-[var(--text-muted)] text-sm">
+                                <i class="fa-solid fa-right-left text-4xl block mb-3 opacity-20"></i>
+                                No transactions recorded yet.
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-
-        <div class="p-4 border-t border-slate-100">
-            {{ $transactions->links() }}
-        </div>
+        @if($transactions->hasPages())
+            <div class="px-5 py-4 border-t border-[var(--border-subtle)]">{{ $transactions->links() }}</div>
+        @endif
     </div>
-
 </div>
 @endsection

@@ -1,169 +1,256 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-50">
+<html lang="en" class="h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'AUTOBOX') }} - Key Access & Real-Time Monitoring</title>
+    <title>{{ config('app.name', 'AUTOBOX') }} — Key Access & Real-Time Monitoring</title>
+    <meta name="description" content="AUTOBOX CCSICT — Physical key management, access control, and real-time monitoring dashboard.">
 
-    <!-- Google Fonts -->
+    <!-- Theme Initialization Script (Prevents Dark Mode Flash) -->
+    <script>
+        if (localStorage.getItem('autobox_theme') === 'dark' || (!('autobox_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Outfit (headings) + Plus Jakarta Sans (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- FontAwesome / Lucide Icons -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Chart.js -->
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        h1, h2, h3, h4, h5, h6, .font-heading {
-            font-family: 'Outfit', sans-serif;
-        }
-        .gradient-violet-blue {
-            background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
-        }
-        .gradient-violet-subtle {
-            background: linear-gradient(135deg, rgba(109, 40, 217, 0.05) 0%, rgba(37, 99, 235, 0.08) 100%);
-        }
-        .text-gradient {
-            background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .sidebar-active {
-            background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
-            color: white !important;
-            box-shadow: 0 4px 14px 0 rgba(109, 40, 217, 0.35);
-        }
-    </style>
 </head>
-<body class="h-full bg-slate-50 text-slate-800 antialiased flex flex-col md:flex-row min-h-screen">
+<body class="h-full antialiased flex flex-col md:flex-row min-h-screen">
 
-    <!-- Sidebar Navigation -->
-    <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col justify-between shadow-sm z-20">
+    <!-- ═══════════════════════════════════
+         FLOATING TOAST NOTIFICATION CONTAINER
+         ═══════════════════════════════════ -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- ═══════════════════════════════════
+         MOCKUP PURPLE SIDEBAR
+         ═══════════════════════════════════ -->
+    <aside class="mockup-sidebar w-full md:w-64 flex-shrink-0 flex flex-col justify-between p-5 text-white z-20">
         <div>
             <!-- Brand Logo Header -->
-            <div class="p-6 flex items-center justify-between border-b border-slate-100">
+            <div class="px-2 py-3 mb-4 flex items-center justify-between">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl gradient-violet-blue flex items-center justify-center text-white shadow-md shadow-violet-200">
-                        <i class="fa-solid fa-key text-lg"></i>
+                    <div class="sidebar-brand-logo shadow-lg">
+                        <i class="fa-solid fa-key text-lg text-white"></i>
                     </div>
-                    <div>
-                        <span class="font-heading font-extrabold text-xl tracking-tight text-slate-900">AUTO<span class="text-gradient">BOX</span></span>
-                        <p class="text-[10px] uppercase font-bold tracking-widest text-violet-600">CCSICT Key System</p>
-                    </div>
+                    <span class="font-heading font-extrabold text-2xl tracking-tight text-white">AUTOBOX</span>
                 </a>
             </div>
 
-            <!-- Navigation Links -->
-            <nav class="p-4 space-y-1.5">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 {{ request()->routeIs('dashboard') ? 'sidebar-active' : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700' }}">
-                    <i class="fa-solid fa-gauge w-5 text-center"></i>
+            <!-- Primary Navigation Links -->
+            <nav class="space-y-1.5">
+                <a href="{{ route('dashboard') }}"
+                   class="sidebar-nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <i class="fa-solid fa-table-cells-large w-5 text-center"></i>
                     <span>Dashboard</span>
                 </a>
 
-                <a href="{{ route('users.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 {{ request()->routeIs('users.*') ? 'sidebar-active' : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700' }}">
-                    <i class="fa-solid fa-users w-5 text-center"></i>
-                    <span>Users & QR</span>
-                </a>
-
-                <a href="{{ route('keys.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 {{ request()->routeIs('keys.*') ? 'sidebar-active' : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700' }}">
+                <a href="{{ route('keys.index') }}"
+                   class="sidebar-nav-link {{ request()->routeIs('keys.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-key w-5 text-center"></i>
                     <span>Key Slots</span>
                 </a>
 
-                <a href="{{ route('schedules.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 {{ request()->routeIs('schedules.*') ? 'sidebar-active' : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700' }}">
+                <a href="{{ route('users.index') }}"
+                   class="sidebar-nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-users w-5 text-center"></i>
+                    <span>Users & QR</span>
+                </a>
+
+                <a href="{{ route('schedules.index') }}"
+                   class="sidebar-nav-link {{ request()->routeIs('schedules.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-calendar-days w-5 text-center"></i>
                     <span>Schedules</span>
                 </a>
 
-                <a href="{{ route('transactions.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 {{ request()->routeIs('transactions.*') ? 'sidebar-active' : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700' }}">
+                <a href="{{ route('transactions.index') }}"
+                   class="sidebar-nav-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
-                    <span>Transaction Logs</span>
+                    <span>Transactions</span>
                 </a>
 
-                <a href="{{ route('access-logs.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 {{ request()->routeIs('access-logs.*') ? 'sidebar-active' : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700' }}">
+                <a href="{{ route('access-logs.index') }}"
+                   class="sidebar-nav-link {{ request()->routeIs('access-logs.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-qrcode w-5 text-center"></i>
                     <span>QR Audit Logs</span>
                 </a>
 
-                <a href="{{ route('reports.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 {{ request()->routeIs('reports.*') ? 'sidebar-active' : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700' }}">
-                    <i class="fa-solid fa-chart-line w-5 text-center"></i>
-                    <span>Analytics & Reports</span>
-                </a>
+              
             </nav>
-        </div>
 
-        <!-- User Profile & Logout -->
-        <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-            <div class="flex items-center justify-between p-2 rounded-xl">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-violet-100 text-violet-700 font-bold flex items-center justify-center border border-violet-200">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
-                    </div>
-                    <div class="truncate">
-                        <p class="text-xs font-bold text-slate-800 truncate">{{ Auth::user()->name ?? 'Admin User' }}</p>
-                        <p class="text-[10px] text-slate-500 capitalize">{{ Auth::user()->role ?? 'Administrator' }}</p>
-                    </div>
-                </div>
+            <!-- Support Section -->
+            <div class="mt-8 pt-4 border-t border-white/10 space-y-1.5">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" title="Logout" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                        <i class="fa-solid fa-right-from-bracket"></i>
+                    <button type="submit" class="sidebar-nav-link w-full text-left">
+                        <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
+                        <span>Logout</span>
                     </button>
                 </form>
             </div>
         </div>
     </aside>
 
-    <!-- Main Content Area -->
+    <!-- ═══════════════════════════════════
+         MAIN CONTENT & TOP NAVBAR
+         ═══════════════════════════════════ -->
     <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <!-- Top Banner Header -->
-        <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-            <div class="flex items-center gap-3">
-                <h1 class="text-xl font-heading font-bold text-slate-900">
-                    @yield('title', 'Dashboard')
-                </h1>
-            </div>
 
-            <!-- Live Status Pulse & Quick Actions -->
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                    <span>System Active & Real-Time Sync</span>
+        <!-- Top Header Bar Container -->
+        <div class="px-8 pt-6 pb-2">
+            <header class="top-header-card flex items-center justify-between flex-wrap gap-4">
+                <!-- Left: Welcome Title with Purple Branded Badge -->
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-2xl bg-[var(--purple-soft)] text-[var(--purple-primary)] flex items-center justify-center text-base shadow-sm border border-[var(--border-subtle)]">
+                        <i class="fa-solid fa-key text-[var(--purple-primary)]"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-heading font-extrabold text-[var(--text-heading)] tracking-tight">
+                                Welcome back, {{ Auth::user()->name ?? 'Admin' }}!
+                            </h1>
+                            <span class="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-[var(--purple-soft)] text-[var(--purple-primary)] uppercase tracking-wider">
+                                Active Session
+                            </span>
+                        </div>
+                        <p class="text-xs text-[var(--text-muted)] font-medium mt-0.5">AUTOBOX Key Access & Real-Time Monitor</p>
+                    </div>
                 </div>
-                <span class="text-xs text-slate-400 border-l border-slate-200 pl-4">{{ now()->format('D, M d, Y') }}</span>
-            </div>
-        </header>
 
-        <!-- Flash Messages -->
-        @if(session('success'))
-            <div class="mx-6 mt-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-3 shadow-sm">
-                <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
+                <!-- Right: Working Day/Night Switch & Admin Profile Chip -->
+                <div class="flex items-center gap-4">
+                    <!-- Working Day / Light & Night Toggle Switch -->
+                    <div id="themeToggleBtn" class="theme-toggle-switch" title="Toggle Light / Dark Mode">
+                        <i class="fa-solid fa-sun text-amber-500 text-xs"></i>
+                        <div class="theme-toggle-track">
+                            <div class="theme-toggle-thumb"></div>
+                        </div>
+                        <i class="fa-solid fa-moon text-indigo-400 text-xs"></i>
+                    </div>
 
-        @if(session('error'))
-            <div class="mx-6 mt-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-3 shadow-sm">
-                <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg"></i>
-                <span>{{ session('error') }}</span>
-            </div>
-        @endif
+                    <!-- User Profile Chip -->
+                    <div class="flex items-center gap-3 p-1.5 pr-3.5 rounded-full bg-[var(--app-bg)] border border-[var(--border-subtle)]">
+                        <div class="relative">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 text-white font-extrabold text-xs flex items-center justify-center shadow-md">
+                                {{ strtoupper(substr(Auth::user()->name ?? 'W', 0, 1)) }}
+                            </div>
+                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#19142c]"></span>
+                        </div>
+                        <div class="hidden sm:block">
+                            <p class="text-xs font-extrabold text-[var(--text-heading)] leading-none">{{ Auth::user()->name ?? 'William Jake' }}</p>
+                            <p class="text-[10px] text-[var(--purple-primary)] font-bold mt-0.5 capitalize">{{ Auth::user()->role ?? 'Admin' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+        </div>
 
         <!-- Main View Content -->
-        <main class="p-6">
+        <main class="px-8 pb-8">
             @yield('content')
         </main>
     </div>
 
+    <!-- ═══════════════════════════════════
+         GLOBAL SCRIPTS: TOASTS, SPINNERS & THEME
+         ═══════════════════════════════════ -->
+    <script>
+        // Global Toast Notification System
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const isSuccess = type === 'success';
+            const bgClass = isSuccess ? 'bg-emerald-600 text-white shadow-emerald-500/20' : 'bg-rose-600 text-white shadow-rose-500/20';
+            const iconClass = isSuccess ? 'fa-circle-check' : 'fa-circle-exclamation';
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center justify-between gap-3 p-4 rounded-2xl shadow-xl transition-all transform duration-300 translate-x-10 opacity-0 ${bgClass}`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-3 min-w-0">
+                    <i class="fa-solid ${iconClass} text-lg flex-shrink-0"></i>
+                    <span class="text-xs font-bold leading-snug">${message}</span>
+                </div>
+                <button type="button" class="text-white/70 hover:text-white transition-colors ml-2" onclick="this.parentElement.remove()">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-10', 'opacity-0');
+            }, 50);
+
+            // Auto dismiss after 4s
+            setTimeout(() => {
+                toast.classList.add('translate-x-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Flash Session Toasts
+            @if(session('success'))
+                showToast("{{ session('success') }}", 'success');
+            @endif
+
+            @if(session('error'))
+                showToast("{{ session('error') }}", 'error');
+            @endif
+
+            // Global Button Loading Spinner on Form Submit
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn && !submitBtn.disabled) {
+                        // Create spinner icon
+                        const originalHtml = submitBtn.innerHTML;
+                        submitBtn.dataset.originalContent = originalHtml;
+                        submitBtn.disabled = true;
+
+                        // Insert spinner
+                        submitBtn.innerHTML = `
+                            <i class="fa-solid fa-spinner animate-spin text-xs"></i>
+                            <span>Processing...</span>
+                        `;
+                        submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                    }
+                });
+            });
+
+            // Theme Switcher
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function () {
+                    const isDark = document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('autobox_theme', isDark ? 'dark' : 'light');
+                    
+                    if (window.dashboardChartInstance) {
+                        window.dashboardChartInstance.options.scales.y.grid.color = isDark ? '#292244' : '#f0f2fb';
+                        window.dashboardChartInstance.options.scales.x.ticks.color = isDark ? '#847bb0' : '#8d87a5';
+                        window.dashboardChartInstance.options.scales.y.ticks.color = isDark ? '#847bb0' : '#8d87a5';
+                        window.dashboardChartInstance.update();
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

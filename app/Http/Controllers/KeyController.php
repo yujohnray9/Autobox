@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Key;
+use App\Models\User;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 
 class KeyController extends Controller
@@ -10,7 +12,8 @@ class KeyController extends Controller
     public function index()
     {
         $keys = Key::orderBy('slot_number')->paginate(15);
-        return view('keys.index', compact('keys'));
+        $users = User::where('is_active', true)->get();
+        return view('keys.index', compact('keys', 'users'));
     }
 
     public function create()
@@ -50,23 +53,61 @@ class KeyController extends Controller
 
         $key->update($validated);
 
-        return redirect()->route('keys.index')->with('success', 'Key updated successfully.');
+        return redirect()->route('keys.index')->with('success', 'Key slot details updated successfully.');
     }
 
     public function destroy(Key $key)
     {
+        $slotNum = $key->slot_number;
         $key->delete();
-        return redirect()->route('keys.index')->with('success', 'Key deleted successfully.');
+        return redirect()->route('keys.index')->with('success', "Key slot #{$slotNum} deleted successfully.");
     }
 
     public function updateStatus(Request $request, Key $key)
     {
         $request->validate([
-            'status' => 'required|in:available,borrowed,missing',
+            'status'  => 'required|in:available,borrowed,missing',
+            'user_id' => 'nullable|exists:users,id',
         ]);
 
-        $key->update(['status' => $request->status]);
+        $newStatus = $request->status;
+        $key->update(['status' => $newStatus]);
 
-        return redirect()->back()->with('success', "Key status updated to {$request->status}.");
+        if ($newStatus === 'borrowed') {
+            $userId = $request->input('user_id', auth()->id());
+            Transaction::create([
+                'user_id'     => $userId,
+                'key_id'      => $key->id,
+                'action'      => 'borrow',
+                'status'      => 'success',
+                'borrowed_at' => now(),
+            ]);
+            $msg = "Key slot #{$key->slot_number} successfully borrowed.";
+        } elseif ($newStatus === 'available') {
+            $activeTx = Transaction::where('key_id', $key->id)
+                ->where('action', 'borrow')
+                ->whereNull('returned_at')
+                ->latest()
+                ->first();
+
+            if ($activeTx) {
+                $activeTx->update([
+                    'returned_at' => now(),
+                ]);
+            }
+
+            Transaction::create([
+                'user_id'     => auth()->id(),
+                'key_id'      => $key->id,
+                'action'      => 'return',
+                'status'      => 'success',
+                'returned_at' => now(),
+            ]);
+            $msg = "Key slot #{$key->slot_number} marked as returned and available.";
+        } else {
+            $msg = "Key slot #{$key->slot_number} flagged as missing.";
+        }
+
+        return redirect()->back()->with('success', $msg);
     }
 }

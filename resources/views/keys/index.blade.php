@@ -1,83 +1,238 @@
 @extends('layouts.app')
 
-@section('title', 'Physical Key Slots')
+@section('title', 'Key Slots Management')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6" x-data="{
+    deleteModalOpen: false, targetKeyId: null, targetKeyName: '', targetSlotNum: '',
+    borrowModalOpen: false, borrowKeyId: null, borrowKeyName: '', borrowSlotNum: ''
+}">
 
-    <div class="flex items-center justify-between">
+    <!-- Header -->
+    <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h2 class="text-xl font-heading font-bold text-slate-900">Key Slot Configuration</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Manage physical key slots, rooms, and manual status overrides</p>
+            <h2 class="mockup-card-title text-xl flex items-center gap-2">
+                <i class="fa-solid fa-key text-[var(--purple-primary)] text-lg"></i>
+                Key Slot Management
+            </h2>
+            <p class="text-xs text-[var(--text-muted)] mt-0.5">Manage physical key slots, assign manual borrows, or restore returned keys.</p>
         </div>
-        <a href="{{ route('keys.create') }}" class="px-4 py-2.5 rounded-xl gradient-violet-blue text-white font-semibold text-xs shadow-md shadow-violet-200 hover:opacity-95 transition-all flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> Add Key Slot
+        <a href="{{ route('keys.create') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
+            <i class="fa-solid fa-plus text-xs"></i> Add New Key Slot
         </a>
     </div>
 
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                    <tr>
-                        <th class="p-4">Slot #</th>
-                        <th class="p-4">Key Name</th>
-                        <th class="p-4">Room Name</th>
-                        <th class="p-4">Description</th>
-                        <th class="p-4">Status</th>
-                        <th class="p-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse($keys as $key)
-                        <tr class="hover:bg-slate-50/60 transition-colors">
-                            <td class="p-4">
-                                <span class="w-8 h-8 rounded-lg bg-violet-100 text-violet-800 font-extrabold flex items-center justify-center font-mono text-sm">
-                                    {{ $key->slot_number }}
-                                </span>
-                            </td>
-                            <td class="p-4 font-bold text-slate-900 text-sm">
-                                {{ $key->key_name }}
-                            </td>
-                            <td class="p-4 font-semibold text-blue-700">
-                                {{ $key->room_name }}
-                            </td>
-                            <td class="p-4 text-slate-500 max-w-xs truncate">
-                                {{ $key->description ?? 'N/A' }}
-                            </td>
-                            <td class="p-4">
-                                <form action="{{ route('keys.update-status', $key->id) }}" method="POST" class="inline-block">
-                                    @csrf
-                                    @method('PATCH')
-                                    <select name="status" onchange="this.form.submit()" class="text-[11px] font-extrabold uppercase rounded-full px-2.5 py-1 border-0 cursor-pointer focus:ring-0
-                                        @if($key->status === 'available') bg-emerald-100 text-emerald-800
-                                        @elseif($key->status === 'borrowed') bg-amber-100 text-amber-800
-                                        @else bg-rose-100 text-rose-800 @endif">
-                                        <option value="available" {{ $key->status === 'available' ? 'selected' : '' }}>AVAILABLE</option>
-                                        <option value="borrowed" {{ $key->status === 'borrowed' ? 'selected' : '' }}>BORROWED</option>
-                                        <option value="missing" {{ $key->status === 'missing' ? 'selected' : '' }}>MISSING</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td class="p-4 text-right space-x-2">
-                                <a href="{{ route('keys.edit', $key->id) }}" class="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold text-xs transition-colors inline-flex items-center gap-1">
-                                    <i class="fa-solid fa-pen"></i> Edit
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="p-8 text-center text-slate-400">No key slots configured.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <!-- Key Slots Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        @forelse($keys as $key)
+            @php
+                $borrower = $key->currentBorrower();
+                $badgeClass = match($key->status) { 'available' => 'slot-badge-available', 'borrowed' => 'slot-badge-borrowed', default => 'slot-badge-missing' };
+            @endphp
 
-        <div class="p-4 border-t border-slate-100">
-            {{ $keys->links() }}
+            <div class="redesigned-slot-card flex flex-col justify-between">
+                <div>
+                    <!-- Top Bar: Slot Badge + Top Action Buttons (Edit & Delete Modal Trigger) -->
+                    <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-[var(--border-subtle)]">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider {{ $badgeClass }}">
+                            Slot #{{ $key->slot_number }}
+                        </span>
+
+                        <!-- Top Right Edit & Delete Modal Trigger -->
+                        <div class="flex items-center gap-1.5">
+                            <a href="{{ route('keys.edit', $key) }}"
+                               title="Edit Key Slot"
+                               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white transition-all shadow-sm">
+                                <i class="fa-solid fa-pen-to-square text-[9px]"></i> Edit
+                            </a>
+                            <button type="button"
+                                    @click="deleteModalOpen = true; targetKeyId = '{{ $key->id }}'; targetKeyName = '{{ addslashes($key->key_name) }}'; targetSlotNum = '{{ $key->slot_number }}'"
+                                    title="Delete Key Slot"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white dark:bg-rose-950/60 dark:text-rose-300 dark:hover:bg-rose-600 dark:hover:text-white transition-all shadow-sm">
+                                <i class="fa-solid fa-trash-can text-[9px]"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Key Details -->
+                    <div class="mt-3">
+                        <h3 class="font-heading font-extrabold text-sm text-[var(--text-heading)] truncate" title="{{ $key->key_name }}">{{ $key->key_name }}</h3>
+                        <p class="text-xs font-semibold text-[var(--purple-primary)] flex items-center gap-1 mt-0.5">
+                            <i class="fa-solid fa-door-open text-[10px]"></i> {{ $key->room_name }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Clean Status Indicator Footer with Borrow & Return Quick Actions -->
+                <div class="mt-3 pt-2.5 border-t border-[var(--border-subtle)] text-xs flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        @if($key->status === 'borrowed' && $borrower)
+                            <p class="text-[11px] font-bold text-[var(--text-heading)] truncate max-w-[110px]" title="{{ $borrower->user->name ?? 'User' }}">{{ $borrower->user->name ?? 'User' }}</p>
+                            <p class="text-[9px] text-[var(--text-muted)]"><i class="fa-regular fa-clock"></i> {{ $borrower->created_at->diffForHumans() }}</p>
+                        @elseif($key->status === 'available')
+                            <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Ready in Lock Box
+                            </span>
+                        @else
+                            <span class="text-rose-600 dark:text-rose-400 font-bold text-[11px] flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Flagged Missing
+                            </span>
+                        @endif
+                    </div>
+
+                    <!-- Action Buttons: Borrow / Return / Mark Available -->
+                    <div class="flex-shrink-0">
+                        @if($key->status === 'available')
+                            <!-- Borrow Action Button -->
+                            <button type="button"
+                                    @click="borrowModalOpen = true; borrowKeyId = '{{ $key->id }}'; borrowKeyName = '{{ addslashes($key->key_name) }}'; borrowSlotNum = '{{ $key->slot_number }}'"
+                                    title="Borrow this key slot"
+                                    class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white transition-all shadow-sm flex items-center gap-1">
+                                <i class="fa-solid fa-key text-[9px]"></i> Borrow
+                            </button>
+                        @elseif($key->status === 'borrowed')
+                            <!-- Return Action Button -->
+                            <form method="POST" action="{{ route('keys.update-status', $key) }}">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="status" value="available">
+                                <button type="submit" title="Return key to lock box" class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center gap-1">
+                                    <i class="fa-solid fa-rotate-left text-[9px]"></i> Return Key
+                                </button>
+                            </form>
+                        @else
+                            <!-- Restore Action for Missing Keys -->
+                            <form method="POST" action="{{ route('keys.update-status', $key) }}">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="status" value="available">
+                                <button type="submit" title="Mark key as found and available" class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-check text-[9px]"></i> Mark Found
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full mockup-card text-center py-16 text-[var(--text-muted)]">
+                <i class="fa-solid fa-key text-5xl mb-4 block opacity-20"></i>
+                <p class="font-heading font-bold text-base">No key slots configured yet.</p>
+                <p class="text-sm mt-1">Add your first key slot to get started.</p>
+            </div>
+        @endforelse
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PREMIUM MANUAL BORROW MODAL
+         ═══════════════════════════════════ -->
+    <div x-show="borrowModalOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+         style="display: none;">
+
+        <div @click.away="borrowModalOpen = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="w-full max-w-md bg-white dark:bg-[#18132a] rounded-2xl shadow-2xl border border-slate-200 dark:border-purple-900/40 overflow-hidden p-6 space-y-5 text-left z-50">
+
+            <div class="flex items-center gap-3 pb-3 border-b border-[var(--border-subtle)]">
+                <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300 text-xl flex items-center justify-center font-extrabold shadow-inner">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <div>
+                    <h3 class="font-heading font-extrabold text-lg text-slate-900 dark:text-white">Borrow Key Slot #<span x-text="borrowSlotNum"></span></h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400" x-text="borrowKeyName"></p>
+                </div>
+            </div>
+
+            <form :action="'{{ url('/keys') }}/' + borrowKeyId + '/status'" method="POST" class="space-y-4">
+                @csrf @method('PATCH')
+                <input type="hidden" name="status" value="borrowed">
+
+                <div>
+                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
+                        Assign Borrower (Faculty / Staff)
+                    </label>
+                    <select name="user_id" required class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        <option value="">-- Select Borrower --</option>
+                        @foreach($users as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->employee_id ?? 'No ID' }}) &mdash; {{ ucfirst($u->role) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-3 pt-3 border-t border-[var(--border-subtle)]">
+                    <button type="button" @click="borrowModalOpen = false"
+                            class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="flex-1 py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-key text-xs"></i> Confirm Borrow
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════
+         PREMIUM CONFIRMATION DELETE MODAL
+         ═══════════════════════════════════ -->
+    <div x-show="deleteModalOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+         style="display: none;">
+
+        <div @click.away="deleteModalOpen = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="w-full max-w-md bg-white dark:bg-[#18132a] rounded-2xl shadow-2xl border border-slate-200 dark:border-purple-900/40 overflow-hidden p-6 space-y-5 text-center z-50">
+
+            <div class="w-14 h-14 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 text-2xl flex items-center justify-center mx-auto shadow-inner">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+
+            <div>
+                <h3 class="font-heading font-extrabold text-xl text-slate-900 dark:text-white">Delete Key Slot #<span x-text="targetSlotNum"></span>?</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-300 mt-2 leading-relaxed font-medium">
+                    Are you sure you want to delete <strong class="text-slate-900 dark:text-white font-bold" x-text="targetKeyName"></strong>?
+                    This action will remove the slot registration permanently.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button" @click="deleteModalOpen = false"
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors">
+                    Cancel
+                </button>
+
+                <form :action="'{{ url('/keys') }}/' + targetKeyId" method="POST" class="flex-1">
+                    @csrf @method('DELETE')
+                    <button type="submit"
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-md flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-trash-can text-xs"></i> Yes, Delete Slot
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

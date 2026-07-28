@@ -37,9 +37,30 @@ class DashboardController extends Controller
             ->where('action', 'return')
             ->count();
 
+        // 12-month data aggregation for dashboard Chart.js dual bar chart
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $monthlyBorrows = [];
+        $monthlyReturns = [];
+
+        foreach (range(1, 12) as $m) {
+            $bCount = Transaction::whereMonth('created_at', $m)
+                ->whereYear('created_at', now()->year)
+                ->where('action', 'borrow')
+                ->count();
+
+            $rCount = Transaction::whereMonth('created_at', $m)
+                ->whereYear('created_at', now()->year)
+                ->where('action', 'return')
+                ->count();
+
+            $monthlyBorrows[] = $bCount;
+            $monthlyReturns[] = $rCount;
+        }
+
         return view('dashboard', compact(
             'totalKeys', 'availableKeys', 'borrowedKeys', 'missingKeys',
-            'keys', 'recentTransactions', 'recentLogs', 'todayBorrows', 'todayReturns'
+            'keys', 'recentTransactions', 'recentLogs', 'todayBorrows', 'todayReturns',
+            'months', 'monthlyBorrows', 'monthlyReturns'
         ));
     }
 }

@@ -5,67 +5,61 @@
 @section('content')
 <div class="space-y-6">
 
+    <!-- Header -->
     <div>
-        <h2 class="text-xl font-heading font-bold text-slate-900">QR Code Scan Audit Trail</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Real-time log of all QR scanner authentication attempts from hardware scanners</p>
+        <h2 class="mockup-card-title text-xl flex items-center gap-2">
+            <i class="fa-solid fa-qrcode text-[var(--purple-primary)] text-lg"></i>
+            QR Audit Logs
+        </h2>
+        <p class="text-xs text-[var(--text-muted)] mt-0.5">All QR scan attempts recorded by the AUTOBOX terminal.</p>
     </div>
 
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <!-- Table -->
+    <div class="mockup-card overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                    <tr>
-                        <th class="p-4">Timestamp</th>
-                        <th class="p-4">User</th>
-                        <th class="p-4">Scanned QR Token</th>
-                        <th class="p-4">Action</th>
-                        <th class="p-4">Result</th>
-                        <th class="p-4">Reason / Details</th>
-                        <th class="p-4">Scanner IP</th>
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="border-b border-[var(--border-subtle)]">
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">User</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">QR Code</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Reason</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Result</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Date & Time</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-[var(--border-subtle)]">
                     @forelse($logs as $log)
-                        <tr class="hover:bg-slate-50/60 transition-colors">
-                            <td class="p-4 font-mono text-slate-600">
-                                {{ $log->created_at->format('M d, Y h:i:s A') }}
+                        <tr class="hover:bg-[var(--purple-soft)] transition-colors">
+                            <td class="px-5 py-3.5">
+                                <p class="font-bold text-[var(--text-heading)] text-sm">{{ $log->user->name ?? 'Unknown' }}</p>
+                                <p class="text-xs text-[var(--text-muted)]">{{ $log->user->employee_id ?? '' }}</p>
                             </td>
-                            <td class="p-4">
-                                <span class="font-bold text-slate-900 block text-sm">{{ $log->user->name ?? 'Unregistered' }}</span>
-                                <span class="text-slate-400 text-xs">{{ $log->user->employee_id ?? 'No Account' }}</span>
-                            </td>
-                            <td class="p-4 font-mono text-slate-500 max-w-[140px] truncate">
-                                {{ $log->qr_token }}
-                            </td>
-                            <td class="p-4 font-semibold uppercase text-slate-700">
-                                {{ $log->action }}
-                            </td>
-                            <td class="p-4">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase
-                                    @if($log->result === 'granted') bg-emerald-100 text-emerald-800 @else bg-rose-100 text-rose-800 @endif">
+                            <td class="px-5 py-3.5 text-xs font-mono text-[var(--text-muted)] truncate max-w-[130px]">{{ $log->qr_data }}</td>
+                            <td class="px-5 py-3.5 text-sm text-[var(--text-body)]">{{ $log->reason }}</td>
+                            <td class="px-5 py-3.5">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider
+                                    {{ $log->result === 'granted'
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : 'bg-rose-100 text-rose-700' }}">
                                     {{ $log->result }}
                                 </span>
                             </td>
-                            <td class="p-4 text-slate-600">
-                                {{ $log->reason }}
-                            </td>
-                            <td class="p-4 font-mono text-slate-400">
-                                {{ $log->ip_address ?? '127.0.0.1' }}
-                            </td>
+                            <td class="px-5 py-3.5 text-sm font-mono text-[var(--text-muted)]">{{ $log->created_at->format('M d, Y · h:i A') }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-400">No scan logs recorded.</td>
+                            <td colspan="5" class="px-5 py-12 text-center text-[var(--text-muted)] text-sm">
+                                <i class="fa-solid fa-qrcode text-4xl block mb-3 opacity-20"></i>
+                                No QR scan logs found.
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-
-        <div class="p-4 border-t border-slate-100">
-            {{ $logs->links() }}
-        </div>
+        @if($logs->hasPages())
+            <div class="px-5 py-4 border-t border-[var(--border-subtle)]">{{ $logs->links() }}</div>
+        @endif
     </div>
-
 </div>
 @endsection

@@ -5,136 +5,167 @@
 @section('content')
 <div class="space-y-6">
 
+    <!-- Header -->
     <div>
-        <h2 class="text-xl font-heading font-bold text-slate-900">Analytics & Reports</h2>
-        <p class="text-xs text-slate-500 mt-0.5">Key usage statistics, access trends, and system performance insights</p>
+        <h2 class="mockup-card-title text-xl flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-[var(--purple-primary)] text-lg"></i>
+            Analytics & Reports
+        </h2>
+        <p class="text-xs text-[var(--text-muted)] mt-0.5">System usage insights and activity summaries.</p>
     </div>
 
     <!-- Summary Stat Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Available Slots</p>
-            <h3 class="text-3xl font-heading font-extrabold text-emerald-600 mt-1">{{ $statusCounts['available'] ?? 0 }}</h3>
-            <p class="text-xs text-emerald-600 font-semibold mt-1">Ready for access</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="mockup-card p-5 text-center">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 text-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <p class="text-2xl font-heading font-extrabold text-emerald-600">{{ $totalBorrows }}</p>
+            <p class="text-[11px] text-[var(--text-muted)] mt-1 font-semibold">Total Borrows</p>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Borrowed Slots</p>
-            <h3 class="text-3xl font-heading font-extrabold text-amber-500 mt-1">{{ $statusCounts['borrowed'] ?? 0 }}</h3>
-            <p class="text-xs text-amber-600 font-semibold mt-1">Currently in use</p>
+        <div class="mockup-card p-5 text-center">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-rotate-left"></i>
+            </div>
+            <p class="text-2xl font-heading font-extrabold text-blue-600">{{ $totalReturns }}</p>
+            <p class="text-[11px] text-[var(--text-muted)] mt-1 font-semibold">Total Returns</p>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Missing / Alert</p>
-            <h3 class="text-3xl font-heading font-extrabold text-rose-600 mt-1">{{ $statusCounts['missing'] ?? 0 }}</h3>
-            <p class="text-xs text-rose-600 font-semibold mt-1">Requires attention</p>
+        <div class="mockup-card p-5 text-center">
+            <div class="w-10 h-10 rounded-xl bg-[var(--purple-soft)] text-[var(--purple-primary)] text-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <p class="text-2xl font-heading font-extrabold text-[var(--purple-primary)]">{{ $totalGranted }}</p>
+            <p class="text-[11px] text-[var(--text-muted)] mt-1 font-semibold">QR Access Granted</p>
+        </div>
+        <div class="mockup-card p-5 text-center">
+            <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 text-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-ban"></i>
+            </div>
+            <p class="text-2xl font-heading font-extrabold text-rose-600">{{ $totalDenied }}</p>
+            <p class="text-[11px] text-[var(--text-muted)] mt-1 font-semibold">QR Access Denied</p>
         </div>
     </div>
 
     <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Daily Borrows Chart (Line) -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <h2 class="text-base font-heading font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-chart-line text-blue-600"></i>
-                Daily Borrow Activity (Last 7 Days)
-            </h2>
+        <div class="mockup-card p-6">
+            <h3 class="mockup-card-title text-sm mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-[var(--purple-primary)]"></i>
+                Daily Key Borrows (Last 30 Days)
+            </h3>
             <canvas id="dailyBorrowsChart" height="200"></canvas>
         </div>
 
         <!-- Key Status Pie Chart -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <h2 class="text-base font-heading font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-violet-600"></i>
-                Current Key Status Distribution
-            </h2>
+        <div class="mockup-card p-6">
+            <h3 class="mockup-card-title text-sm mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-[var(--purple-primary)]"></i>
+                Key Status Overview
+            </h3>
             <canvas id="statusPieChart" height="200"></canvas>
         </div>
-
     </div>
 
-    <!-- Most Borrowed Keys Table -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <h2 class="text-base font-heading font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-fire text-orange-500"></i>
-            Most Frequently Borrowed Keys
-        </h2>
-
-        @if($popularKeys->isEmpty())
-            <p class="text-xs text-slate-400 text-center py-6">No transaction data yet.</p>
-        @else
-            <div class="space-y-3">
-                @foreach($popularKeys as $i => $pk)
-                    <div class="flex items-center gap-4">
-                        <span class="w-7 h-7 rounded-lg bg-violet-50 text-violet-700 font-extrabold text-xs flex items-center justify-center border border-violet-100">{{ $i + 1 }}</span>
-                        <div class="flex-1">
-                            <p class="text-sm font-bold text-slate-900">{{ $pk->key->key_name ?? 'Unknown' }}
-                                <span class="ml-2 text-xs font-medium text-violet-600">{{ $pk->key->room_name ?? '' }}</span>
-                            </p>
-                            <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div class="h-full rounded-full gradient-violet-blue"
-                                     style="width: {{ min(100, ($pk->total / max($popularKeys->max('total'), 1)) * 100) }}%"></div>
-                            </div>
-                        </div>
-                        <span class="text-xs font-extrabold text-slate-600">{{ $pk->total }} borrows</span>
-                    </div>
-                @endforeach
-            </div>
-        @endif
+    <!-- Top Borrowers Table -->
+    <div class="mockup-card p-6">
+        <h3 class="mockup-card-title text-sm mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-ranking-star text-amber-500"></i>
+            Top 10 Borrowers
+        </h3>
+        <table class="w-full text-sm text-left">
+            <thead>
+                <tr class="border-b border-[var(--border-subtle)]">
+                    <th class="pb-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">#</th>
+                    <th class="pb-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">User</th>
+                    <th class="pb-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Total Borrows</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--border-subtle)]">
+                @forelse($topBorrowers as $i => $borrower)
+                    <tr class="hover:bg-[var(--purple-soft)] transition-colors">
+                        <td class="py-2.5 text-[var(--text-muted)] font-mono text-xs font-semibold">{{ $i + 1 }}</td>
+                        <td class="py-2.5 font-bold text-[var(--text-heading)]">{{ $borrower->user->name ?? 'Unknown' }}</td>
+                        <td class="py-2.5">
+                            <span class="font-extrabold text-[var(--purple-primary)]">{{ $borrower->total }}</span>
+                            <span class="text-[var(--text-muted)] text-xs ml-1">borrows</span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3" class="py-8 text-center text-[var(--text-muted)] text-sm">No data available.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
-
 </div>
 
 <script>
 // Daily Borrows Chart
-const dailyLabels = @json($dailyBorrows->keys());
-const dailyData   = @json($dailyBorrows->values());
+const dailyLabels = {!! json_encode($dailyLabels) !!};
+const dailyData = {!! json_encode($dailyData) !!};
 
-new Chart(document.getElementById('dailyBorrowsChart'), {
+const dailyCanvas = document.getElementById('dailyBorrowsChart');
+const dCtx = dailyCanvas.getContext('2d');
+const areaGrad = dCtx.createLinearGradient(0, 0, 0, 200);
+areaGrad.addColorStop(0, 'rgba(109,40,217,0.18)');
+areaGrad.addColorStop(1, 'rgba(109,40,217,0)');
+
+new Chart(dailyCanvas, {
     type: 'line',
     data: {
-        labels: dailyLabels.length ? dailyLabels : ['No data'],
+        labels: dailyLabels,
         datasets: [{
             label: 'Borrows',
-            data: dailyData.length ? dailyData : [0],
+            data: dailyData,
             borderColor: '#6d28d9',
-            backgroundColor: 'rgba(109, 40, 217, 0.08)',
+            backgroundColor: areaGrad,
+            borderWidth: 2.5,
+            tension: 0.45,
+            pointRadius: 4,
+            pointBackgroundColor: '#fff',
+            pointBorderColor: '#6d28d9',
+            pointBorderWidth: 2,
+            pointHoverRadius: 6,
             fill: true,
-            tension: 0.4,
-            pointBackgroundColor: '#6d28d9',
-            pointRadius: 5,
         }]
     },
     options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: '#12141c',
+                titleFont: { weight: '700', size: 12 },
+                bodyFont: { size: 12 },
+                padding: 10,
+                cornerRadius: 8,
+                displayColors: false,
+            },
+        },
         scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: { grid: { color: '#f1f0f5' }, ticks: { font: { size: 10 } }, border: { display: false } }
         }
     }
 });
 
 // Status Pie Chart
-const statusLabels = ['Available', 'Borrowed', 'Missing'];
-const statusData   = [
-    {{ $statusCounts['available'] ?? 0 }},
-    {{ $statusCounts['borrowed'] ?? 0 }},
-    {{ $statusCounts['missing'] ?? 0 }},
-];
-
 new Chart(document.getElementById('statusPieChart'), {
     type: 'doughnut',
     data: {
-        labels: statusLabels,
+        labels: ['Available', 'Borrowed', 'Missing'],
         datasets: [{
-            data: statusData,
-            backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
-            borderWidth: 3,
-            borderColor: '#ffffff',
+            data: [{{ $availableCount }}, {{ $borrowedCount }}, {{ $missingCount }}],
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+            borderWidth: 0,
+            hoverOffset: 6,
         }]
     },
     options: {
         responsive: true,
-        cutout: '65%',
+        cutout: '70%',
         plugins: {
             legend: {
                 position: 'bottom',

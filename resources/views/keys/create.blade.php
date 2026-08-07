@@ -46,28 +46,33 @@
                 @error('slot_number') <p class="text-rose-600 text-xs mt-1.5 font-medium">{{ $message }}</p> @enderror
             </div>
 
-            <!-- Key Identifier Name & Room Name -->
+            <!-- Key Identifier Name & Room Selection (Only Room 1, Room 2, Room 3) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
                         Key Identifier Name
                     </label>
-                    <input type="text" name="key_name" value="{{ old('key_name') }}" required placeholder="e.g. Lab 301 Key"
+                    <input type="text" name="key_name" value="{{ old('key_name') }}" required placeholder="e.g. Lab 1 Key"
                         class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
                     @error('key_name') <p class="text-rose-600 text-xs mt-1.5 font-medium">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        Assigned Room / Facility Name
+                        Assigned Room
                     </label>
-                    <input type="text" name="room_name" value="{{ old('room_name') }}" required placeholder="e.g. Computer Laboratory 301"
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                    <select name="room_name" required
+                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        <option value="">-- Select Room --</option>
+                        <option value="Room 1" {{ old('room_name') === 'Room 1' ? 'selected' : '' }}>Room 1</option>
+                        <option value="Room 2" {{ old('room_name') === 'Room 2' ? 'selected' : '' }}>Room 2</option>
+                        <option value="Room 3" {{ old('room_name') === 'Room 3' ? 'selected' : '' }}>Room 3</option>
+                    </select>
                     @error('room_name') <p class="text-rose-600 text-xs mt-1.5 font-medium">{{ $message }}</p> @enderror
                 </div>
             </div>
 
-            <!-- Initial Operational Status Selector (NO EMOJIS) -->
+            <!-- Initial Operational Status Selector -->
             <div>
                 <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-2 uppercase tracking-widest">
                     Initial Operational Status
@@ -77,7 +82,7 @@
 
                     <!-- Available Option -->
                     <label class="relative flex flex-col p-3.5 rounded-xl border-2 cursor-pointer transition-all shadow-sm"
-                        :class="status === 'available' ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
+                        :class="status === 'available' ? 'border-emerald-500 bg-emerald-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
                         <input type="radio" name="status" value="available" x-model="status" class="sr-only">
                         <div class="flex items-center justify-between">
                             <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 text-xs">
@@ -93,7 +98,7 @@
 
                     <!-- Missing Option -->
                     <label class="relative flex flex-col p-3.5 rounded-xl border-2 cursor-pointer transition-all shadow-sm"
-                        :class="status === 'missing' ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
+                        :class="status === 'missing' ? 'border-rose-500 bg-rose-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
                         <input type="radio" name="status" value="missing" x-model="status" class="sr-only">
                         <div class="flex items-center justify-between">
                             <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-rose-100 text-rose-600 text-xs">
@@ -112,7 +117,7 @@
 
             <!-- Form Actions -->
             <div class="pt-4 flex items-center justify-between border-t border-[var(--border-subtle)]">
-                <a href="{{ route('keys.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <a href="{{ route('keys.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700 transition-colors">
                     Cancel
                 </a>
                 <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-extrabold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">

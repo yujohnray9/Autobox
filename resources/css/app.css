@@ -1,33 +1,33 @@
 @import 'tailwindcss';
 
 /* ======================================
-   AUTOBOX — Soft Purple & Dark Mode Theme
+   AUTOBOX — Dark Mode Theme (Default)
    ====================================== */
 
 :root {
-    /* Brand & Layout Colors */
-    --purple-primary: #6451a3;
-    --purple-dark: #503d8d;
-    --purple-soft: #f0ecf9;
-    --purple-hover: #584695;
+    /* Brand & Layout Colors (Dark Mode Default) */
+    --purple-primary: #8b78d4;
+    --purple-dark: #6e5cb7;
+    --purple-soft: #251d3e;
+    --purple-hover: #7a67c3;
     
-    --app-bg: #f4f5fa;
-    --surface-white: #ffffff;
-    --border-subtle: #e6e4f0;
+    --app-bg: #0f0b1e;
+    --surface-white: #19142c;
+    --border-subtle: #292244;
     
     /* Text Palette */
-    --text-heading: #1e1938;
-    --text-body: #4a4468;
-    --text-muted: #8d87a5;
+    --text-heading: #f0ecfc;
+    --text-body: #c4beea;
+    --text-muted: #847bb0;
 
     /* Card Stat Palette */
-    --card-lilac: #eeecf9;
-    --card-pink: #fbebf3;
-    --card-peach: #fcf1eb;
-    --card-mint: #eaf7f2;
+    --card-lilac: #231b3c;
+    --card-pink: #2a1928;
+    --card-peach: #2b1c1e;
+    --card-mint: #152923;
 }
 
-html.dark {
+html, html.dark {
     --purple-primary: #8b78d4;
     --purple-dark: #6e5cb7;
     --purple-soft: #251d3e;
@@ -140,50 +140,6 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     color: var(--text-heading);
 }
 
-/* ─── DAY / NIGHT TOGGLE SWITCH ───── */
-.theme-toggle-switch {
-    background: var(--app-bg);
-    border: 1px solid var(--border-subtle);
-    border-radius: 9999px;
-    padding: 0.25rem 0.625rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    user-select: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.theme-toggle-track {
-    width: 2.25rem;
-    height: 1.125rem;
-    background: #dcd7f0;
-    border-radius: 9999px;
-    position: relative;
-    transition: background 0.3s ease;
-}
-
-html.dark .theme-toggle-track {
-    background: #503d8d;
-}
-
-.theme-toggle-thumb {
-    width: 0.875rem;
-    height: 0.875rem;
-    background: #ffffff;
-    border-radius: 50%;
-    position: absolute;
-    top: 0.125rem;
-    left: 0.125rem;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-html.dark .theme-toggle-thumb {
-    transform: translateX(1.125rem);
-}
-
 /* ─── TOP STAT CARDS ───────────────── */
 .mockup-stat-card {
     border-radius: 1.5rem;
@@ -211,11 +167,6 @@ html.dark .theme-toggle-thumb {
 }
 
 .mockup-stat-card-missing {
-    background: #ffe4e6;
-    border-color: #fecdd3;
-}
-
-html.dark .mockup-stat-card-missing {
     background: #38151b;
     border-color: #5c1d28;
 }
@@ -249,31 +200,16 @@ html.dark .mockup-stat-card-missing {
 }
 
 .stat-tag-positive {
-    background: #eaf7f2;
-    color: #10b981;
-}
-
-.stat-tag-negative {
-    background: #ffe4e6;
-    color: #e11d48;
-}
-
-.stat-tag-neutral {
-    background: #eef2ff;
-    color: #4f46e5;
-}
-
-html.dark .stat-tag-positive {
     background: #152923;
     color: #34d399;
 }
 
-html.dark .stat-tag-negative {
+.stat-tag-negative {
     background: #3d151c;
     color: #fb7185;
 }
 
-html.dark .stat-tag-neutral {
+.stat-tag-neutral {
     background: #1e1b4b;
     color: #818cf8;
 }
@@ -311,31 +247,16 @@ html.dark .stat-tag-neutral {
 }
 
 .slot-badge-available {
-    background: #eaf7f2;
-    color: #10b981;
-}
-
-.slot-badge-borrowed {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.slot-badge-missing {
-    background: #ffe4e6;
-    color: #e11d48;
-}
-
-html.dark .slot-badge-available {
     background: #152923;
     color: #34d399;
 }
 
-html.dark .slot-badge-borrowed {
+.slot-badge-borrowed {
     background: #312613;
     color: #fbbf24;
 }
 
-html.dark .slot-badge-missing {
+.slot-badge-missing {
     background: #33151b;
     color: #fb7185;
 }

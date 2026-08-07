@@ -28,10 +28,9 @@ class UserController extends Controller
             'role'        => 'required|in:admin,faculty,staff',
             'department'  => 'nullable|string|max:255',
             'employee_id' => 'required|string|unique:users,employee_id',
-            'password'    => 'required|string|min:8',
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
+        $validated['password'] = Hash::make(Str::random(16));
         $validated['qr_token'] = 'AUTOBOX-QR-' . strtoupper(Str::random(10));
         $validated['is_active'] = true;
 

@@ -61,16 +61,11 @@ class DatabaseSeeder extends Seeder
             'is_active'   => true,
         ]);
 
-        // 3. Create Keys (Slots 1 to 10 for CCSICT rooms)
+        // 3. Create Only 3 Keys (Room 1, Room 2, Room 3)
         $keys = [
-            ['key_name' => 'Lab 1 Key', 'room_name' => 'ComLab 101', 'description' => 'Programming & Multi-Media Lab', 'slot_number' => 1, 'status' => 'available'],
-            ['key_name' => 'Lab 2 Key', 'room_name' => 'ComLab 102', 'description' => 'Networking & Cisco Lab', 'slot_number' => 2, 'status' => 'borrowed'],
-            ['key_name' => 'Lab 3 Key', 'room_name' => 'ComLab 103', 'description' => 'Hardware & IoT Lab', 'slot_number' => 3, 'status' => 'available'],
-            ['key_name' => 'Lecture 201 Key', 'room_name' => 'RM 201', 'description' => 'Lecture Hall A', 'slot_number' => 4, 'status' => 'available'],
-            ['key_name' => 'Lecture 202 Key', 'room_name' => 'RM 202', 'description' => 'Lecture Hall B', 'slot_number' => 5, 'status' => 'borrowed'],
-            ['key_name' => 'Faculty Office Key', 'room_name' => 'CCSICT Faculty', 'description' => 'Main Faculty Room', 'slot_number' => 6, 'status' => 'available'],
-            ['key_name' => 'Server Room Key', 'room_name' => 'Server RM', 'description' => 'Network & Server Rack Room', 'slot_number' => 7, 'status' => 'missing'],
-            ['key_name' => 'Dean Office Key', 'room_name' => 'Dean Office', 'description' => 'CCSICT Dean Office', 'slot_number' => 8, 'status' => 'available'],
+            ['key_name' => 'Lab 1 Key', 'room_name' => 'Room 1', 'description' => 'Programming & Multi-Media Lab', 'slot_number' => 1, 'status' => 'available'],
+            ['key_name' => 'Lab 2 Key', 'room_name' => 'Room 2', 'description' => 'Networking & Cisco Lab', 'slot_number' => 2, 'status' => 'borrowed'],
+            ['key_name' => 'Lab 3 Key', 'room_name' => 'Room 3', 'description' => 'Hardware & IoT Lab', 'slot_number' => 3, 'status' => 'missing'],
         ];
 
         $createdKeys = [];
@@ -119,7 +114,7 @@ class DatabaseSeeder extends Seeder
 
         Transaction::create([
             'user_id'     => $faculty2->id,
-            'key_id'      => $createdKeys[4]->id, // Lecture 202 Key (currently borrowed)
+            'key_id'      => $createdKeys[2]->id, // Lab 3 Key
             'action'      => 'borrow',
             'status'      => 'success',
             'notes'       => 'Borrowed for IT101 Lecture',

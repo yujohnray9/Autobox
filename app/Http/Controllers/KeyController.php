@@ -25,7 +25,7 @@ class KeyController extends Controller
     {
         $validated = $request->validate([
             'key_name'    => 'required|string|max:255',
-            'room_name'   => 'required|string|max:255',
+            'room_name'   => 'required|in:Room 1,Room 2,Room 3',
             'slot_number' => 'required|integer|unique:keys,slot_number|min:1|max:50',
             'description' => 'nullable|string',
             'status'      => 'required|in:available,borrowed,missing',
@@ -45,7 +45,7 @@ class KeyController extends Controller
     {
         $validated = $request->validate([
             'key_name'    => 'required|string|max:255',
-            'room_name'   => 'required|string|max:255',
+            'room_name'   => 'required|in:Room 1,Room 2,Room 3',
             'slot_number' => 'required|integer|min:1|max:50|unique:keys,slot_number,' . $key->id,
             'description' => 'nullable|string',
             'status'      => 'required|in:available,borrowed,missing',

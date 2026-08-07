@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,13 +8,10 @@
     <title>{{ config('app.name', 'AUTOBOX') }} — Key Access & Real-Time Monitoring</title>
     <meta name="description" content="AUTOBOX CCSICT — Physical key management, access control, and real-time monitoring dashboard.">
 
-    <!-- Theme Initialization Script (Prevents Dark Mode Flash) -->
+    <!-- Enforce Dark Theme -->
     <script>
-        if (localStorage.getItem('autobox_theme') === 'dark' || (!('autobox_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('autobox_theme', 'dark');
     </script>
 
     <!-- Google Fonts: Outfit (headings) + Plus Jakarta Sans (body) -->
@@ -90,7 +87,11 @@
                     <span>QR Audit Logs</span>
                 </a>
 
-              
+                <a href="{{ route('reports.index') }}"
+                   class="sidebar-nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i>
+                    <span>Analytics</span>
+                </a>
             </nav>
 
             <!-- Support Section -->
@@ -117,7 +118,7 @@
                 <!-- Left: Welcome Title with Purple Branded Badge -->
                 <div class="flex items-center gap-3.5">
                     <div class="w-10 h-10 rounded-2xl bg-[var(--purple-soft)] text-[var(--purple-primary)] flex items-center justify-center text-base shadow-sm border border-[var(--border-subtle)]">
-                        <i class="fa-solid fa-key text-[var(--purple-primary)]"></i>
+                        <i class="fa-solid fa-crown text-[var(--purple-primary)]"></i>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -132,17 +133,9 @@
                     </div>
                 </div>
 
-                <!-- Right: Working Day/Night Switch & Admin Profile Chip -->
-                <div class="flex items-center gap-4">
-                    <!-- Working Day / Light & Night Toggle Switch -->
-                    <div id="themeToggleBtn" class="theme-toggle-switch" title="Toggle Light / Dark Mode">
-                        <i class="fa-solid fa-sun text-amber-500 text-xs"></i>
-                        <div class="theme-toggle-track">
-                            <div class="theme-toggle-thumb"></div>
-                        </div>
-                        <i class="fa-solid fa-moon text-indigo-400 text-xs"></i>
-                    </div>
 
+                <!-- Right: Admin Profile Chip -->
+                <div class="flex items-center gap-4">
                     <!-- User Profile Chip -->
                     <div class="flex items-center gap-3 p-1.5 pr-3.5 rounded-full bg-[var(--app-bg)] border border-[var(--border-subtle)]">
                         <div class="relative">
@@ -167,7 +160,7 @@
     </div>
 
     <!-- ═══════════════════════════════════
-         GLOBAL SCRIPTS: TOASTS, SPINNERS & THEME
+         GLOBAL SCRIPTS: TOASTS & SPINNERS
          ═══════════════════════════════════ -->
     <script>
         // Global Toast Notification System
@@ -193,12 +186,10 @@
 
             container.appendChild(toast);
 
-            // Animate in
             setTimeout(() => {
                 toast.classList.remove('translate-x-10', 'opacity-0');
             }, 50);
 
-            // Auto dismiss after 4s
             setTimeout(() => {
                 toast.classList.add('translate-x-10', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
@@ -206,7 +197,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            // Flash Session Toasts
             @if(session('success'))
                 showToast("{{ session('success') }}", 'success');
             @endif
@@ -215,17 +205,14 @@
                 showToast("{{ session('error') }}", 'error');
             @endif
 
-            // Global Button Loading Spinner on Form Submit
             document.querySelectorAll('form').forEach(form => {
                 form.addEventListener('submit', function (e) {
                     const submitBtn = form.querySelector('button[type="submit"]');
                     if (submitBtn && !submitBtn.disabled) {
-                        // Create spinner icon
                         const originalHtml = submitBtn.innerHTML;
                         submitBtn.dataset.originalContent = originalHtml;
                         submitBtn.disabled = true;
 
-                        // Insert spinner
                         submitBtn.innerHTML = `
                             <i class="fa-solid fa-spinner animate-spin text-xs"></i>
                             <span>Processing...</span>
@@ -234,22 +221,6 @@
                     }
                 });
             });
-
-            // Theme Switcher
-            const toggleBtn = document.getElementById('themeToggleBtn');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function () {
-                    const isDark = document.documentElement.classList.toggle('dark');
-                    localStorage.setItem('autobox_theme', isDark ? 'dark' : 'light');
-                    
-                    if (window.dashboardChartInstance) {
-                        window.dashboardChartInstance.options.scales.y.grid.color = isDark ? '#292244' : '#f0f2fb';
-                        window.dashboardChartInstance.options.scales.x.ticks.color = isDark ? '#847bb0' : '#8d87a5';
-                        window.dashboardChartInstance.options.scales.y.ticks.color = isDark ? '#847bb0' : '#8d87a5';
-                        window.dashboardChartInstance.update();
-                    }
-                });
-            }
         });
     </script>
 </body>

@@ -34,7 +34,7 @@
                                 <p class="font-bold text-[var(--text-heading)] text-sm">{{ $log->user->name ?? 'Unknown' }}</p>
                                 <p class="text-xs text-[var(--text-muted)]">{{ $log->user->employee_id ?? '' }}</p>
                             </td>
-                            <td class="px-5 py-3.5 text-xs font-mono text-[var(--text-muted)] truncate max-w-[130px]">{{ $log->qr_data }}</td>
+                            <td class="px-5 py-3.5 text-xs font-mono text-[var(--text-muted)] truncate max-w-[130px]">{{ $log->qr_token }}</td>
                             <td class="px-5 py-3.5 text-sm text-[var(--text-body)]">{{ $log->reason }}</td>
                             <td class="px-5 py-3.5">
                                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider

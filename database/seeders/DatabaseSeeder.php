@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             'password'    => Hash::make('admin123'),
             'role'        => 'admin',
             'department'  => 'CCSICT',
-            'employee_id' => 'EMP-0001',
+            'employee_id' => 'EMP-2024-001',
             'qr_token'    => Str::uuid()->toString(),
             'is_active'   => true,
         ]);
@@ -34,8 +34,8 @@ class DatabaseSeeder extends Seeder
             'password'    => Hash::make('password'),
             'role'        => 'faculty',
             'department'  => 'Computer Science',
-            'employee_id' => 'EMP-1002',
-            'qr_token'    => 'AUTOBOX-QR-FAC-001',
+            'employee_id' => 'EMP-2024-002',
+            'qr_token'    => Str::uuid()->toString(),
             'is_active'   => true,
         ]);
 
@@ -45,8 +45,8 @@ class DatabaseSeeder extends Seeder
             'password'    => Hash::make('password'),
             'role'        => 'faculty',
             'department'  => 'Information Technology',
-            'employee_id' => 'EMP-1003',
-            'qr_token'    => 'AUTOBOX-QR-FAC-002',
+            'employee_id' => 'EMP-2024-003',
+            'qr_token'    => Str::uuid()->toString(),
             'is_active'   => true,
         ]);
 
@@ -56,16 +56,16 @@ class DatabaseSeeder extends Seeder
             'password'    => Hash::make('password'),
             'role'        => 'staff',
             'department'  => 'Laboratory Custodian',
-            'employee_id' => 'EMP-2001',
-            'qr_token'    => 'AUTOBOX-QR-STAFF-001',
+            'employee_id' => 'EMP-2024-004',
+            'qr_token'    => Str::uuid()->toString(),
             'is_active'   => true,
         ]);
 
         // 3. Create Only 3 Keys (Room 1, Room 2, Room 3)
         $keys = [
-            ['key_name' => 'Lab 1 Key', 'room_name' => 'Room 1', 'description' => 'Programming & Multi-Media Lab', 'slot_number' => 1, 'status' => 'available'],
-            ['key_name' => 'Lab 2 Key', 'room_name' => 'Room 2', 'description' => 'Networking & Cisco Lab', 'slot_number' => 2, 'status' => 'borrowed'],
-            ['key_name' => 'Lab 3 Key', 'room_name' => 'Room 3', 'description' => 'Hardware & IoT Lab', 'slot_number' => 3, 'status' => 'missing'],
+            ['key_name' => 'Room 1', 'room_name' => 'Room 1', 'description' => 'Programming & Multi-Media Lab', 'slot_number' => 1, 'status' => 'available'],
+            ['key_name' => 'Room 2', 'room_name' => 'Room 2', 'description' => 'Networking & Cisco Lab', 'slot_number' => 2, 'status' => 'borrowed'],
+            ['key_name' => 'Room 3', 'room_name' => 'Room 3', 'description' => 'Hardware & IoT Lab', 'slot_number' => 3, 'status' => 'missing'],
         ];
 
         $createdKeys = [];

@@ -3,7 +3,24 @@
 @section('title', 'Access Schedules')
 
 @section('content')
-<div class="space-y-6" x-data="{ showForm: false, deleteId: null, deleteName: '' }">
+<div class="space-y-6" x-data="{ showForm: {{ session('conflict_error') ? 'true' : 'false' }}, deleteId: null, deleteName: '' }">
+
+    @if(session('conflict_error'))
+    <div class="flex items-start gap-3 px-5 py-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-800 dark:bg-amber-950/40 dark:border-amber-700/50 dark:text-amber-300 shadow-sm">
+        <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 flex-shrink-0"></i>
+        <div>
+            <p class="font-extrabold text-sm">Schedule Conflict Detected</p>
+            <p class="text-xs font-medium mt-0.5 leading-relaxed">{{ session('conflict_error') }}</p>
+        </div>
+    </div>
+    @endif
+
+    @if(session('success'))
+    <div class="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-700/50 dark:text-emerald-300 shadow-sm">
+        <i class="fa-solid fa-circle-check text-emerald-500 flex-shrink-0"></i>
+        <p class="text-sm font-semibold">{{ session('success') }}</p>
+    </div>
+    @endif
 
     <!-- Page Header -->
     <div class="flex items-center justify-between flex-wrap gap-3">

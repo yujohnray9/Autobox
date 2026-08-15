@@ -27,11 +27,22 @@ class UserController extends Controller
             'email'       => 'required|string|email|max:255|unique:users',
             'role'        => 'required|in:admin,faculty,staff',
             'department'  => 'nullable|string|max:255',
-            'employee_id' => 'required|string|unique:users,employee_id',
+            'employee_id' => 'nullable|string|unique:users,employee_id|regex:/^EMP-\d{4}-\d{3,}$/',
         ]);
 
+        if (empty($validated['employee_id'])) {
+            $year = now()->format('Y');
+            $lastUser = User::where('employee_id', 'like', "EMP-{$year}-%")
+                ->orderByRaw('CAST(SUBSTRING_INDEX(employee_id, "-", -1) AS UNSIGNED) DESC')
+                ->first();
+            $nextNum = $lastUser
+                ? (int) explode('-', $lastUser->employee_id)[2] + 1
+                : 1;
+            $validated['employee_id'] = "EMP-{$year}-" . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+        }
+
         $validated['password'] = Hash::make(Str::random(16));
-        $validated['qr_token'] = 'AUTOBOX-QR-' . strtoupper(Str::random(10));
+        $validated['qr_token'] = Str::uuid()->toString();
         $validated['is_active'] = true;
 
         User::create($validated);

@@ -8,6 +8,9 @@ use App\Models\Key;
 use App\Models\Transaction;
 use App\Models\AccessLog;
 use App\Models\Schedule;
+use App\Events\SliderStateChanged;
+use App\Events\KeyStatusUpdated;
+use App\Events\AccessLogged;
 use Illuminate\Http\Request;
 
 class AuthQrController extends Controller
@@ -128,6 +131,10 @@ class AuthQrController extends Controller
                 'ip_address' => $ip,
             ]);
 
+            // Dispatch WebSocket Events
+            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'available', $key->key_name, $key->room_name, null);
+            AccessLogged::dispatch($user->name, 'return', 'granted', "Returned to Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+
             return response()->json([
                 'success'     => true,
                 'status'      => 'GRANTED',
@@ -148,6 +155,8 @@ class AuthQrController extends Controller
                     'reason'     => "Key Slot #{$key->slot_number} is already borrowed",
                     'ip_address' => $ip,
                 ]);
+
+                AccessLogged::dispatch($user->name, 'borrow', 'denied', "Slot #{$key->slot_number} already borrowed", $key->key_name, $key->room_name);
 
                 return response()->json([
                     'success' => false,
@@ -175,6 +184,10 @@ class AuthQrController extends Controller
                 'reason'     => "Key Slot #{$key->slot_number} unlocked for borrowing",
                 'ip_address' => $ip,
             ]);
+
+            // Dispatch WebSocket Events
+            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'borrowed', $key->key_name, $key->room_name, $user->name);
+            AccessLogged::dispatch($user->name, 'borrow', 'granted', "Borrowed Slot #{$key->slot_number}", $key->key_name, $key->room_name);
 
             return response()->json([
                 'success'     => true,
@@ -212,9 +225,43 @@ class AuthQrController extends Controller
         $key = Key::where('slot_number', $request->slot_number)->first();
         if ($key) {
             $key->update(['status' => 'missing']);
+            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'missing', $key->key_name, $key->room_name, null);
+            AccessLogged::dispatch('Hardware Alert', 'missing', 'denied', "Key missing from Slot #{$key->slot_number}", $key->key_name, $key->room_name);
             return response()->json(['success' => true, 'message' => "Slot #{$key->slot_number} marked as missing"]);
         }
 
         return response()->json(['success' => false, 'message' => 'Slot not found'], 404);
+    }
+
+    /**
+     * Hardware reports slider door movement (opened/closed via Ultrasonic DC Motor)
+     */
+    public function reportSliderEvent(Request $request)
+    {
+        $request->validate([
+            'state'  => 'required|string|in:opened,closed',
+            'reason' => 'nullable|string',
+        ]);
+
+        $action = $request->state === 'opened' ? 'slider_open' : 'slider_close';
+        $reason = $request->reason ?? ("DC Motor Slider " . ucfirst($request->state));
+
+        AccessLog::create([
+            'user_id'    => null,
+            'qr_token'   => 'HARDWARE_SLIDER',
+            'action'     => $action,
+            'result'     => 'granted',
+            'reason'     => $reason,
+            'ip_address' => $request->ip(),
+        ]);
+
+        // Dispatch WebSocket Event for Live Frontend Update
+        SliderStateChanged::dispatch($request->state, $reason);
+        AccessLogged::dispatch('System / Ultrasonic', $action, 'granted', $reason);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Slider event recorded: {$request->state}",
+        ]);
     }
 }

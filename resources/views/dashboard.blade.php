@@ -135,6 +135,28 @@
                     <span>Manage Slots</span>
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </a>
+            <!-- ULTRASONIC & DC MOTOR SLIDER HARDWARE STATUS -->
+            <div class="mb-5 p-4 rounded-2xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-slate-900/40 border border-purple-500/30 flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-extrabold text-white flex items-center gap-2">
+                            DC Motor Slider Door
+                            <span id="slider-door-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                <i class="fa-solid fa-hand text-[9px]"></i> Ultrasonic Sensor Active
+                            </span>
+                        </h4>
+                        <p class="text-xs text-slate-300 mt-0.5">
+                            Hand Detected <i class="fa-solid fa-arrow-right text-[10px] text-purple-400"></i> Rolls Open &nbsp;|&nbsp; No Hand <i class="fa-solid fa-arrow-right text-[10px] text-purple-400"></i> Rolls Closed (GPIO 19 &amp; 26 / Pins 35 &amp; 37)
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-xs font-semibold text-purple-200 bg-purple-950/60 px-3 py-1.5 rounded-xl border border-purple-800/40">
+                    <i class="fa-solid fa-wave-square text-purple-400"></i>
+                    <span>TRIG: GPIO 24 | ECHO: GPIO 25</span>
+                </div>
             </div>
 
             <!-- Grid of Key Slots -->
@@ -332,6 +354,35 @@
                 }
             }
         });
+
+        // ═══════════════════════════════════
+        // PUSHER WEBSOCKET REAL-TIME HARDWARE LISTENERS
+        // ═══════════════════════════════════
+        if (window.Echo) {
+            console.log('[Pusher Echo] Subscribing to autobox-hardware channel...');
+            window.Echo.channel('autobox-hardware')
+                .listen('.SliderStateChanged', (e) => {
+                    console.log('[Pusher Echo] Slider State Event:', e);
+                    const badge = document.getElementById('slider-door-badge');
+                    if (badge) {
+                        if (e.state === 'opened') {
+                            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-500/30 text-amber-300 border border-amber-500/50 animate-pulse';
+                            badge.innerHTML = '<i class="fa-solid fa-door-open text-[9px]"></i> SLIDER OPENING / OPEN';
+                        } else {
+                            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                            badge.innerHTML = '<i class="fa-solid fa-hand text-[9px]"></i> Ultrasonic Sensor Active';
+                        }
+                    }
+                })
+                .listen('.KeyStatusUpdated', (e) => {
+                    console.log('[Pusher Echo] Key Status Updated:', e);
+                    // Dynamically refresh key status UI
+                    setTimeout(() => window.location.reload(), 1000);
+                })
+                .listen('.AccessLogged', (e) => {
+                    console.log('[Pusher Echo] Access Logged:', e);
+                });
+        }
     });
 </script>
 @endsection

@@ -3,7 +3,16 @@
 @section('title', 'Access Schedules')
 
 @section('content')
-<div class="space-y-6" x-data="{ showForm: {{ session('conflict_error') ? 'true' : 'false' }}, deleteId: null, deleteName: '' }">
+<div class="space-y-6" x-data="{ 
+    showForm: {{ session('conflict_error') ? 'true' : 'false' }}, 
+    deleteModalOpen: false, 
+    deleteScheduleId: null, 
+    deleteUserName: '', 
+    deleteUserRole: '', 
+    deleteKeyName: '', 
+    deleteSlotNum: '', 
+    deleteDayTime: '' 
+}">
 
     @if(session('conflict_error'))
     <div class="flex items-start gap-3 px-5 py-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-800 dark:bg-amber-950/40 dark:border-amber-700/50 dark:text-amber-300 shadow-sm">
@@ -60,99 +69,94 @@
             <form method="POST" action="{{ route('schedules.store') }}" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 @csrf
 
-                <!-- User -->
-                <div>
+                <!-- User Selection -->
+                <div class="sm:col-span-2">
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        Assigned User
+                        User (Faculty / Staff) <span class="text-rose-500">*</span>
                     </label>
                     <select name="user_id" required
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                        <option value="">-- Select Faculty / Staff --</option>
-                        @foreach($users as $u)
-                            <option value="{{ $u->id }}" {{ old('user_id') == $u->id ? 'selected' : '' }}>
-                                {{ $u->name }} ({{ $u->employee_id ?? 'No ID' }}) — {{ ucfirst($u->role) }}
+                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        <option value="">— Select Authorized User —</option>
+                        @foreach($users as $user)
+                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                                {{ $user->name }} ({{ $user->employee_id ?? 'No ID' }}) &mdash; {{ ucfirst($user->role) }}
                             </option>
                         @endforeach
                     </select>
-                    @error('user_id') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('user_id') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Key Slot -->
-                <div>
+                <!-- Key Slot Selection -->
+                <div class="sm:col-span-2">
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        Key Slot
+                        Key Slot / Room <span class="text-rose-500">*</span>
                     </label>
                     <select name="key_id" required
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                        <option value="">-- Select Key Slot --</option>
-                        @foreach($keys as $k)
-                            <option value="{{ $k->id }}" {{ old('key_id') == $k->id ? 'selected' : '' }}>
-                                Slot #{{ $k->slot_number }} — {{ $k->key_name }} ({{ $k->room_name }})
+                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        <option value="">— Select Key Slot —</option>
+                        @foreach($keys as $key)
+                            <option value="{{ $key->id }}" {{ old('key_id') == $key->id ? 'selected' : '' }}>
+                                Slot #{{ $key->slot_number }} &mdash; {{ $key->key_name }} ({{ $key->room_name }})
                             </option>
                         @endforeach
                     </select>
-                    @error('key_id') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('key_id') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- Day of Week -->
                 <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        Day of Week
+                        Day of the Week <span class="text-rose-500">*</span>
                     </label>
                     <select name="day_of_week" required
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                        <option value="">-- Select Day --</option>
-                        @foreach(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as $day)
-                            <option value="{{ $day }}" {{ old('day_of_week') === $day ? 'selected' : '' }}>{{ ucfirst($day) }}</option>
+                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
+                            <option value="{{ $day }}" {{ old('day_of_week') == $day ? 'selected' : '' }}>
+                                {{ ucfirst($day) }}
+                            </option>
                         @endforeach
                     </select>
-                    @error('day_of_week') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('day_of_week') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Is Active toggle -->
-                <div class="flex items-end pb-1">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <div class="relative">
-                            <input type="checkbox" name="is_active" value="1" class="sr-only peer" checked>
-                            <div class="w-10 h-5 bg-[var(--border-subtle)] peer-checked:bg-[var(--purple-primary)] rounded-full transition-all"></div>
-                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-all peer-checked:translate-x-5"></div>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-[var(--text-heading)]">Active Schedule</p>
-                            <p class="text-[10px] text-[var(--text-muted)]">Enable this schedule rule</p>
-                        </div>
+                <!-- Active Status -->
+                <div class="flex items-center gap-3 pt-5">
+                    <input type="checkbox" name="is_active" id="is_active" value="1" checked
+                        class="w-4 h-4 rounded text-[var(--purple-primary)] border-[var(--border-subtle)] focus:ring-[var(--purple-primary)]">
+                    <label for="is_active" class="text-xs font-bold text-[var(--text-heading)] cursor-pointer">
+                        Enable this schedule rule immediately
                     </label>
                 </div>
 
                 <!-- Start Time -->
                 <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        Start Time
+                        Start Time <span class="text-rose-500">*</span>
                     </label>
-                    <input type="time" name="start_time" value="{{ old('start_time') }}" required
+                    <input type="time" name="start_time" value="{{ old('start_time', '08:00') }}" required
                         class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                    @error('start_time') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('start_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- End Time -->
                 <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        End Time
+                        End Time <span class="text-rose-500">*</span>
                     </label>
-                    <input type="time" name="end_time" value="{{ old('end_time') }}" required
+                    <input type="time" name="end_time" value="{{ old('end_time', '17:00') }}" required
                         class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                    @error('end_time') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
+                    @error('end_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Buttons -->
-                <div class="sm:col-span-2 flex gap-3 pt-3 border-t border-[var(--border-subtle)]">
-                    <button type="submit"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
-                        <i class="fa-solid fa-floppy-disk text-xs"></i> Save Schedule
-                    </button>
+                <!-- Submit Buttons -->
+                <div class="sm:col-span-2 flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-subtle)]">
                     <button type="button" @click="showForm = false"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700 transition-colors">
                         Cancel
+                    </button>
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
+                        <i class="fa-solid fa-floppy-disk text-xs"></i> Save Access Rule
                     </button>
                 </div>
             </form>
@@ -165,8 +169,8 @@
             <table class="w-full text-sm text-left">
                 <thead>
                     <tr class="border-b border-[var(--border-subtle)]">
-                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">User</th>
-                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Key Slot</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Authorized User</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Key Slot / Room</th>
                         <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Day</th>
                         <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Time Window</th>
                         <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
@@ -175,7 +179,7 @@
                 </thead>
                 <tbody class="divide-y divide-[var(--border-subtle)]">
                     @forelse($schedules as $schedule)
-                        <tr class="hover:bg-[var(--purple-soft)] transition-colors group">
+                        <tr class="hover:bg-[var(--purple-soft)] transition-colors">
                             <!-- User -->
                             <td class="px-5 py-3.5">
                                 <div class="flex items-center gap-2.5">
@@ -228,14 +232,17 @@
                             </td>
                             <!-- Actions -->
                             <td class="px-5 py-3.5 text-right">
-                                <form method="POST" action="{{ route('schedules.destroy', $schedule) }}"
-                                      onsubmit="return confirm('Remove this schedule for {{ addslashes($schedule->user->name ?? 'this user') }}?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[var(--border-subtle)] text-[var(--text-body)] hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 transition-all">
-                                        <i class="fa-solid fa-trash text-[10px]"></i> Remove
-                                    </button>
-                                </form>
+                                <button type="button"
+                                    @click="deleteModalOpen = true; 
+                                            deleteScheduleId = '{{ $schedule->id }}'; 
+                                            deleteUserName = '{{ addslashes($schedule->user->name ?? 'Unknown User') }}'; 
+                                            deleteUserRole = '{{ ucfirst($schedule->user->role ?? 'User') }}';
+                                            deleteKeyName = '{{ addslashes($schedule->key->key_name ?? 'Key') }}'; 
+                                            deleteSlotNum = '{{ $schedule->key->slot_number ?? '?' }}'; 
+                                            deleteDayTime = '{{ ucfirst($schedule->day_of_week) }} · {{ \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') }} – {{ \Carbon\Carbon::parse($schedule->end_time)->format('h:i A') }}'"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[var(--border-subtle)] text-[var(--text-body)] hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white transition-all shadow-sm">
+                                    <i class="fa-solid fa-trash-can text-[10px]"></i> Remove
+                                </button>
                             </td>
                         </tr>
                     @empty
@@ -256,6 +263,87 @@
                 {{ $schedules->links() }}
             </div>
         @endif
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PREMIUM CONFIRMATION REMOVE SCHEDULE MODAL
+         ═══════════════════════════════════ -->
+    <div x-show="deleteModalOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @keydown.escape.window="deleteModalOpen = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+         style="display: none;">
+
+        <div @click.away="deleteModalOpen = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
+             class="w-full max-w-md bg-[var(--surface-white)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
+            
+            <!-- Glowing Red Ambient Light Accent -->
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+            <!-- Danger Warning Icon -->
+            <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-500/10">
+                <i class="fa-solid fa-calendar-xmark"></i>
+            </div>
+
+            <!-- Header Content -->
+            <div>
+                <h3 class="font-heading font-extrabold text-xl text-[var(--text-heading)]">Remove Access Schedule?</h3>
+                <p class="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed font-medium">
+                    This user will no longer be authorized to borrow this key during this specified time window.
+                </p>
+            </div>
+
+            <!-- Schedule Detail Preview Card -->
+            <div class="p-4 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] text-left space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-user text-[var(--purple-primary)] text-xs"></i>
+                        <span class="font-bold text-sm text-[var(--text-heading)]" x-text="deleteUserName"></span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-500/15 text-[var(--purple-primary)]" x-text="deleteUserRole"></span>
+                </div>
+
+                <div class="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
+                    <span class="text-[var(--text-muted)] font-medium">Key Slot:</span>
+                    <span class="font-bold text-[var(--text-heading)] flex items-center gap-1.5">
+                        <span class="px-1.5 py-0.5 rounded bg-[var(--purple-soft)] text-[var(--purple-primary)] font-mono text-[10px]">#<span x-text="deleteSlotNum"></span></span>
+                        <span x-text="deleteKeyName"></span>
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-[var(--text-muted)] font-medium">Window:</span>
+                    <span class="font-mono font-bold text-rose-400 text-[11px]" x-text="deleteDayTime"></span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-3 pt-1">
+                <button type="button" @click="deleteModalOpen = false"
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700/50 hover:text-white transition-all">
+                    Cancel
+                </button>
+
+                <form :action="'{{ url('/schedules') }}/' + deleteScheduleId" method="POST" class="flex-1">
+                    @csrf @method('DELETE')
+                    <button type="submit"
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-500 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash-can text-xs"></i> Yes, Remove
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

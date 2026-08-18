@@ -159,40 +159,44 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+         @keydown.escape.window="showDeleteModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
          style="display: none;">
 
         <div @click.away="showDeleteModal = false"
              x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
              x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="w-full max-w-md bg-white dark:bg-[#18132a] rounded-2xl shadow-2xl border border-slate-200 dark:border-purple-900/40 overflow-hidden p-6 space-y-5 text-center z-50">
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
+             class="w-full max-w-md bg-[var(--surface-white)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
 
-            <div class="w-14 h-14 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 text-2xl flex items-center justify-center mx-auto shadow-inner">
+            <!-- Glowing Red Ambient Light Accent -->
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-500/10">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
 
             <div>
-                <h3 class="font-heading font-extrabold text-xl text-slate-900 dark:text-white">Delete Key Slot #{{ $key->slot_number }}?</h3>
-                <p class="text-sm text-slate-600 dark:text-slate-300 mt-2 leading-relaxed font-medium">
-                    Are you sure you want to delete <strong class="text-slate-900 dark:text-white font-bold">{{ $key->key_name }}</strong> ({{ $key->room_name }})?
-                    This will permanently remove the key slot from AUTOBOX.
+                <h3 class="font-heading font-extrabold text-xl text-[var(--text-heading)]">Delete Key Slot #{{ $key->slot_number }}?</h3>
+                <p class="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed font-medium">
+                    Are you sure you want to delete <strong class="text-[var(--text-heading)]">{{ $key->key_name }}</strong> ({{ $key->room_name }})?
+                    This will permanently remove the key slot from AUTOBOX and cancel any associated borrowing schedules.
                 </p>
             </div>
 
-            <div class="flex items-center gap-3 pt-2">
+            <div class="flex items-center gap-3 pt-1">
                 <button type="button" @click="showDeleteModal = false"
-                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors">
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700/50 hover:text-white transition-all">
                     Cancel
                 </button>
 
                 <form method="POST" action="{{ route('keys.destroy', $key) }}" class="flex-1">
                     @csrf @method('DELETE')
                     <button type="submit"
-                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-md flex items-center justify-center gap-1.5">
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-500 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-trash-can text-xs"></i> Yes, Delete Slot
                     </button>
                 </form>

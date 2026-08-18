@@ -3,7 +3,7 @@
 @section('title', 'User QR Code & Access Badge')
 
 @section('content')
-<div class="max-w-xl mx-auto space-y-6">
+<div class="max-w-xl mx-auto space-y-6" x-data="{ showRegenModal: false }">
     <!-- Top Action Nav -->
     <div class="flex items-center justify-between no-print">
         <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 text-xs font-bold text-[var(--purple-primary)] hover:underline transition-all">
@@ -134,13 +134,67 @@
 
         <!-- Action Buttons (Hidden on Print) -->
         <div class="pt-2 border-t border-[var(--border-subtle)] space-y-3 no-print">
-            <form method="POST" action="{{ route('users.regenerate-qr', $user) }}">
-                @csrf
-                <button type="submit" onclick="return confirm('Regenerate QR token? The old QR code will no longer work.')"
-                        class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
-                    <i class="fa-solid fa-rotate text-xs"></i> Regenerate QR Token
+            <button type="button" @click="showRegenModal = true"
+                    class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
+                <i class="fa-solid fa-rotate text-xs"></i> Regenerate QR Token
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PREMIUM CONFIRMATION REGENERATE QR MODAL
+         ═══════════════════════════════════ -->
+    <div x-show="showRegenModal"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @keydown.escape.window="showRegenModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+         style="display: none;">
+
+        <div @click.away="showRegenModal = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
+             class="w-full max-w-md bg-[var(--surface-white)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
+            
+            <!-- Glowing Purple/Amber Ambient Light Accent -->
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-amber-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+            <!-- Caution Icon -->
+            <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-amber-500/10">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </div>
+
+            <!-- Header Content -->
+            <div>
+                <h3 class="font-heading font-extrabold text-xl text-[var(--text-heading)]">Regenerate QR Token?</h3>
+                <p class="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed font-medium">
+                    This will immediately revoke the current QR badge for <strong class="text-[var(--text-heading)]">{{ $user->name }}</strong>. Any previously saved or printed copies will no longer unlock the terminal.
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-3 pt-1">
+                <button type="button" @click="showRegenModal = false"
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700/50 hover:text-white transition-all">
+                    Cancel
                 </button>
-            </form>
+
+                <form method="POST" action="{{ route('users.regenerate-qr', $user) }}" class="flex-1">
+                    @csrf
+                    <button type="submit"
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] active:scale-[0.98] transition-all shadow-lg shadow-purple-900/40 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate text-xs"></i> Yes, Regenerate
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

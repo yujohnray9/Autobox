@@ -115,18 +115,17 @@
         </div>
     </div>
 
-
     <!-- ═══════════════════════════════════
-         BOTTOM ROW — HARDWARE KEY SLOTS & RECENT ACTIVITY (SPACIOUS & LARGE)
+         BOTTOM ROW — HARDWARE KEY SLOTS (LEFT) & RECENT ACTIVITY (RIGHT)
          ═══════════════════════════════════ -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-        <!-- HARDWARE KEY SLOTS (MONITOR) -->
-        <div class="lg:col-span-2 mockup-card">
-            <div class="flex items-center justify-between mb-5 flex-wrap gap-2">
+        <!-- HARDWARE KEY SLOTS (MONITOR - LEFT 2 COLUMNS) -->
+        <div class="lg:col-span-2 mockup-card space-y-5">
+            <div class="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[var(--border-subtle)]">
                 <div>
-                    <h2 class="mockup-card-title flex items-center gap-2">
-                        <i class="fa-solid fa-boxes-stacked text-[var(--purple-primary)] text-base"></i>
+                    <h2 class="mockup-card-title flex items-center gap-2 text-base">
+                        <i class="fa-solid fa-boxes-stacked text-[var(--purple-primary)]"></i>
                         Hardware Key Slots (Real-Time Monitor)
                     </h2>
                     <p class="text-xs text-[var(--text-muted)] font-medium mt-0.5">Live status of physical lock box key slots</p>
@@ -135,8 +134,10 @@
                     <span>Manage Slots</span>
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </a>
+            </div>
+
             <!-- ULTRASONIC & DC MOTOR SLIDER HARDWARE STATUS -->
-            <div class="mb-5 p-4 rounded-2xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-slate-900/40 border border-purple-500/30 flex items-center justify-between flex-wrap gap-3">
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-slate-900/40 border border-purple-500/30 flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-lg shadow-inner">
                         <i class="fa-solid fa-sliders"></i>
@@ -149,13 +150,9 @@
                             </span>
                         </h4>
                         <p class="text-xs text-slate-300 mt-0.5">
-                            Hand Detected <i class="fa-solid fa-arrow-right text-[10px] text-purple-400"></i> Rolls Open &nbsp;|&nbsp; No Hand <i class="fa-solid fa-arrow-right text-[10px] text-purple-400"></i> Rolls Closed (GPIO 19 &amp; 26 / Pins 35 &amp; 37)
+                            Hand Detected <i class="fa-solid fa-arrow-right text-[10px] text-purple-400"></i> Rolls Open &nbsp;|&nbsp; No Hand <i class="fa-solid fa-arrow-right text-[10px] text-purple-400"></i> Rolls Closed
                         </p>
                     </div>
-                </div>
-                <div class="flex items-center gap-2 text-xs font-semibold text-purple-200 bg-purple-950/60 px-3 py-1.5 rounded-xl border border-purple-800/40">
-                    <i class="fa-solid fa-wave-square text-purple-400"></i>
-                    <span>TRIG: GPIO 24 | ECHO: GPIO 25</span>
                 </div>
             </div>
 
@@ -226,9 +223,9 @@
             </div>
         </div>
 
-        <!-- RECENT ACTIVITY (LARGE & SPACIOUS) -->
-        <div class="mockup-card p-5 md:p-6">
-            <div class="flex items-center justify-between mb-5 pb-3 border-b border-[var(--border-subtle)]">
+        <!-- RECENT ACTIVITY (RIGHT 1 COLUMN) -->
+        <div class="lg:col-span-1 mockup-card p-5 md:p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
                 <h2 class="mockup-card-title text-base flex items-center gap-2">
                     <i class="fa-solid fa-clock-rotate-left text-[var(--purple-primary)] text-sm"></i>
                     Recent Activity
@@ -239,7 +236,7 @@
                 </a>
             </div>
 
-            <div class="space-y-3.5">
+            <div class="space-y-3">
                 @forelse($recentTransactions as $t)
                     <div class="p-3 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] hover:border-[var(--purple-primary)]/50 transition-all flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">

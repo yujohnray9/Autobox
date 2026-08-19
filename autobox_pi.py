@@ -49,14 +49,11 @@ ULTRASONIC_TRIG = 24
 ULTRASONIC_ECHO = 25
 
 # ══════════════════════════════════════════════════════════
-# BRUSHLESS FAN DC 5V CONFIGURATION (AUTOMATIC COOLING)
+# BRUSHLESS FAN DC 5V CONFIGURATION (ALWAYS ON ACTIVE COOLING)
 # ══════════════════════════════════════════════════════════
 FAN_NAME = "Brushless Fan DC 5V"
 FAN_PIN = 14                # GPIO 14 (Physical Pin 8) - DC 5V Brushless Fan Switch (MOSFET / Transistor / Relay)
-FAN_AUTO_ENABLE = True      # Automatic thermal & active cooling management
-FAN_TEMP_ON = 45.0          # Turn ON Brushless Fan when Pi/locker temp >= 45°C
-FAN_TEMP_OFF = 38.0         # Turn OFF Brushless Fan when cooled down <= 38°C
-FAN_CHECK_INTERVAL = 5      # Check temperature & fan status every 5 seconds
+FAN_ALWAYS_ON = True        # Continuous 24/7 active cooling while Python script / Raspberry Pi is running
 
 # 6V Yellow DC TT Gear Motor & Driver Configuration
 SLIDER_MOTOR_IN1 = 19       # Motor Driver IN1 (GPIO 19 / Pin 35)
@@ -75,7 +72,7 @@ fan_state = False        # Track current state of Brushless Fan DC 5V
 
 
 # ══════════════════════════════════════════════════════════
-# BRUSHLESS FAN DC 5V CONTROL FUNCTIONS
+# BRUSHLESS FAN DC 5V CONTROL FUNCTIONS (ALWAYS ON)
 # ══════════════════════════════════════════════════════════
 def get_cpu_temperature():
     """Read Raspberry Pi CPU temperature in Celsius."""
@@ -85,18 +82,18 @@ def get_cpu_temperature():
                 temp_raw = f.read().strip()
                 return round(float(temp_raw) / 1000.0, 1)
     except Exception as e:
-        print(f"[FAN] Could not read thermal sensor: {e}")
+        pass
     return None
 
 
-def fan_on(reason=""):
+def fan_on(reason="Continuous Active Cooling"):
     """Activate the Brushless Fan DC 5V."""
     global fan_state
     try:
         GPIO.output(FAN_PIN, GPIO.HIGH)
         fan_state = True
         log_reason = f" (Reason: {reason})" if reason else ""
-        print(f"[FAN] {FAN_NAME} -> [ON]{log_reason}")
+        print(f"[FAN] {FAN_NAME} -> [ALWAYS ON]{log_reason}")
     except Exception as e:
         print(f"[FAN ERROR] Failed to turn on {FAN_NAME}: {e}")
 
@@ -111,23 +108,6 @@ def fan_off(reason=""):
         print(f"[FAN] {FAN_NAME} -> [OFF]{log_reason}")
     except Exception as e:
         print(f"[FAN ERROR] Failed to turn off {FAN_NAME}: {e}")
-
-
-def auto_fan_control():
-    """Automatically monitor temperature and control Brushless Fan DC 5V."""
-    if not FAN_AUTO_ENABLE:
-        return
-
-    temp = get_cpu_temperature()
-    if temp is not None:
-        if temp >= FAN_TEMP_ON and not fan_state:
-            fan_on(f"Temp {temp}°C >= {FAN_TEMP_ON}°C threshold")
-        elif temp <= FAN_TEMP_OFF and fan_state:
-            fan_off(f"Temp {temp}°C <= {FAN_TEMP_OFF}°C cooled threshold")
-    else:
-        # Fallback: if temperature cannot be read, keep fan on for continuous hardware cooling
-        if not fan_state:
-            fan_on("Thermal fallback - continuous ventilation")
 
 
 def setup_lcd():
@@ -195,13 +175,12 @@ def setup_gpio():
 
     stop_slider()
 
-    # Brushless Fan DC 5V GPIO setup
+    # Brushless Fan DC 5V GPIO setup (Always ON continuous cooling)
     GPIO.setup(FAN_PIN, GPIO.OUT)
-    GPIO.output(FAN_PIN, GPIO.LOW)
-    # Automatically start the fan on boot to ensure initial airflow
-    fan_on("System Initialization / Auto-start")
+    GPIO.output(FAN_PIN, GPIO.HIGH)
+    fan_on("Continuous Active Cooling")
 
-    print(f"[GPIO] All pins initialized (including 6V TT Gear Motor & {FAN_NAME}).")
+    print(f"[GPIO] All pins initialized (including 6V TT Gear Motor & {FAN_NAME} [ALWAYS ON]).")
 
 
 def stop_slider():
@@ -486,16 +465,10 @@ def main():
 
     last_poll = time.time()
     last_ir_check = time.time()
-    last_fan_check = time.time()
 
     try:
         while True:
-            # 1. Automatic thermal & ventilation control for Brushless Fan DC 5V
-            if time.time() - last_fan_check >= FAN_CHECK_INTERVAL:
-                auto_fan_control()
-                last_fan_check = time.time()
-
-            # 2. Key presence monitoring via IR sensors
+            # 1. Key presence monitoring via IR sensors
             if time.time() - last_ir_check >= 5:
                 run_ir_check()
                 last_ir_check = time.time()

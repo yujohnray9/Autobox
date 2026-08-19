@@ -378,6 +378,11 @@
                 })
                 .listen('.AccessLogged', (e) => {
                     console.log('[Pusher Echo] Access Logged:', e);
+                    if (e.action === 'security_alert') {
+                        if (typeof showToast === 'function') {
+                            showToast(`🚨 SECURITY ALERT: ${e.userName} — ${e.reason}`, 'error');
+                        }
+                    }
                 });
         }
     });

@@ -11,7 +11,12 @@ use App\Models\Schedule;
 use App\Events\SliderStateChanged;
 use App\Events\KeyStatusUpdated;
 use App\Events\AccessLogged;
+use App\Mail\QrMultipleScansAdminAlert;
+use App\Mail\QrMultipleScansUserWarning;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class AuthQrController extends Controller
 {
@@ -21,7 +26,7 @@ class AuthQrController extends Controller
     public function authenticate(Request $request)
     {
         $request->validate([
-            'qr_token' => 'required|string',
+            'qr_token'    => 'required|string',
             'slot_number' => 'nullable|integer',
         ]);
 
@@ -30,6 +35,9 @@ class AuthQrController extends Controller
 
         // 1. Find User by QR token
         $user = User::where('qr_token', $qrToken)->where('is_active', true)->first();
+
+        // 2. Track scan frequency for 3-scan security alert
+        $this->handleScanFrequencySecurityCheck($user, $qrToken, $ip);
 
         if (!$user) {
             AccessLog::create([
@@ -48,7 +56,7 @@ class AuthQrController extends Controller
             ], 401);
         }
 
-        // 2. Check if user has an active schedule today for a key
+        // 3. Check if user has an active schedule today for a key
         $today = strtolower(now()->format('l')); // e.g. 'monday'
         $currentTime = now()->format('H:i:s');
 
@@ -96,7 +104,7 @@ class AuthQrController extends Controller
             ], 404);
         }
 
-        // 3. Determine action: Borrow or Return?
+        // 4. Determine action: Borrow or Return?
         $existingBorrow = Transaction::where('user_id', $user->id)
             ->where('key_id', $key->id)
             ->where('action', 'borrow')
@@ -131,9 +139,11 @@ class AuthQrController extends Controller
                 'ip_address' => $ip,
             ]);
 
-            // Dispatch WebSocket Events
-            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'available', $key->key_name, $key->room_name, null);
-            AccessLogged::dispatch($user->name, 'return', 'granted', "Returned to Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+            // Dispatch WebSocket Events safely
+            $this->safeBroadcast(function () use ($key, $user) {
+                KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'available', $key->key_name, $key->room_name, null);
+                AccessLogged::dispatch($user->name, 'return', 'granted', "Returned to Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+            });
 
             return response()->json([
                 'success'     => true,
@@ -156,7 +166,9 @@ class AuthQrController extends Controller
                     'ip_address' => $ip,
                 ]);
 
-                AccessLogged::dispatch($user->name, 'borrow', 'denied', "Slot #{$key->slot_number} already borrowed", $key->key_name, $key->room_name);
+                $this->safeBroadcast(function () use ($user, $key) {
+                    AccessLogged::dispatch($user->name, 'borrow', 'denied', "Slot #{$key->slot_number} already borrowed", $key->key_name, $key->room_name);
+                });
 
                 return response()->json([
                     'success' => false,
@@ -185,9 +197,11 @@ class AuthQrController extends Controller
                 'ip_address' => $ip,
             ]);
 
-            // Dispatch WebSocket Events
-            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'borrowed', $key->key_name, $key->room_name, $user->name);
-            AccessLogged::dispatch($user->name, 'borrow', 'granted', "Borrowed Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+            // Dispatch WebSocket Events safely
+            $this->safeBroadcast(function () use ($key, $user) {
+                KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'borrowed', $key->key_name, $key->room_name, $user->name);
+                AccessLogged::dispatch($user->name, 'borrow', 'granted', "Borrowed Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+            });
 
             return response()->json([
                 'success'     => true,
@@ -198,6 +212,80 @@ class AuthQrController extends Controller
                 'user_name'   => $user->name,
                 'message'     => "Access Granted: Unlock Slot #{$key->slot_number}",
             ]);
+        }
+    }
+
+    /**
+     * Handle security check and multi-scan alerting when QR is scanned 3 or more times.
+     */
+    protected function handleScanFrequencySecurityCheck(?User $user, string $qrToken, string $ip): void
+    {
+        $cacheKey = 'qr_scan_count_' . md5($qrToken);
+        $cooldownKey = 'qr_alert_cooldown_' . md5($qrToken);
+
+        $scanCount = (int) Cache::get($cacheKey, 0) + 1;
+        Cache::put($cacheKey, $scanCount, now()->addMinutes(15));
+
+        // When scanned 3 or more times, trigger alert (with 15 min cooldown to prevent mail spam)
+        if ($scanCount >= 3 && !Cache::has($cooldownKey)) {
+            Cache::put($cooldownKey, true, now()->addMinutes(15));
+
+            $userName = $user ? $user->name : 'Unknown User (Unregistered QR)';
+
+            // 1. Log security alert
+            AccessLog::create([
+                'user_id'    => $user?->id,
+                'qr_token'   => $qrToken,
+                'action'     => 'security_alert',
+                'result'     => 'denied',
+                'reason'     => "🚨 SECURITY ALERT: QR Code scanned {$scanCount} times within 15 minutes",
+                'ip_address' => $ip,
+            ]);
+
+            // 2. Dispatch real-time WebSocket event for instant admin screen alert safely
+            $this->safeBroadcast(function () use ($userName, $scanCount) {
+                AccessLogged::dispatch(
+                    $userName,
+                    'security_alert',
+                    'denied',
+                    "🚨 Multi-Scan Alert: QR code was scanned {$scanCount} times rapidly!",
+                    null,
+                    null
+                );
+            });
+
+            // 3. Send email to all Admins
+            try {
+                $admins = User::where('role', 'admin')->whereNotNull('email')->get();
+                foreach ($admins as $admin) {
+                    if (filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
+                        Mail::to($admin->email)->send(new QrMultipleScansAdminAlert($user, $qrToken, $scanCount, $ip));
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::error("[SECURITY ALERT] Failed to send admin alert email: " . $e->getMessage());
+            }
+
+            // 4. Send email to the User who owns that QR code
+            if ($user && !empty($user->email) && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    Mail::to($user->email)->send(new QrMultipleScansUserWarning($user, $scanCount));
+                } catch (\Throwable $e) {
+                    Log::error("[SECURITY ALERT] Failed to send user warning email: " . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Safely dispatch real-time events without crashing if Reverb/Pusher is unreachable.
+     */
+    protected function safeBroadcast(callable $callback): void
+    {
+        try {
+            $callback();
+        } catch (\Throwable $e) {
+            Log::warning("[BROADCAST] Event dispatch skipped (broadcast server unreachable): " . $e->getMessage());
         }
     }
 
@@ -225,8 +313,10 @@ class AuthQrController extends Controller
         $key = Key::where('slot_number', $request->slot_number)->first();
         if ($key) {
             $key->update(['status' => 'missing']);
-            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'missing', $key->key_name, $key->room_name, null);
-            AccessLogged::dispatch('Hardware Alert', 'missing', 'denied', "Key missing from Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+            $this->safeBroadcast(function () use ($key) {
+                KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'missing', $key->key_name, $key->room_name, null);
+                AccessLogged::dispatch('Hardware Alert', 'missing', 'denied', "Key missing from Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+            });
             return response()->json(['success' => true, 'message' => "Slot #{$key->slot_number} marked as missing"]);
         }
 
@@ -255,9 +345,11 @@ class AuthQrController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        // Dispatch WebSocket Event for Live Frontend Update
-        SliderStateChanged::dispatch($request->state, $reason);
-        AccessLogged::dispatch('System / Ultrasonic', $action, 'granted', $reason);
+        // Dispatch WebSocket Event safely
+        $this->safeBroadcast(function () use ($request, $action, $reason) {
+            SliderStateChanged::dispatch($request->state, $reason);
+            AccessLogged::dispatch('System / Ultrasonic', $action, 'granted', $reason);
+        });
 
         return response()->json([
             'success' => true,

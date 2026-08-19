@@ -98,7 +98,7 @@ class UserController extends Controller
                 'role'        => $validated['role'],
                 'department'  => $validated['department'] ?? null,
                 'employee_id' => $validated['employee_id'],
-                'password'    => Hash::make(Str::random(16)),
+                'password'    => null,
                 'qr_token'    => Str::uuid()->toString(),
                 'is_active'   => true,
             ]);

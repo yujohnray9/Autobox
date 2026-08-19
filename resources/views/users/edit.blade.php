@@ -56,7 +56,7 @@
 
                 <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Role <span class="text-rose-500">*</span></label>
-                    <select name="role"
+                    <select name="role" id="roleEditSelect"
                         class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
                         <option value="faculty" {{ old('role', $user->role) === 'faculty' ? 'selected' : '' }}>Faculty</option>
                         <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Staff</option>
@@ -72,19 +72,25 @@
                     @error('department') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div>
-                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        New Password <span class="text-[var(--text-muted)] font-normal normal-case">(leave blank to keep)</span>
-                    </label>
-                    <input type="password" name="password" placeholder="••••••••"
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                    @error('password') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Confirm New Password</label>
-                    <input type="password" name="password_confirmation" placeholder="••••••••"
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                <!-- Admin Password Edit Fields (Only shown when Role is Admin) -->
+                <div id="adminPasswordEditFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-purple-950/20 border border-purple-500/30" style="display: none;">
+                    <div class="md:col-span-2 flex items-center gap-2 pb-1 border-b border-purple-500/20">
+                        <i class="fa-solid fa-shield-halved text-xs text-[var(--purple-primary)]"></i>
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-purple-300">Admin Login Credentials</span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
+                            New Password <span class="text-[var(--text-muted)] font-normal normal-case">(leave blank to keep current)</span>
+                        </label>
+                        <input type="password" name="password" placeholder="••••••••"
+                            class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        @error('password') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Confirm New Password</label>
+                        <input type="password" name="password_confirmation" placeholder="••••••••"
+                            class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                    </div>
                 </div>
             </div>
 
@@ -211,5 +217,27 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const roleSelect = document.getElementById('roleEditSelect');
+        const adminPasswordContainer = document.getElementById('adminPasswordEditFields');
+
+        function updateRolePasswordVisibility() {
+            if (roleSelect && adminPasswordContainer) {
+                if (roleSelect.value === 'admin') {
+                    adminPasswordContainer.style.display = 'grid';
+                } else {
+                    adminPasswordContainer.style.display = 'none';
+                }
+            }
+        }
+
+        if (roleSelect) {
+            roleSelect.addEventListener('change', updateRolePasswordVisibility);
+            updateRolePasswordVisibility();
+        }
+    });
+</script>
 @endsection
 

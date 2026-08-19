@@ -81,6 +81,29 @@
                             placeholder="e.g. Computer Science Department / Networking Lab">
                         @error('department') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
+
+                    <!-- Admin Password Fields (Only shown when Role is Admin) -->
+                    <div id="adminPasswordFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-purple-950/20 border border-purple-500/30" style="display: none;">
+                        <div class="md:col-span-2 flex items-center gap-2 pb-1 border-b border-purple-500/20">
+                            <i class="fa-solid fa-shield-halved text-xs text-[var(--purple-primary)]"></i>
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider text-purple-300">Admin Login Credentials</span>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
+                                Admin Password <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="password" name="password" id="passwordInput" placeholder="••••••••"
+                                class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                            @error('password') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
+                                Confirm Password <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="password" name="password_confirmation" id="passwordConfirmInput" placeholder="••••••••"
+                                class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -319,9 +342,22 @@
             }
         }
 
-        if (toggle) {
-            toggle.addEventListener('change', updateScheduleVisibility);
-            updateScheduleVisibility();
+        const roleSelect = document.getElementById('roleSelect');
+        const adminPasswordContainer = document.getElementById('adminPasswordFields');
+
+        function updateRolePasswordVisibility() {
+            if (roleSelect && adminPasswordContainer) {
+                if (roleSelect.value === 'admin') {
+                    adminPasswordContainer.style.display = 'grid';
+                } else {
+                    adminPasswordContainer.style.display = 'none';
+                }
+            }
+        }
+
+        if (roleSelect) {
+            roleSelect.addEventListener('change', updateRolePasswordVisibility);
+            updateRolePasswordVisibility();
         }
 
         updateDaysSummary();

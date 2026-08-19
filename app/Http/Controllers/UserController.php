@@ -31,6 +31,7 @@ class UserController extends Controller
             'name'            => 'required|string|max:255',
             'email'           => 'required|string|email|max:255|unique:users',
             'role'            => 'required|in:admin,faculty,staff',
+            'password'        => 'required_if:role,admin|nullable|string|min:6|confirmed',
             'department'      => 'nullable|string|max:255',
             'employee_id'     => 'nullable|string|unique:users,employee_id|regex:/^EMP-\d{4}-\d{3,}$/',
             
@@ -92,13 +93,17 @@ class UserController extends Controller
 
         $user = null;
         DB::transaction(function () use ($validated, $hasSchedule, $days, &$user) {
+            $password = ($validated['role'] === 'admin' && !empty($validated['password']))
+                ? Hash::make($validated['password'])
+                : null;
+
             $user = User::create([
                 'name'        => $validated['name'],
                 'email'       => $validated['email'],
                 'role'        => $validated['role'],
                 'department'  => $validated['department'] ?? null,
                 'employee_id' => $validated['employee_id'],
-                'password'    => null,
+                'password'    => $password,
                 'qr_token'    => Str::uuid()->toString(),
                 'is_active'   => true,
             ]);
@@ -137,13 +142,16 @@ class UserController extends Controller
             'name'        => 'required|string|max:255',
             'email'       => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'role'        => 'required|in:admin,faculty,staff',
+            'password'    => 'nullable|string|min:6|confirmed',
             'department'  => 'nullable|string|max:255',
             'employee_id' => 'required|string|unique:users,employee_id,' . $user->id,
             'is_active'   => 'boolean',
         ]);
 
-        if ($request->filled('password')) {
+        if ($validated['role'] === 'admin' && $request->filled('password')) {
             $validated['password'] = Hash::make($request->password);
+        } else {
+            unset($validated['password']);
         }
 
         $validated['is_active'] = $request->has('is_active');

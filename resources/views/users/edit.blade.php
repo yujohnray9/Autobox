@@ -82,14 +82,24 @@
                         <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
                             New Password <span class="text-[var(--text-muted)] font-normal normal-case">(leave blank to keep current)</span>
                         </label>
-                        <input type="password" name="password" placeholder="••••••••"
-                            class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        <div class="relative">
+                            <input type="password" name="password" id="editPasswordInput" placeholder="••••••••"
+                                class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] pl-3.5 pr-10 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                            <button type="button" onclick="togglePasswordVisibility('editPasswordInput', 'eyeIconEditPassword')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--text-muted)] hover:text-white transition-colors cursor-pointer" title="Toggle password visibility">
+                                <i id="eyeIconEditPassword" class="fa-regular fa-eye text-sm"></i>
+                            </button>
+                        </div>
                         @error('password') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Confirm New Password</label>
-                        <input type="password" name="password_confirmation" placeholder="••••••••"
-                            class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        <div class="relative">
+                            <input type="password" name="password_confirmation" id="editPasswordConfirmInput" placeholder="••••••••"
+                                class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] pl-3.5 pr-10 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                            <button type="button" onclick="togglePasswordVisibility('editPasswordConfirmInput', 'eyeIconEditPasswordConfirm')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--text-muted)] hover:text-white transition-colors cursor-pointer" title="Toggle password visibility">
+                                <i id="eyeIconEditPasswordConfirm" class="fa-regular fa-eye text-sm"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -238,6 +248,22 @@
             updateRolePasswordVisibility();
         }
     });
+
+    function togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (!input || !icon) return;
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
 </script>
 @endsection
 

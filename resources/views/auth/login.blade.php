@@ -90,8 +90,11 @@
                             <i class="fa-solid fa-lock text-xs"></i>
                         </div>
                         <input id="password" type="password" name="password" required
-                               class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                               class="w-full pl-9 pr-10 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                                placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('password', 'eyeIconLogin')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer" title="Toggle password visibility">
+                            <i id="eyeIconLogin" class="fa-regular fa-eye text-sm"></i>
+                        </button>
                     </div>
                     @error('password')
                         <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
@@ -122,5 +125,22 @@
 
     </div>
 
+    <script>
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input || !icon) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>

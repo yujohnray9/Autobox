@@ -7,6 +7,21 @@ from pyzbar.pyzbar import decode
 from RPLCD.i2c import CharLCD
 import smbus2
 
+# ══════════════════════════════════════════════════════════
+# HARDWARE MODULE TOGGLES
+# Set False if component is not wired/connected yet
+# ══════════════════════════════════════════════════════════
+ENABLE_LCD = True           # 16x2 I2C LCD Display (PCF8574)
+ENABLE_CAMERA = True        # Pi Camera (QR Scanner)
+ENABLE_ULTRASONIC = True    # HC-SR04 Proximity Sensor
+ENABLE_LEDS = True          # Slot Green & Red Status LEDs
+ENABLE_IR_SENSORS = False   # Set True when IR key presence sensors are connected
+ENABLE_SOLENOIDS = False    # Set True when Relays & Solenoid locks are connected
+ENABLE_SLIDER_MOTOR = False # Set True when DC TT Gear Motor & L298N driver are connected
+ENABLE_BUZZER = False       # Set True when Active Buzzer is connected
+ENABLE_FAN = False          # Set True when Brushless Fan switch is connected
+
+# Update this with your Laravel server's IP and port (e.g. "http://192.168.1.45:8000" or "http://192.168.1.100/autobox/public")
 API_BASE_URL = "http://192.168.1.100/autobox/public"
 API_AUTHENTICATE = f"{API_BASE_URL}/api/authenticate-qr"
 API_KEY_STATUSES = f"{API_BASE_URL}/api/keys"
@@ -15,7 +30,7 @@ API_SLIDER_EVENT = f"{API_BASE_URL}/api/slider-event"
 
 REQUEST_TIMEOUT = 10
 STATUS_POLL_INTERVAL = 30
-UNLOCK_DURATION = 5
+UNLOCK_DURATION = 3
 ULTRASONIC_DISTANCE_CM = 50
 
 MAIN_LOCK_PIN = 23
@@ -48,12 +63,9 @@ BUZZER_PIN = 18
 ULTRASONIC_TRIG = 24
 ULTRASONIC_ECHO = 25
 
-# ══════════════════════════════════════════════════════════
-# BRUSHLESS FAN DC 5V CONFIGURATION (ALWAYS ON ACTIVE COOLING)
-# ══════════════════════════════════════════════════════════
+# Brushless Fan DC 5V
 FAN_NAME = "Brushless Fan DC 5V"
-FAN_PIN = 14                # GPIO 14 (Physical Pin 8) - DC 5V Brushless Fan Switch (MOSFET / Transistor / Relay)
-FAN_ALWAYS_ON = True        # Continuous 24/7 active cooling while Python script / Raspberry Pi is running
+FAN_PIN = 14
 
 # 6V Yellow DC TT Gear Motor & Driver Configuration
 SLIDER_MOTOR_IN1 = 19       # Motor Driver IN1 (GPIO 19 / Pin 35)
@@ -68,27 +80,13 @@ LCD_I2C_PORT = 1
 lcd = None
 pwm_ena = None
 slider_state = "CLOSED"  # State can be: "CLOSED", "OPEN", "OPENING", "CLOSING"
-fan_state = False        # Track current state of Brushless Fan DC 5V
-
-
-# ══════════════════════════════════════════════════════════
-# BRUSHLESS FAN DC 5V CONTROL FUNCTIONS (ALWAYS ON)
-# ══════════════════════════════════════════════════════════
-def get_cpu_temperature():
-    """Read Raspberry Pi CPU temperature in Celsius."""
-    try:
-        if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
-            with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-                temp_raw = f.read().strip()
-                return round(float(temp_raw) / 1000.0, 1)
-    except Exception as e:
-        pass
-    return None
+fan_state = False
 
 
 def fan_on(reason="Continuous Active Cooling"):
-    """Activate the Brushless Fan DC 5V."""
     global fan_state
+    if not ENABLE_FAN:
+        return
     try:
         GPIO.output(FAN_PIN, GPIO.HIGH)
         fan_state = True
@@ -99,8 +97,9 @@ def fan_on(reason="Continuous Active Cooling"):
 
 
 def fan_off(reason=""):
-    """Deactivate the Brushless Fan DC 5V."""
     global fan_state
+    if not ENABLE_FAN:
+        return
     try:
         GPIO.output(FAN_PIN, GPIO.LOW)
         fan_state = False
@@ -112,17 +111,21 @@ def fan_off(reason=""):
 
 def setup_lcd():
     global lcd
+    if not ENABLE_LCD:
+        print("[LCD] LCD is disabled in settings.")
+        return
     try:
         lcd = CharLCD('PCF8574', LCD_I2C_ADDRESS, port=LCD_I2C_PORT, cols=16, rows=2)
         lcd.clear()
         lcd_print("AUTOBOX Ready", "Scan QR Code")
+        print("[LCD] Initialized successfully.")
     except Exception as e:
-        print(f"[LCD] Failed to init: {e}")
+        print(f"[LCD] Failed to init (Check I2C address/connections): {e}")
         lcd = None
 
 
 def lcd_print(line1="", line2=""):
-    if not lcd:
+    if not lcd or not ENABLE_LCD:
         return
     try:
         lcd.clear()
@@ -139,51 +142,61 @@ def setup_gpio():
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
 
-    GPIO.setup(MAIN_LOCK_PIN, GPIO.OUT)
-    GPIO.output(MAIN_LOCK_PIN, GPIO.LOW)
+    # Solenoid Locks
+    if ENABLE_SOLENOIDS:
+        GPIO.setup(MAIN_LOCK_PIN, GPIO.OUT)
+        GPIO.output(MAIN_LOCK_PIN, GPIO.LOW)
+        for slot, pin in SLOT_PINS.items():
+            GPIO.setup(pin, GPIO.OUT)
+            GPIO.output(pin, GPIO.LOW)
 
-    for slot, pin in SLOT_PINS.items():
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, GPIO.LOW)
+    # LEDs
+    if ENABLE_LEDS:
+        for slot, pin in LED_GREEN_PINS.items():
+            GPIO.setup(pin, GPIO.OUT)
+            GPIO.output(pin, GPIO.LOW)
+        for slot, pin in LED_RED_PINS.items():
+            GPIO.setup(pin, GPIO.OUT)
+            GPIO.output(pin, GPIO.HIGH)
 
-    for slot, pin in LED_GREEN_PINS.items():
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, GPIO.LOW)
+    # IR Sensors
+    if ENABLE_IR_SENSORS:
+        for slot, pin in IR_SENSOR_PINS.items():
+            GPIO.setup(pin, GPIO.IN)
 
-    for slot, pin in LED_RED_PINS.items():
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, GPIO.HIGH)
+    # Buzzer
+    if ENABLE_BUZZER:
+        GPIO.setup(BUZZER_PIN, GPIO.OUT)
+        GPIO.output(BUZZER_PIN, GPIO.LOW)
 
-    for slot, pin in IR_SENSOR_PINS.items():
-        GPIO.setup(pin, GPIO.IN)
+    # Ultrasonic
+    if ENABLE_ULTRASONIC:
+        GPIO.setup(ULTRASONIC_TRIG, GPIO.OUT)
+        GPIO.setup(ULTRASONIC_ECHO, GPIO.IN)
+        GPIO.output(ULTRASONIC_TRIG, GPIO.LOW)
 
-    GPIO.setup(BUZZER_PIN, GPIO.OUT)
-    GPIO.output(BUZZER_PIN, GPIO.LOW)
+    # Slider Motor
+    if ENABLE_SLIDER_MOTOR:
+        GPIO.setup(SLIDER_MOTOR_IN1, GPIO.OUT)
+        GPIO.setup(SLIDER_MOTOR_IN2, GPIO.OUT)
+        if SLIDER_MOTOR_ENA is not None:
+            GPIO.setup(SLIDER_MOTOR_ENA, GPIO.OUT)
+            pwm_ena = GPIO.PWM(SLIDER_MOTOR_ENA, 1000)
+            pwm_ena.start(0)
+        stop_slider()
 
-    GPIO.setup(ULTRASONIC_TRIG, GPIO.OUT)
-    GPIO.setup(ULTRASONIC_ECHO, GPIO.IN)
-    GPIO.output(ULTRASONIC_TRIG, GPIO.LOW)
+    # Fan
+    if ENABLE_FAN:
+        GPIO.setup(FAN_PIN, GPIO.OUT)
+        GPIO.output(FAN_PIN, GPIO.HIGH)
+        fan_on("Continuous Active Cooling")
 
-    # 6V TT Gear Motor driver pins setup
-    GPIO.setup(SLIDER_MOTOR_IN1, GPIO.OUT)
-    GPIO.setup(SLIDER_MOTOR_IN2, GPIO.OUT)
-
-    if SLIDER_MOTOR_ENA is not None:
-        GPIO.setup(SLIDER_MOTOR_ENA, GPIO.OUT)
-        pwm_ena = GPIO.PWM(SLIDER_MOTOR_ENA, 1000)  # 1kHz PWM frequency
-        pwm_ena.start(0)
-
-    stop_slider()
-
-    # Brushless Fan DC 5V GPIO setup (Always ON continuous cooling)
-    GPIO.setup(FAN_PIN, GPIO.OUT)
-    GPIO.output(FAN_PIN, GPIO.HIGH)
-    fan_on("Continuous Active Cooling")
-
-    print(f"[GPIO] All pins initialized (including 6V TT Gear Motor & {FAN_NAME} [ALWAYS ON]).")
+    print("[GPIO] Connected components initialized successfully.")
 
 
 def stop_slider():
+    if not ENABLE_SLIDER_MOTOR:
+        return
     GPIO.output(SLIDER_MOTOR_IN1, GPIO.LOW)
     GPIO.output(SLIDER_MOTOR_IN2, GPIO.LOW)
     if pwm_ena:
@@ -194,19 +207,20 @@ def open_slider():
     global slider_state
     if slider_state == "OPEN":
         return
-    print("[SLIDER] Hand detected -> Rolling 6V TT Gear Motor OPEN...")
+    print("[SLIDER] Hand detected -> Opening Slider...")
     lcd_print("Hand Detected", "Opening Slider...")
     slider_state = "OPENING"
     
-    if pwm_ena:
-        pwm_ena.ChangeDutyCycle(SLIDER_MOTOR_SPEED)
+    if ENABLE_SLIDER_MOTOR:
+        if pwm_ena:
+            pwm_ena.ChangeDutyCycle(SLIDER_MOTOR_SPEED)
+        GPIO.output(SLIDER_MOTOR_IN1, GPIO.HIGH)
+        GPIO.output(SLIDER_MOTOR_IN2, GPIO.LOW)
+        time.sleep(SLIDER_MOTOR_DURATION)
+        stop_slider()
     
-    GPIO.output(SLIDER_MOTOR_IN1, GPIO.HIGH)
-    GPIO.output(SLIDER_MOTOR_IN2, GPIO.LOW)
-    time.sleep(SLIDER_MOTOR_DURATION)
-    stop_slider()
     slider_state = "OPEN"
-    print("[SLIDER] Slider fully OPEN.")
+    print("[SLIDER] Slider OPEN.")
     report_slider_event("opened", "Hand detected by Ultrasonic sensor")
 
 
@@ -214,19 +228,20 @@ def close_slider():
     global slider_state
     if slider_state == "CLOSED":
         return
-    print("[SLIDER] No hand detected -> Rolling 6V TT Gear Motor CLOSE...")
+    print("[SLIDER] No hand detected -> Closing Slider...")
     lcd_print("No Hand Detected", "Closing Slider...")
     slider_state = "CLOSING"
     
-    if pwm_ena:
-        pwm_ena.ChangeDutyCycle(SLIDER_MOTOR_SPEED)
+    if ENABLE_SLIDER_MOTOR:
+        if pwm_ena:
+            pwm_ena.ChangeDutyCycle(SLIDER_MOTOR_SPEED)
+        GPIO.output(SLIDER_MOTOR_IN1, GPIO.LOW)
+        GPIO.output(SLIDER_MOTOR_IN2, GPIO.HIGH)
+        time.sleep(SLIDER_MOTOR_DURATION)
+        stop_slider()
         
-    GPIO.output(SLIDER_MOTOR_IN1, GPIO.LOW)
-    GPIO.output(SLIDER_MOTOR_IN2, GPIO.HIGH)
-    time.sleep(SLIDER_MOTOR_DURATION)
-    stop_slider()
     slider_state = "CLOSED"
-    print("[SLIDER] Slider fully CLOSED.")
+    print("[SLIDER] Slider CLOSED.")
     report_slider_event("closed", "No hand detected by Ultrasonic sensor")
     lcd_print("AUTOBOX Ready", "Scan QR Code")
 
@@ -241,41 +256,58 @@ def report_slider_event(state, reason=""):
 
 def unlock_main_door():
     print("[MAIN LOCK] Box door UNLOCKED")
-    GPIO.output(MAIN_LOCK_PIN, GPIO.HIGH)
-    time.sleep(UNLOCK_DURATION)
-    GPIO.output(MAIN_LOCK_PIN, GPIO.LOW)
+    if ENABLE_SOLENOIDS:
+        GPIO.output(MAIN_LOCK_PIN, GPIO.HIGH)
+        time.sleep(UNLOCK_DURATION)
+        GPIO.output(MAIN_LOCK_PIN, GPIO.LOW)
     print("[MAIN LOCK] Box door LOCKED")
 
 
 def unlock_slot(slot_number):
-    pin = SLOT_PINS.get(slot_number)
-    if pin is None:
-        print(f"[ERROR] Slot {slot_number} not in SLOT_PINS.")
-        return
-    print(f"[UNLOCK] Slot #{slot_number} UNLOCKED for {UNLOCK_DURATION}s")
-    GPIO.output(pin, GPIO.HIGH)
-    if slot_number in LED_GREEN_PINS:
-        GPIO.output(LED_GREEN_PINS[slot_number], GPIO.HIGH)
-    if slot_number in LED_RED_PINS:
-        GPIO.output(LED_RED_PINS[slot_number], GPIO.LOW)
+    print(f"[UNLOCK] Slot #{slot_number} UNLOCKED")
+    if ENABLE_SOLENOIDS:
+        pin = SLOT_PINS.get(slot_number)
+        if pin:
+            GPIO.output(pin, GPIO.HIGH)
+
+    if ENABLE_LEDS:
+        if slot_number in LED_GREEN_PINS:
+            GPIO.output(LED_GREEN_PINS[slot_number], GPIO.HIGH)
+        if slot_number in LED_RED_PINS:
+            GPIO.output(LED_RED_PINS[slot_number], GPIO.LOW)
+
     beep(1)
     time.sleep(UNLOCK_DURATION)
-    GPIO.output(pin, GPIO.LOW)
-    if slot_number in LED_GREEN_PINS:
-        GPIO.output(LED_GREEN_PINS[slot_number], GPIO.LOW)
-    if slot_number in LED_RED_PINS:
-        GPIO.output(LED_RED_PINS[slot_number], GPIO.HIGH)
+
+    if ENABLE_SOLENOIDS:
+        pin = SLOT_PINS.get(slot_number)
+        if pin:
+            GPIO.output(pin, GPIO.LOW)
+
+    if ENABLE_LEDS:
+        if slot_number in LED_GREEN_PINS:
+            GPIO.output(LED_GREEN_PINS[slot_number], GPIO.LOW)
+        if slot_number in LED_RED_PINS:
+            GPIO.output(LED_RED_PINS[slot_number], GPIO.HIGH)
+
     print(f"[LOCK] Slot #{slot_number} LOCKED")
 
 
 def deny_access():
     beep(3)
-    if all(p in LED_RED_PINS for p in [1, 2, 3]):
-        for slot in LED_RED_PINS:
-            GPIO.output(LED_RED_PINS[slot], GPIO.HIGH)
+    if ENABLE_LEDS:
+        for _ in range(3):
+            for slot in LED_RED_PINS:
+                GPIO.output(LED_RED_PINS[slot], GPIO.LOW)
+            time.sleep(0.15)
+            for slot in LED_RED_PINS:
+                GPIO.output(LED_RED_PINS[slot], GPIO.HIGH)
+            time.sleep(0.15)
 
 
 def beep(times=1, duration=0.1):
+    if not ENABLE_BUZZER:
+        return
     for _ in range(times):
         GPIO.output(BUZZER_PIN, GPIO.HIGH)
         time.sleep(duration)
@@ -284,6 +316,8 @@ def beep(times=1, duration=0.1):
 
 
 def get_distance_cm():
+    if not ENABLE_ULTRASONIC:
+        return 999
     GPIO.output(ULTRASONIC_TRIG, GPIO.HIGH)
     time.sleep(0.00001)
     GPIO.output(ULTRASONIC_TRIG, GPIO.LOW)
@@ -306,11 +340,12 @@ def get_distance_cm():
 
 def person_detected():
     distance = get_distance_cm()
-    print(f"[ULTRASONIC] Distance: {distance} cm")
     return distance <= ULTRASONIC_DISTANCE_CM
 
 
 def is_key_present(slot_number):
+    if not ENABLE_IR_SENSORS:
+        return True
     pin = IR_SENSOR_PINS.get(slot_number)
     if pin is None:
         return True
@@ -318,6 +353,8 @@ def is_key_present(slot_number):
 
 
 def check_all_ir_sensors():
+    if not ENABLE_IR_SENSORS:
+        return []
     missing_slots = []
     for slot, pin in IR_SENSOR_PINS.items():
         if not is_key_present(slot):
@@ -326,27 +363,34 @@ def check_all_ir_sensors():
 
 
 def scan_qr_from_camera():
-    picam = Picamera2()
-    config = picam.create_preview_configuration(main={"size": (640, 480)})
-    picam.configure(config)
-    picam.start()
-    print("[CAMERA] Scanning for QR code...")
-    lcd_print("Scanning QR...", "Hold steady")
-    qr_data = None
-    start_time = time.time()
-    while time.time() - start_time < 10:
-        frame = picam.capture_array()
-        decoded = decode(frame)
-        for obj in decoded:
-            qr_data = obj.data.decode("utf-8").strip()
-            print(f"[CAMERA] QR Detected: {qr_data}")
-            break
-        if qr_data:
-            break
-        time.sleep(0.1)
-    picam.stop()
-    picam.close()
-    return qr_data
+    if not ENABLE_CAMERA:
+        return None
+    try:
+        picam = Picamera2()
+        config = picam.create_preview_configuration(main={"size": (640, 480)})
+        picam.configure(config)
+        picam.start()
+        print("[CAMERA] Scanning for QR code...")
+        lcd_print("Scanning QR...", "Hold steady")
+        qr_data = None
+        start_time = time.time()
+        while time.time() - start_time < 8:
+            frame = picam.capture_array()
+            decoded = decode(frame)
+            for obj in decoded:
+                qr_data = obj.data.decode("utf-8").strip()
+                print(f"[CAMERA] QR Detected: {qr_data}")
+                break
+            if qr_data:
+                break
+            time.sleep(0.1)
+        picam.stop()
+        picam.close()
+        return qr_data
+    except Exception as e:
+        print(f"[CAMERA ERROR] {e}")
+        lcd_print("Camera Error", "Check cable")
+        return None
 
 
 def authenticate_qr(qr_token, slot_number=None):
@@ -425,19 +469,21 @@ def process_scan(qr_token):
         lcd_print("ACCESS DENIED", message[:16])
         deny_access()
 
-    time.sleep(2)
+    time.sleep(1.5)
     lcd_print("AUTOBOX Ready", "Scan QR Code")
 
 
 def run_ir_check():
+    if not ENABLE_IR_SENSORS:
+        return
     missing_slots = check_all_ir_sensors()
     for slot in missing_slots:
         print(f"[IR] Slot #{slot} key is MISSING — reporting to server.")
         lcd_print(f"Slot #{slot} Missing", "Reporting...")
         report_missing_key(slot)
-        if slot in LED_RED_PINS:
+        if ENABLE_LEDS and slot in LED_RED_PINS:
             GPIO.output(LED_RED_PINS[slot], GPIO.HIGH)
-        if slot in LED_GREEN_PINS:
+        if ENABLE_LEDS and slot in LED_GREEN_PINS:
             GPIO.output(LED_GREEN_PINS[slot], GPIO.LOW)
     if missing_slots:
         time.sleep(1)
@@ -445,9 +491,9 @@ def run_ir_check():
 
 
 def main():
-    print("=" * 50)
-    print("  AUTOBOX - Raspberry Pi Controller")
-    print("=" * 50)
+    print("=" * 55)
+    print("  AUTOBOX - Raspberry Pi Hardware Controller")
+    print("=" * 55)
 
     setup_gpio()
     setup_lcd()
@@ -455,7 +501,7 @@ def main():
     print("[INFO] Testing server connection...")
     keys = get_key_statuses()
     if keys:
-        print(f"[INFO] Connected. {len(keys)} slot(s) online.")
+        print(f"[INFO] Connected to Laravel. {len(keys)} slot(s) online.")
         lcd_print("Server Connected", f"{len(keys)} Slots Active")
     else:
         print("[WARN] Server unreachable. Running in offline mode.")
@@ -468,12 +514,12 @@ def main():
 
     try:
         while True:
-            # 1. Key presence monitoring via IR sensors
-            if time.time() - last_ir_check >= 5:
+            # 1. Key presence monitoring via IR sensors (only if enabled)
+            if ENABLE_IR_SENSORS and (time.time() - last_ir_check >= 5):
                 run_ir_check()
                 last_ir_check = time.time()
 
-            # 3. Person / Hand proximity detection
+            # 2. Hand proximity detection via Ultrasonic Sensor
             hand_present = person_detected()
 
             if hand_present:
@@ -491,7 +537,7 @@ def main():
                 if slider_state != "CLOSED":
                     close_slider()
 
-            # 4. Status polling from web API
+            # 3. Periodic status polling from web API
             if time.time() - last_poll >= STATUS_POLL_INTERVAL:
                 print("[POLL] Fetching key statuses...")
                 keys = get_key_statuses()

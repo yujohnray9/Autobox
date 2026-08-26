@@ -33,7 +33,7 @@
                 </p>
                 <div style="background-color: #130f24; border: 1px solid #292244; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px;">
                     <p style="margin: 0; color: #a78bfa; font-weight: 600;">
-                        🕒 <strong>Time of Occurrence:</strong> <span style="color: #ffffff;">{{ $timestamp }}</span>
+                        <strong>Time of Occurrence:</strong> <span style="color: #ffffff;">{{ $timestamp }}</span>
                     </p>
                 </div>
             </td>
@@ -44,7 +44,7 @@
             <td style="padding: 0 30px 20px 30px;">
                 <div style="background-color: rgba(217, 119, 6, 0.12); border: 1px solid rgba(217, 119, 6, 0.35); border-radius: 12px; padding: 16px;">
                     <h4 style="margin: 0 0 8px 0; color: #fde68a; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                        ⚠️ Important Security Steps
+                        Important Security Steps
                     </h4>
                     <ul style="margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.6; color: #fef3c7;">
                         <li style="margin-bottom: 6px;"><strong>If you scanned this yourself:</strong> No further action is required. If your scan failed, please check your key schedule hours.</li>

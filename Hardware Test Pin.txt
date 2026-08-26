@@ -1,20 +1,34 @@
-LCD Backpack Pin			Raspberry Pi Pin Name	
-VCC							5V Power
-GND							Ground (GND)	
-SDA							GPIO 2 (I2C SDA)	
-SCL							GPIO 3 (I2C SCL)	
+1. 16x2 I2C LCD DISPLAY
+LCD Backpack Pin        Raspberry Pi Pin Name       Physical Header Pin
+VCC                     5V Power                    Pin 4
+GND                     Ground (GND)                Pin 6
+SDA                     GPIO 2 (I2C SDA)            Pin 3
+SCL                     GPIO 3 (I2C SCL)            Pin 5
 
-Ultrasonic Pin				Raspberry Pi Pin Name	
-VCC							5V Power
-GND							Ground (GND)	
-TRIG							GPIO 24
-ECHO							GPIO 25
+2. LEDS (SLOT 1 ONLY)
+LED Color & Slot        Raspberry Pi Pin Name       Physical Header Pin
+Green LED — Slot 1      GPIO 5                      Pin 29
+Red LED — Slot 1        GPIO 12                     Pin 32
+LED Common Ground       Ground (GND)                Pin 34 (or Pin 39)
 
-LED Color & Slot			Raspberry Pi Pin Name
-Green LED — Slot 1		GPIO 5	
-Green LED — Slot 2		GPIO 6		
-Green LED — Slot 3		GPIO 13		
-Red LED — Slot 1			GPIO 12		
-Red LED — Slot 2			GPIO 16		
-Red LED — Slot 3			GPIO 20		
-LED Common Ground			GND		
+3. SOLENOID LOCK RELAYS (SLOT 1 + MAIN LOCK)
+Relay Channel           Connected Solenoid          Raspberry Pi Pin Name   Physical Header Pin
+Relay IN1               Slot 1 Solenoid Lock        GPIO 17                 Pin 11
+Relay IN4               Main Compartment Lock       GPIO 23                 Pin 16
+Relay VCC / GND         5V & GND                    5V Power & GND          Pin 2 & Pin 20
+
+4. IR KEY PRESENCE SENSOR (SLOT 1 ONLY)
+IR Sensor Output Pin    Monitored Slot              Raspberry Pi Pin Name   Physical Header Pin
+Slot 1 IR Sensor (DO)   Slot 1 Key Presence         GPIO 4                  Pin 7
+IR VCC / GND            5V & GND                    Power & Ground          Pin 2 & Pin 9
+
+5. ULTRASONIC DISTANCE SENSOR (HC-SR04)
+Ultrasonic Pin          Raspberry Pi Pin Name       Physical Header Pin
+VCC                     5V Power                    Pin 4
+GND                     Ground (GND)                Pin 25
+TRIG                    GPIO 24                     Pin 18
+ECHO                    GPIO 25 (Voltage Divider)   Pin 22
+
+6. RASPBERRY PI CAMERA MODULE (QR SCANNER)
+Interface               Connection Port             Notes
+Ribbon Cable            CSI Camera Port             Insert into Pi Camera ribbon connector

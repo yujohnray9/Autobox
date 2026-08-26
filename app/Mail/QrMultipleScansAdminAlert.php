@@ -38,7 +38,7 @@ class QrMultipleScansAdminAlert extends Mailable
     {
         $userName = $this->scannedUser ? $this->scannedUser->name : 'Unknown User';
         return new Envelope(
-            subject: "🚨 [AUTOBOX SECURITY ALERT] QR Code Scanned {$this->scanCount} Times ({$userName})",
+            subject: "[AUTOBOX SECURITY ALERT] QR Code Scanned {$this->scanCount} Times ({$userName})",
         );
     }
 

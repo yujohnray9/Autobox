@@ -293,9 +293,8 @@
         if (!ctx) return;
 
         const months = {!! json_encode($months ?? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']) !!};
-        // Normalized data for 0 - 100 scale
-        const borrowsData = [65, 78, 85, 70, 75, 88, 62, 74, 82, 90, 85, 72];
-        const returnsData = [60, 72, 80, 68, 70, 82, 58, 70, 78, 85, 80, 68];
+        const borrowsData = {!! json_encode($monthlyBorrows ?? []) !!};
+        const returnsData = {!! json_encode($monthlyReturns ?? []) !!};
 
         window.dashboardChartInstance = new Chart(ctx, {
             type: 'bar',
@@ -339,13 +338,12 @@
                         ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#847bb0' }
                     },
                     y: {
-                        min: 0,
-                        max: 100,
+                        beginAtZero: true,
                         grid: { color: '#292244' },
                         ticks: {
                             font: { family: 'Plus Jakarta Sans', size: 10 },
                             color: '#847bb0',
-                            stepSize: 20
+                            precision: 0
                         }
                     }
                 }
@@ -380,7 +378,7 @@
                     console.log('[Pusher Echo] Access Logged:', e);
                     if (e.action === 'security_alert') {
                         if (typeof showToast === 'function') {
-                            showToast(`🚨 SECURITY ALERT: ${e.userName} — ${e.reason}`, 'error');
+                            showToast(`SECURITY ALERT: ${e.userName} — ${e.reason}`, 'error');
                         }
                     }
                 });

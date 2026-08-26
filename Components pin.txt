@@ -3,9 +3,7 @@ Component                      BCM (code)      Physical Pin    Connection / Circ
 LCD SDA (I2C)                  GPIO 2          Pin 3           I2C Serial Data (to 16x2 LCD PCF8574 I2C Backpack)
 LCD SCL (I2C)                  GPIO 3          Pin 5           I2C Serial Clock (to 16x2 LCD PCF8574 I2C Backpack)
 IR Sensor Slot 1               GPIO 4          Pin 7           Slot 1 IR Sensor Digital Output (DO / OUT pin)
-Brushless Fan DC 5V            GPIO 14         Pin 8           Cooling Fan Switch (via N-MOSFET / NPN Transistor / Relay)
 Slot 1 Solenoid (Relay)        GPIO 17         Pin 11          Slot 1 Solenoid Lock (via 5V Multi-Channel Relay IN1)
-Buzzer                         GPIO 18         Pin 12          Active Buzzer Signal (via 2N2222 / Transistor / Direct)
 Slot 2 Solenoid (Relay)        GPIO 27         Pin 13          Slot 2 Solenoid Lock (via 5V Multi-Channel Relay IN2)
 Slot 3 Solenoid (Relay)        GPIO 22         Pin 15          Slot 3 Solenoid Lock (via 5V Multi-Channel Relay IN3)
 Main Door Lock (Relay)         GPIO 23         Pin 16          Main Compartment Lock (via 5V Multi-Channel Relay IN4)
@@ -19,14 +17,6 @@ Red LED Slot 1                 GPIO 12         Pin 32          Slot 1 Locked/Mis
 Green LED Slot 3               GPIO 13         Pin 33          Slot 3 Available Green LED (via 220Ω / 330Ω Resistor)
 Red LED Slot 2                 GPIO 16         Pin 36          Slot 2 Locked/Missing Red LED (via 220Ω / 330Ω Resistor)
 Red LED Slot 3                 GPIO 20         Pin 38          Slot 3 Locked/Missing Red LED (via 220Ω / 330Ω Resistor)
-
----------------------------------------------------------------------------------------------------------------------------------
-BRUSHLESS FAN DC 5V 
----------------------------------------------------------------------------------------------------------------------------------
-Fan Control Signal (Switch)    GPIO 14         Pin 8           Signal to Transistor Base / MOSFET Gate (via 1kΩ Resistor)
-Fan Positive (+ Red Wire)      5V Power        Pin 2 / Pin 4   Connects to 5V Rail (or External 5V Power Supply)
-Fan Negative (- Black Wire)    GND Switch      Switched        Connects to Transistor Collector / MOSFET Drain (or Relay NO)
-Ground (GND)                   GND             Pin 6, 9, 14, 20, 25, 30, 34, or 39 (Common Ground)
 
 ---------------------------------------------------------------------------------------------------------------------------------
 6V YELLOW DC TT GEAR MOTOR & DRIVER CONNECTIONS (SLIDER)

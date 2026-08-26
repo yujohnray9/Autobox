@@ -56,57 +56,8 @@ class AuthQrController extends Controller
             ], 401);
         }
 
-        // 3. Check if user has an active schedule today for a key
-        $today = strtolower(now()->format('l')); // e.g. 'monday'
-        $currentTime = now()->format('H:i:s');
-
-        $schedule = Schedule::where('user_id', $user->id)
-            ->where('day_of_week', $today)
-            ->where('is_active', true)
-            ->with('key')
-            ->first();
-
-        // Find assigned key or default key
-        $key = null;
-        if ($request->filled('slot_number')) {
-            $key = Key::where('slot_number', $request->slot_number)->first();
-        } elseif ($schedule) {
-            $key = $schedule->key;
-        } else {
-            // Find first available key or borrowed key for returning
-            $borrowedKey = Transaction::where('user_id', $user->id)
-                ->where('action', 'borrow')
-                ->whereNull('returned_at')
-                ->latest()
-                ->first();
-
-            if ($borrowedKey) {
-                $key = $borrowedKey->key;
-            } else {
-                $key = Key::where('status', 'available')->first();
-            }
-        }
-
-        if (!$key) {
-            AccessLog::create([
-                'user_id'    => $user->id,
-                'qr_token'   => $qrToken,
-                'action'     => 'scan',
-                'result'     => 'denied',
-                'reason'     => 'No keys available or assigned',
-                'ip_address' => $ip,
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'status'  => 'DENIED',
-                'message' => 'No key available for access',
-            ], 404);
-        }
-
-        // 4. Determine action: Borrow or Return?
+        // 3. Determine action: Is user returning a currently borrowed key?
         $existingBorrow = Transaction::where('user_id', $user->id)
-            ->where('key_id', $key->id)
             ->where('action', 'borrow')
             ->whereNull('returned_at')
             ->latest()
@@ -114,11 +65,19 @@ class AuthQrController extends Controller
 
         if ($existingBorrow) {
             // ACTION: RETURN KEY
+            $key = $existingBorrow->key;
+            if (!$key) {
+                return response()->json([
+                    'success' => false,
+                    'status'  => 'DENIED',
+                    'message' => 'Key record not found',
+                ], 404);
+            }
+
             $existingBorrow->update([
                 'returned_at' => now(),
             ]);
 
-            // Create return transaction
             Transaction::create([
                 'user_id'     => $user->id,
                 'key_id'      => $key->id,
@@ -139,7 +98,6 @@ class AuthQrController extends Controller
                 'ip_address' => $ip,
             ]);
 
-            // Dispatch WebSocket Events safely
             $this->safeBroadcast(function () use ($key, $user) {
                 KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'available', $key->key_name, $key->room_name, null);
                 AccessLogged::dispatch($user->name, 'return', 'granted', "Returned to Slot #{$key->slot_number}", $key->key_name, $key->room_name);
@@ -154,65 +112,144 @@ class AuthQrController extends Controller
                 'user_name'   => $user->name,
                 'message'     => "Access Granted: Return Key to Slot #{$key->slot_number}",
             ]);
+        }
+
+        // ACTION: BORROW KEY - Check active schedule
+        $today = strtolower(now()->format('l'));
+        $currentTime = now()->format('H:i:s');
+        $key = null;
+
+        if ($user->role === 'admin') {
+            if ($request->filled('slot_number')) {
+                $key = Key::where('slot_number', $request->slot_number)->first();
+            } else {
+                $key = Key::where('status', 'available')->first();
+            }
         } else {
-            // ACTION: BORROW KEY
-            if ($key->status === 'borrowed') {
+            // Regular user: Must have an active schedule for TODAY within the scheduled time window
+            $schedule = Schedule::where('user_id', $user->id)
+                ->where('day_of_week', $today)
+                ->where('is_active', true)
+                ->where('start_time', '<=', $currentTime)
+                ->where('end_time', '>=', $currentTime)
+                ->with('key')
+                ->first();
+
+            if (!$schedule) {
+                $todaySchedule = Schedule::where('user_id', $user->id)
+                    ->where('day_of_week', $today)
+                    ->where('is_active', true)
+                    ->first();
+
+                $otherSchedule = Schedule::where('user_id', $user->id)
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($todaySchedule) {
+                    $reason = "Access Denied: Scheduled on " . ucfirst($today) . " from " .
+                        \Carbon\Carbon::parse($todaySchedule->start_time)->format('h:i A') . " to " .
+                        \Carbon\Carbon::parse($todaySchedule->end_time)->format('h:i A');
+                } elseif ($otherSchedule) {
+                    $reason = "Access Denied: Your schedule is for " . ucfirst($otherSchedule->day_of_week) . ", but today is " . ucfirst($today);
+                } else {
+                    $reason = "Access Denied: No active schedule assigned for today (" . ucfirst($today) . ")";
+                }
+
                 AccessLog::create([
                     'user_id'    => $user->id,
                     'qr_token'   => $qrToken,
                     'action'     => 'borrow',
                     'result'     => 'denied',
-                    'reason'     => "Key Slot #{$key->slot_number} is already borrowed",
+                    'reason'     => $reason,
                     'ip_address' => $ip,
                 ]);
 
-                $this->safeBroadcast(function () use ($user, $key) {
-                    AccessLogged::dispatch($user->name, 'borrow', 'denied', "Slot #{$key->slot_number} already borrowed", $key->key_name, $key->room_name);
+                $this->safeBroadcast(function () use ($user, $reason) {
+                    AccessLogged::dispatch($user->name, 'borrow', 'denied', $reason, null, null);
                 });
 
                 return response()->json([
                     'success' => false,
                     'status'  => 'DENIED',
-                    'message' => "Key is currently borrowed by another user",
-                ], 409);
+                    'message' => $reason,
+                ], 403);
             }
 
-            Transaction::create([
-                'user_id'     => $user->id,
-                'key_id'      => $key->id,
-                'action'      => 'borrow',
-                'status'      => 'success',
-                'notes'       => 'Borrowed via QR Scan',
-                'borrowed_at' => now(),
+            $key = $schedule->key;
+        }
+
+        if (!$key) {
+            AccessLog::create([
+                'user_id'    => $user->id,
+                'qr_token'   => $qrToken,
+                'action'     => 'scan',
+                'result'     => 'denied',
+                'reason'     => 'No key assigned or available for this schedule',
+                'ip_address' => $ip,
             ]);
 
-            $key->update(['status' => 'borrowed']);
+            return response()->json([
+                'success' => false,
+                'status'  => 'DENIED',
+                'message' => 'No key assigned or available for access',
+            ], 404);
+        }
 
+        if ($key->status === 'borrowed') {
             AccessLog::create([
                 'user_id'    => $user->id,
                 'qr_token'   => $qrToken,
                 'action'     => 'borrow',
-                'result'     => 'granted',
-                'reason'     => "Key Slot #{$key->slot_number} unlocked for borrowing",
+                'result'     => 'denied',
+                'reason'     => "Key Slot #{$key->slot_number} is already borrowed",
                 'ip_address' => $ip,
             ]);
 
-            // Dispatch WebSocket Events safely
-            $this->safeBroadcast(function () use ($key, $user) {
-                KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'borrowed', $key->key_name, $key->room_name, $user->name);
-                AccessLogged::dispatch($user->name, 'borrow', 'granted', "Borrowed Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+            $this->safeBroadcast(function () use ($user, $key) {
+                AccessLogged::dispatch($user->name, 'borrow', 'denied', "Slot #{$key->slot_number} already borrowed", $key->key_name, $key->room_name);
             });
 
             return response()->json([
-                'success'     => true,
-                'status'      => 'GRANTED',
-                'action'      => 'BORROW',
-                'slot_number' => $key->slot_number,
-                'key_name'    => $key->key_name,
-                'user_name'   => $user->name,
-                'message'     => "Access Granted: Unlock Slot #{$key->slot_number}",
-            ]);
+                'success' => false,
+                'status'  => 'DENIED',
+                'message' => "Key is currently borrowed by another user",
+            ], 409);
         }
+
+        Transaction::create([
+            'user_id'     => $user->id,
+            'key_id'      => $key->id,
+            'action'      => 'borrow',
+            'status'      => 'success',
+            'notes'       => 'Borrowed via QR Scan',
+            'borrowed_at' => now(),
+        ]);
+
+        $key->update(['status' => 'borrowed']);
+
+        AccessLog::create([
+            'user_id'    => $user->id,
+            'qr_token'   => $qrToken,
+            'action'     => 'borrow',
+            'result'     => 'granted',
+            'reason'     => "Key Slot #{$key->slot_number} unlocked for borrowing",
+            'ip_address' => $ip,
+        ]);
+
+        $this->safeBroadcast(function () use ($key, $user) {
+            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'borrowed', $key->key_name, $key->room_name, $user->name);
+            AccessLogged::dispatch($user->name, 'borrow', 'granted', "Borrowed Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+        });
+
+        return response()->json([
+            'success'     => true,
+            'status'      => 'GRANTED',
+            'action'      => 'BORROW',
+            'slot_number' => $key->slot_number,
+            'key_name'    => $key->key_name,
+            'user_name'   => $user->name,
+            'message'     => "Access Granted: Unlock Slot #{$key->slot_number}",
+        ]);
     }
 
     /**
@@ -238,7 +275,7 @@ class AuthQrController extends Controller
                 'qr_token'   => $qrToken,
                 'action'     => 'security_alert',
                 'result'     => 'denied',
-                'reason'     => "🚨 SECURITY ALERT: QR Code scanned {$scanCount} times within 15 minutes",
+                'reason'     => "SECURITY ALERT: QR Code scanned {$scanCount} times within 15 minutes",
                 'ip_address' => $ip,
             ]);
 
@@ -248,7 +285,7 @@ class AuthQrController extends Controller
                     $userName,
                     'security_alert',
                     'denied',
-                    "🚨 Multi-Scan Alert: QR code was scanned {$scanCount} times rapidly!",
+                    "SECURITY ALERT: QR code was scanned {$scanCount} times rapidly!",
                     null,
                     null
                 );

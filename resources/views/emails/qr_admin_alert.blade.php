@@ -27,7 +27,7 @@
             <td style="padding: 24px 30px 10px 30px;">
                 <div style="background-color: rgba(225, 29, 72, 0.15); border: 1px solid rgba(225, 29, 72, 0.4); border-radius: 12px; padding: 14px 18px;">
                     <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #fecdd3; font-weight: 600;">
-                        ⚠️ <strong>Notice to System Administrator:</strong> A QR code has been scanned <strong>{{ $scanCount }} times</strong> in rapid succession at the physical lockbox scanner. This may indicate repeated failed attempts, unauthorized access, or hardware tampering.
+                        <strong>Notice to System Administrator:</strong> A QR code has been scanned <strong>{{ $scanCount }} times</strong> in rapid succession at the physical lockbox scanner. This may indicate repeated failed attempts, unauthorized access, or hardware tampering.
                     </p>
                 </div>
             </td>

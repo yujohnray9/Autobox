@@ -29,20 +29,50 @@
                 </thead>
                 <tbody class="divide-y divide-[var(--border-subtle)]">
                     @forelse($logs as $log)
-                        <tr class="hover:bg-[var(--purple-soft)] transition-colors">
+                        @php
+                            $cleanReason = preg_replace('/[\x{1F600}-\x{1F64F}\x{1F300}-\x{1F5FF}\x{1F680}-\x{1F6FF}\x{1F1E0}-\x{1F1FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{FE00}-\x{FE0F}]/u', '', $log->reason);
+                            $cleanReason = trim($cleanReason);
+                            $isSecurityAlert = $log->action === 'security_alert' || str_contains(strtoupper($log->reason), 'SECURITY ALERT');
+                        @endphp
+                        <tr class="hover:bg-[var(--purple-soft)] transition-colors {{ $isSecurityAlert ? 'bg-rose-950/20' : '' }}">
                             <td class="px-5 py-3.5">
-                                <p class="font-bold text-[var(--text-heading)] text-sm">{{ $log->user->name ?? 'Unknown' }}</p>
-                                <p class="text-xs text-[var(--text-muted)]">{{ $log->user->employee_id ?? '' }}</p>
+                                <p class="font-bold text-[var(--text-heading)] text-sm flex items-center gap-1.5">
+                                    @if($isSecurityAlert)
+                                        <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xs"></i>
+                                    @endif
+                                    {{ $log->user->name ?? 'Unknown User' }}
+                                </p>
+                                <p class="text-xs text-[var(--text-muted)]">{{ $log->user->employee_id ?? 'Unregistered' }}</p>
                             </td>
                             <td class="px-5 py-3.5 text-xs font-mono text-[var(--text-muted)] truncate max-w-[130px]">{{ $log->qr_token }}</td>
-                            <td class="px-5 py-3.5 text-sm text-[var(--text-body)]">{{ $log->reason }}</td>
+                            <td class="px-5 py-3.5 text-sm">
+                                @if($isSecurityAlert)
+                                    <span class="inline-flex items-center gap-1.5 text-rose-300 font-bold bg-rose-950/50 px-2.5 py-1 rounded-lg border border-rose-800/40 text-xs">
+                                        <svg class="w-3.5 h-3.5 text-rose-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                        {{ $cleanReason }}
+                                    </span>
+                                @else
+                                    <span class="text-[var(--text-body)]">{{ $cleanReason }}</span>
+                                @endif
+                            </td>
                             <td class="px-5 py-3.5">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider
-                                    {{ $log->result === 'granted'
-                                        ? 'bg-emerald-100 text-emerald-700'
-                                        : 'bg-rose-100 text-rose-700' }}">
-                                    {{ $log->result }}
-                                </span>
+                                @if($log->result === 'granted')
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
+                                        <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Granted
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-950/60 text-rose-300 border border-rose-800/40">
+                                        <svg class="w-3 h-3 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                        Denied
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-5 py-3.5 text-sm font-mono text-[var(--text-muted)]">{{ $log->created_at->format('M d, Y · h:i A') }}</td>
                         </tr>

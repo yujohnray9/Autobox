@@ -33,7 +33,7 @@ class QrMultipleScansUserWarning extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "⚠️ [AUTOBOX Security Notification] Multiple scans detected on your QR Code",
+            subject: "[AUTOBOX Security Notification] Multiple scans detected on your QR Code",
         );
     }
 

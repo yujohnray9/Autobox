@@ -56,7 +56,7 @@
                     </tr>
                     <tr>
                         <td style="color: #94a3b8; font-weight: 600;">Last Person to Retrieve:</td>
-                        <td style="color: #ffffff; font-weight: 700;">{{ $borrower->name ?? 'Unknown / Not Registered' }}</td>
+                        <td style="color: #ffffff; font-weight: 700;">{{ $borrower->name ?? 'No recent borrower record' }}</td>
                     </tr>
                     @if($borrower)
                     <tr>
@@ -66,6 +66,11 @@
                     <tr>
                         <td style="color: #94a3b8; font-weight: 600;">Borrower Email:</td>
                         <td style="color: #a78bfa; font-weight: 600;">{{ $borrower->email }}</td>
+                    </tr>
+                    @else
+                    <tr>
+                        <td style="color: #94a3b8; font-weight: 600;">Borrower Email:</td>
+                        <td style="color: #94a3b8; font-style: italic;">No borrower recorded (Locker physical sensor alert)</td>
                     </tr>
                     @endif
                     @if($transaction && $transaction->borrowed_at)

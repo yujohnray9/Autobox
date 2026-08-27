@@ -353,15 +353,9 @@ class AuthQrController extends Controller
         if ($key) {
             $key->update(['status' => 'missing']);
 
-            // Find active borrow transaction for this key that hasn't been returned
-            $activeBorrow = Transaction::where('key_id', $key->id)
-                ->where('action', 'borrow')
-                ->whereNull('returned_at')
-                ->latest()
-                ->with('user')
-                ->first();
-
-            $borrower = $activeBorrow?->user;
+            // Find borrower using intelligent multi-level fallback (even if returned_at was set or key was marked available)
+            $borrower = self::resolveLastBorrower($key);
+            $activeBorrow = self::resolveLastTransaction($key);
 
             // Send notification email to both the unreturned borrower and all admins
             $this->sendUnreturnedMissingAlerts($key, $borrower, $activeBorrow);
@@ -411,6 +405,92 @@ class AuthQrController extends Controller
     }
 
     /**
+     * Intelligently resolve the last person who retrieved/borrowed a given key.
+     * Checks: active borrow -> most recent borrow -> most recent transaction -> access log -> schedule
+     */
+    public static function resolveLastBorrower(Key $key): ?User
+    {
+        // 1. Active unreturned borrow
+        $activeBorrow = Transaction::where('key_id', $key->id)
+            ->where('action', 'borrow')
+            ->whereNull('returned_at')
+            ->latest()
+            ->with('user')
+            ->first();
+
+        if ($activeBorrow && $activeBorrow->user) {
+            return $activeBorrow->user;
+        }
+
+        // 2. Most recent borrow transaction (even if returned_at was populated)
+        $lastBorrow = Transaction::where('key_id', $key->id)
+            ->where('action', 'borrow')
+            ->latest()
+            ->with('user')
+            ->first();
+
+        if ($lastBorrow && $lastBorrow->user) {
+            return $lastBorrow->user;
+        }
+
+        // 3. Most recent transaction of any type
+        $anyLastTx = Transaction::where('key_id', $key->id)
+            ->latest()
+            ->with('user')
+            ->first();
+
+        if ($anyLastTx && $anyLastTx->user) {
+            return $anyLastTx->user;
+        }
+
+        // 4. Most recent granted access log for this slot
+        $lastLog = AccessLog::where('result', 'granted')
+            ->where(function ($q) use ($key) {
+                $q->where('reason', 'like', "%Slot #{$key->slot_number}%")
+                  ->orWhere('reason', 'like', "%{$key->key_name}%");
+            })
+            ->whereNotNull('user_id')
+            ->latest()
+            ->with('user')
+            ->first();
+
+        if ($lastLog && $lastLog->user) {
+            return $lastLog->user;
+        }
+
+        // 5. Active schedule assigned to this key
+        $sched = Schedule::where('key_id', $key->id)
+            ->where('is_active', true)
+            ->with('user')
+            ->first();
+
+        if ($sched && $sched->user) {
+            return $sched->user;
+        }
+
+        return null;
+    }
+
+    /**
+     * Intelligently resolve the last transaction associated with a given key.
+     */
+    public static function resolveLastTransaction(Key $key): ?Transaction
+    {
+        return Transaction::where('key_id', $key->id)
+            ->where('action', 'borrow')
+            ->whereNull('returned_at')
+            ->latest()
+            ->first()
+            ?? Transaction::where('key_id', $key->id)
+                ->where('action', 'borrow')
+                ->latest()
+                ->first()
+            ?? Transaction::where('key_id', $key->id)
+                ->latest()
+                ->first();
+    }
+
+    /**
      * Send email notifications when a key is unreturned / missing to both the borrower and admins.
      */
     protected function sendUnreturnedMissingAlerts(Key $key, ?User $borrower, ?Transaction $transaction): void
@@ -435,5 +515,201 @@ class AuthQrController extends Controller
         } catch (\Throwable $e) {
             Log::error("[UNRETURNED KEY] Failed to send email to admins: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Deliver offline cache package for Raspberry Pi local operation.
+     */
+    public function getOfflineCache()
+    {
+        // Active users with their schedules
+        $users = User::where('is_active', true)
+            ->with(['schedules' => function ($q) {
+                $q->where('is_active', true)->with('key');
+            }])
+            ->get();
+
+        $userMap = [];
+        foreach ($users as $user) {
+            if (!$user->qr_token) {
+                continue;
+            }
+
+            $schedules = [];
+            foreach ($user->schedules as $sched) {
+                $schedules[] = [
+                    'id'          => $sched->id,
+                    'day_of_week' => strtolower($sched->day_of_week),
+                    'start_time'  => $sched->start_time,
+                    'end_time'    => $sched->end_time,
+                    'slot_number' => $sched->key?->slot_number,
+                    'key_id'      => $sched->key_id,
+                    'key_name'    => $sched->key?->key_name,
+                    'room_name'   => $sched->key?->room_name,
+                ];
+            }
+
+            $userMap[$user->qr_token] = [
+                'id'        => $user->id,
+                'name'      => $user->name,
+                'role'      => $user->role,
+                'is_active' => (bool) $user->is_active,
+                'schedules' => $schedules,
+            ];
+        }
+
+        // Keys with current status and active borrower
+        $keys = Key::orderBy('slot_number')->get();
+        $keyMap = [];
+        foreach ($keys as $key) {
+            $activeBorrow = null;
+            if ($key->status === 'borrowed') {
+                $activeBorrow = Transaction::where('key_id', $key->id)
+                    ->where('action', 'borrow')
+                    ->whereNull('returned_at')
+                    ->latest()
+                    ->first();
+            }
+
+            $keyMap[(int) $key->slot_number] = [
+                'id'                  => $key->id,
+                'slot_number'         => (int) $key->slot_number,
+                'key_name'            => $key->key_name,
+                'room_name'           => $key->room_name,
+                'status'              => $key->status,
+                'borrowed_by_user_id' => $activeBorrow?->user_id,
+            ];
+        }
+
+        return response()->json([
+            'success'   => true,
+            'timestamp' => now()->toDateTimeString(),
+            'users'     => $userMap,
+            'keys'      => $keyMap,
+        ]);
+    }
+
+    /**
+     * Ingest batched offline transactions and access logs from Raspberry Pi.
+     */
+    public function syncOfflineLogs(Request $request)
+    {
+        $request->validate([
+            'logs'   => 'required|array',
+            'logs.*' => 'required|array',
+        ]);
+
+        $logs = $request->input('logs');
+        $syncedCount = 0;
+
+        foreach ($logs as $item) {
+            $type = $item['type'] ?? null;
+            $timestamp = isset($item['timestamp']) ? \Carbon\Carbon::parse($item['timestamp']) : now();
+
+            if ($type === 'transaction') {
+                $userId     = $item['user_id'] ?? null;
+                $keyId      = $item['key_id'] ?? null;
+                $slotNumber = $item['slot_number'] ?? null;
+                $action     = $item['action'] ?? null;
+                $notes      = $item['notes'] ?? 'Recorded via Offline Mode';
+
+                $key = null;
+                if ($keyId) {
+                    $key = Key::find($keyId);
+                } elseif ($slotNumber) {
+                    $key = Key::where('slot_number', $slotNumber)->first();
+                }
+
+                if ($key && $userId) {
+                    $user = User::find($userId);
+
+                    if ($action === 'borrow') {
+                        Transaction::create([
+                            'user_id'     => $userId,
+                            'key_id'      => $key->id,
+                            'action'      => 'borrow',
+                            'status'      => 'success',
+                            'notes'       => $notes,
+                            'borrowed_at' => $timestamp,
+                            'created_at'  => $timestamp,
+                            'updated_at'  => $timestamp,
+                        ]);
+
+                        $key->update(['status' => 'borrowed']);
+
+                        $this->safeBroadcast(function () use ($key, $user) {
+                            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'borrowed', $key->key_name, $key->room_name, $user?->name);
+                        });
+                    } elseif ($action === 'return') {
+                        $existingBorrow = Transaction::where('user_id', $userId)
+                            ->where('key_id', $key->id)
+                            ->where('action', 'borrow')
+                            ->whereNull('returned_at')
+                            ->latest()
+                            ->first();
+
+                        if ($existingBorrow) {
+                            $existingBorrow->update([
+                                'returned_at' => $timestamp,
+                            ]);
+                        }
+
+                        Transaction::create([
+                            'user_id'     => $userId,
+                            'key_id'      => $key->id,
+                            'action'      => 'return',
+                            'status'      => 'success',
+                            'notes'       => $notes,
+                            'returned_at' => $timestamp,
+                            'created_at'  => $timestamp,
+                            'updated_at'  => $timestamp,
+                        ]);
+
+                        $key->update(['status' => 'available']);
+
+                        $this->safeBroadcast(function () use ($key) {
+                            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'available', $key->key_name, $key->room_name, null);
+                        });
+                    }
+                    $syncedCount++;
+                }
+            } elseif ($type === 'access_log') {
+                $userId    = $item['user_id'] ?? null;
+                $qrToken   = $item['qr_token'] ?? 'OFFLINE_SCAN';
+                $action    = $item['action'] ?? 'scan';
+                $result    = $item['result'] ?? 'granted';
+                $reason    = $item['reason'] ?? 'Offline Scan Event';
+                $ipAddress = $item['ip_address'] ?? $request->ip();
+
+                AccessLog::create([
+                    'user_id'    => $userId,
+                    'qr_token'   => $qrToken,
+                    'action'     => $action,
+                    'result'     => $result,
+                    'reason'     => $reason,
+                    'ip_address' => $ipAddress,
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp,
+                ]);
+
+                $userName = 'Unknown User';
+                if ($userId) {
+                    $user = User::find($userId);
+                    $userName = $user?->name ?? 'User #' . $userId;
+                }
+
+                $this->safeBroadcast(function () use ($userName, $action, $result, $reason) {
+                    AccessLogged::dispatch($userName, $action, $result, $reason, null, null);
+                });
+
+                $syncedCount++;
+            }
+        }
+
+        return response()->json([
+            'success'      => true,
+            'message'      => "Synced {$syncedCount} offline record(s) successfully",
+            'synced_count' => $syncedCount,
+        ]);
     }
 }

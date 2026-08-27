@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Transaction;
 use App\Mail\KeyUnreturnedUserNotice;
 use App\Mail\KeyUnreturnedAdminAlert;
+use App\Http\Controllers\Api\AuthQrController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -109,15 +110,9 @@ class KeyController extends Controller
             ]);
             $msg = "Key slot #{$key->slot_number} marked as returned and available.";
         } else {
-            // Flagged missing: find borrower with active unreturned transaction
-            $activeTx = Transaction::where('key_id', $key->id)
-                ->where('action', 'borrow')
-                ->whereNull('returned_at')
-                ->latest()
-                ->with('user')
-                ->first();
-
-            $borrower = $activeTx?->user;
+            // Flagged missing: find borrower with multi-level fallback
+            $borrower = AuthQrController::resolveLastBorrower($key);
+            $activeTx = AuthQrController::resolveLastTransaction($key);
 
             if ($borrower && !empty($borrower->email) && filter_var($borrower->email, FILTER_VALIDATE_EMAIL)) {
                 try {

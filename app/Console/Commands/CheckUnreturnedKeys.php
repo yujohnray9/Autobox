@@ -6,6 +6,8 @@ use App\Models\Key;
 use App\Models\User;
 use App\Models\Schedule;
 use App\Models\Transaction;
+use App\Models\AccessLog;
+use App\Http\Controllers\Api\AuthQrController;
 use App\Mail\KeyUnreturnedUserNotice;
 use App\Mail\KeyUnreturnedAdminAlert;
 use Illuminate\Console\Command;
@@ -56,7 +58,15 @@ class CheckUnreturnedKeys extends Command
             $borrower = $tx->user;
             $key = $tx->key;
 
-            if (!$key || !$borrower) {
+            if (!$key) {
+                continue;
+            }
+
+            if (!$borrower) {
+                $borrower = AuthQrController::resolveLastBorrower($key);
+            }
+
+            if (!$borrower) {
                 continue;
             }
 
@@ -139,6 +149,20 @@ class CheckUnreturnedKeys extends Command
                         Log::error("[UNRETURNED EMAIL] Failed to email admin: " . $e->getMessage());
                     }
                 }
+            }
+
+            // 6. Record audit log so the event is visible on the web dashboard
+            try {
+                AccessLog::create([
+                    'user_id'    => $borrower->id,
+                    'qr_token'   => $borrower->qr_token ?? 'SYSTEM_ALERT',
+                    'action'     => 'alert_unreturned',
+                    'result'     => 'denied',
+                    'reason'     => "Overdue Notice Email sent to {$borrower->name}: {$expiredReason}",
+                    'ip_address' => '127.0.0.1',
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning("[UNRETURNED EMAIL] Failed to log to access_logs: " . $e->getMessage());
             }
         }
 

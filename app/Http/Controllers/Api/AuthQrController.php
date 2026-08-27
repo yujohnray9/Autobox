@@ -13,6 +13,8 @@ use App\Events\KeyStatusUpdated;
 use App\Events\AccessLogged;
 use App\Mail\QrMultipleScansAdminAlert;
 use App\Mail\QrMultipleScansUserWarning;
+use App\Mail\KeyUnreturnedUserNotice;
+use App\Mail\KeyUnreturnedAdminAlert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
@@ -350,6 +352,20 @@ class AuthQrController extends Controller
         $key = Key::where('slot_number', $request->slot_number)->first();
         if ($key) {
             $key->update(['status' => 'missing']);
+
+            // Find active borrow transaction for this key that hasn't been returned
+            $activeBorrow = Transaction::where('key_id', $key->id)
+                ->where('action', 'borrow')
+                ->whereNull('returned_at')
+                ->latest()
+                ->with('user')
+                ->first();
+
+            $borrower = $activeBorrow?->user;
+
+            // Send notification email to both the unreturned borrower and all admins
+            $this->sendUnreturnedMissingAlerts($key, $borrower, $activeBorrow);
+
             $this->safeBroadcast(function () use ($key) {
                 KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'missing', $key->key_name, $key->room_name, null);
                 AccessLogged::dispatch('Hardware Alert', 'missing', 'denied', "Key missing from Slot #{$key->slot_number}", $key->key_name, $key->room_name);
@@ -392,5 +408,32 @@ class AuthQrController extends Controller
             'success' => true,
             'message' => "Slider event recorded: {$request->state}",
         ]);
+    }
+
+    /**
+     * Send email notifications when a key is unreturned / missing to both the borrower and admins.
+     */
+    protected function sendUnreturnedMissingAlerts(Key $key, ?User $borrower, ?Transaction $transaction): void
+    {
+        // 1. Send reminder/warning email to the borrower who hasn't returned the key
+        if ($borrower && !empty($borrower->email) && filter_var($borrower->email, FILTER_VALIDATE_EMAIL)) {
+            try {
+                Mail::to($borrower->email)->send(new KeyUnreturnedUserNotice($borrower, $key, $transaction));
+            } catch (\Throwable $e) {
+                Log::error("[UNRETURNED KEY] Failed to send email to borrower: " . $e->getMessage());
+            }
+        }
+
+        // 2. Send alert email to all System Admins
+        try {
+            $admins = User::where('role', 'admin')->whereNotNull('email')->get();
+            foreach ($admins as $admin) {
+                if (filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
+                    Mail::to($admin->email)->send(new KeyUnreturnedAdminAlert($admin, $borrower, $key, $transaction));
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("[UNRETURNED KEY] Failed to send email to admins: " . $e->getMessage());
+        }
     }
 }

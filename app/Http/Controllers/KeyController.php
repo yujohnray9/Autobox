@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Key;
 use App\Models\User;
 use App\Models\Transaction;
+use App\Mail\KeyUnreturnedUserNotice;
+use App\Mail\KeyUnreturnedAdminAlert;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class KeyController extends Controller
 {
@@ -105,7 +109,36 @@ class KeyController extends Controller
             ]);
             $msg = "Key slot #{$key->slot_number} marked as returned and available.";
         } else {
-            $msg = "Key slot #{$key->slot_number} flagged as missing.";
+            // Flagged missing: find borrower with active unreturned transaction
+            $activeTx = Transaction::where('key_id', $key->id)
+                ->where('action', 'borrow')
+                ->whereNull('returned_at')
+                ->latest()
+                ->with('user')
+                ->first();
+
+            $borrower = $activeTx?->user;
+
+            if ($borrower && !empty($borrower->email) && filter_var($borrower->email, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    Mail::to($borrower->email)->send(new KeyUnreturnedUserNotice($borrower, $key, $activeTx));
+                } catch (\Throwable $e) {
+                    Log::error("[UNRETURNED KEY] Failed to send email to borrower: " . $e->getMessage());
+                }
+            }
+
+            try {
+                $admins = User::where('role', 'admin')->whereNotNull('email')->get();
+                foreach ($admins as $admin) {
+                    if (filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
+                        Mail::to($admin->email)->send(new KeyUnreturnedAdminAlert($admin, $borrower, $key, $activeTx));
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::error("[UNRETURNED KEY] Failed to send email to admins: " . $e->getMessage());
+            }
+
+            $msg = "Key slot #{$key->slot_number} flagged as missing, and email alerts have been sent.";
         }
 
         return redirect()->back()->with('success', $msg);

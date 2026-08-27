@@ -15,7 +15,7 @@ ENABLE_IR_SENSORS = True
 ENABLE_SOLENOIDS = True
 ENABLE_MOTOR = True
 
-KEY_PRESENT_STATE = GPIO.HIGH
+KEY_PRESENT_STATE = GPIO.LOW
 
 API_BASE_URL = "http://192.168.11.130:8000"
 API_AUTHENTICATE = f"{API_BASE_URL}/api/authenticate-qr"
@@ -51,8 +51,8 @@ LED_RED_PINS = {
 
 IR_SENSOR_PINS = {
     1: 4,
-    2: 8,
-    3: 7,
+    2: 7,
+    3: 8,
 }
 
 ULTRASONIC_TRIG = 24
@@ -115,7 +115,7 @@ def setup_gpio():
 
     if ENABLE_IR_SENSORS:
         for slot, pin in IR_SENSOR_PINS.items():
-            GPIO.setup(pin, GPIO.IN)
+            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     if ENABLE_ULTRASONIC:
         GPIO.setup(ULTRASONIC_TRIG, GPIO.OUT)
@@ -367,7 +367,7 @@ def process_scan(qr_token):
 
         if slot:
             if ENABLE_SOLENOIDS:
-                print(f"[AUTOBOX] Unlatching Main Door & Slot #{slot}...")
+                print(f"[AUTOBOX] Unlocking Main Door and Slot #{slot}...")
                 GPIO.output(MAIN_LOCK_PIN, GPIO.HIGH)
                 slot_pin = SLOT_PINS.get(slot)
                 if slot_pin:
@@ -376,14 +376,20 @@ def process_scan(qr_token):
             print("[AUTOBOX] Opening motorized slider door...")
             slider_open()
 
+            # Main lock stays energized (unlocked) here on purpose.
+            # It only relocks below, after wait_no_hand_and_close() has
+            # actually closed the slider — so the door can't relock while
+            # a hand is present or before the slider finishes its cycle.
+
+            print("[AUTOBOX] Waiting for user hand removal (5s safety timer)...")
+            wait_no_hand_and_close()
+
             if ENABLE_SOLENOIDS:
                 GPIO.output(MAIN_LOCK_PIN, GPIO.LOW)
                 slot_pin = SLOT_PINS.get(slot)
                 if slot_pin:
+                    print(f"[AUTOBOX] Relocking Slot #{slot}...")
                     GPIO.output(slot_pin, GPIO.LOW)
-
-            print("[AUTOBOX] Waiting for user hand removal (5s safety timer)...")
-            wait_no_hand_and_close()
 
             update_key_presence_and_leds()
             get_key_statuses()
@@ -412,7 +418,7 @@ def update_key_presence_and_leds():
                 GPIO.output(LED_GREEN_PINS[slot], GPIO.HIGH)
             if ENABLE_LEDS and slot in LED_RED_PINS:
                 GPIO.output(LED_RED_PINS[slot], GPIO.LOW)
-            
+
             if slot in reported_missing_slots:
                 reported_missing_slots.discard(slot)
         else:
@@ -426,6 +432,7 @@ def update_key_presence_and_leds():
                 print(f"[AUTOBOX ALERT] Key Slot #{slot} is physically MISSING! Reporting to Laravel...")
                 if report_missing_key(slot):
                     reported_missing_slots.add(slot)
+                    known_key_statuses[slot]["status"] = "missing"
                     print(f"[AUTOBOX ALERT] Slot #{slot} successfully flagged as MISSING in Laravel database.")
 
 
@@ -458,7 +465,7 @@ def main():
                 print(f"[AUTOBOX] QR Code Read: {qr_token}")
                 process_scan(qr_token)
                 update_key_presence_and_leds()
-                time.sleep(1.5)  
+                time.sleep(1.5)
 
             if time.time() - last_poll >= STATUS_POLL_INTERVAL:
                 get_key_statuses()

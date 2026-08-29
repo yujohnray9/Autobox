@@ -34,11 +34,11 @@
                             $cleanReason = trim($cleanReason);
                             $isSecurityAlert = $log->action === 'security_alert' || str_contains(strtoupper($log->reason), 'SECURITY ALERT');
                         @endphp
-                        <tr class="hover:bg-[var(--purple-soft)] transition-colors {{ $isSecurityAlert ? 'bg-rose-950/20' : '' }}">
+                        <tr class="hover:bg-[var(--purple-soft)] transition-colors {{ $isSecurityAlert ? 'bg-rose-50/70' : '' }}">
                             <td class="px-5 py-3.5">
                                 <p class="font-bold text-[var(--text-heading)] text-sm flex items-center gap-1.5">
                                     @if($isSecurityAlert)
-                                        <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xs"></i>
+                                        <i class="fa-solid fa-triangle-exclamation text-rose-500 text-xs"></i>
                                     @endif
                                     {{ $log->user->name ?? 'Unknown User' }}
                                 </p>
@@ -47,8 +47,8 @@
                             <td class="px-5 py-3.5 text-xs font-mono text-[var(--text-muted)] truncate max-w-[130px]">{{ $log->qr_token }}</td>
                             <td class="px-5 py-3.5 text-sm">
                                 @if($isSecurityAlert)
-                                    <span class="inline-flex items-center gap-1.5 text-rose-300 font-bold bg-rose-950/50 px-2.5 py-1 rounded-lg border border-rose-800/40 text-xs">
-                                        <svg class="w-3.5 h-3.5 text-rose-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <span class="inline-flex items-center gap-1.5 text-rose-700 font-bold bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 text-xs">
+                                        <svg class="w-3.5 h-3.5 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                         </svg>
                                         {{ $cleanReason }}
@@ -59,15 +59,15 @@
                             </td>
                             <td class="px-5 py-3.5">
                                 @if($log->result === 'granted')
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
-                                        <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                         </svg>
                                         Granted
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-950/60 text-rose-300 border border-rose-800/40">
-                                        <svg class="w-3 h-3 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200">
+                                        <svg class="w-3 h-3 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
                                         Denied

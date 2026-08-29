@@ -21,48 +21,48 @@
 
         <!-- Total Borrows -->
         <div class="mockup-card p-5 flex items-center gap-4 border-l-4 border-emerald-500">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-xl flex-shrink-0">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl flex-shrink-0">
                 <i class="fa-solid fa-arrow-up-from-bracket"></i>
             </div>
             <div>
                 <p class="text-[11px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-0.5">Total Borrows</p>
-                <p class="text-3xl font-heading font-extrabold text-emerald-400 leading-none">{{ $totalBorrows }}</p>
+                <p class="text-3xl font-heading font-extrabold text-emerald-600 leading-none">{{ $totalBorrows }}</p>
                 <p class="text-[10px] text-[var(--text-muted)] mt-1">All-time borrow events</p>
             </div>
         </div>
 
         <!-- Total Returns -->
         <div class="mockup-card p-5 flex items-center gap-4 border-l-4 border-sky-500">
-            <div class="w-12 h-12 rounded-2xl bg-sky-500/15 text-sky-400 flex items-center justify-center text-xl flex-shrink-0">
+            <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl flex-shrink-0">
                 <i class="fa-solid fa-rotate-left"></i>
             </div>
             <div>
                 <p class="text-[11px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-0.5">Total Returns</p>
-                <p class="text-3xl font-heading font-extrabold text-sky-400 leading-none">{{ $totalReturns }}</p>
+                <p class="text-3xl font-heading font-extrabold text-sky-600 leading-none">{{ $totalReturns }}</p>
                 <p class="text-[10px] text-[var(--text-muted)] mt-1">All-time return events</p>
             </div>
         </div>
 
         <!-- QR Access Granted -->
         <div class="mockup-card p-5 flex items-center gap-4 border-l-4 border-violet-500">
-            <div class="w-12 h-12 rounded-2xl bg-violet-500/15 text-violet-400 flex items-center justify-center text-xl flex-shrink-0">
+            <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center text-xl flex-shrink-0">
                 <i class="fa-solid fa-qrcode"></i>
             </div>
             <div>
                 <p class="text-[11px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-0.5">QR Granted</p>
-                <p class="text-3xl font-heading font-extrabold text-violet-400 leading-none">{{ $totalGranted }}</p>
+                <p class="text-3xl font-heading font-extrabold text-violet-600 leading-none">{{ $totalGranted }}</p>
                 <p class="text-[10px] text-[var(--text-muted)] mt-1">Successful QR scans</p>
             </div>
         </div>
 
         <!-- QR Access Denied -->
         <div class="mockup-card p-5 flex items-center gap-4 border-l-4 border-rose-500">
-            <div class="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-400 flex items-center justify-center text-xl flex-shrink-0">
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl flex-shrink-0">
                 <i class="fa-solid fa-ban"></i>
             </div>
             <div>
                 <p class="text-[11px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest mb-0.5">QR Denied</p>
-                <p class="text-3xl font-heading font-extrabold text-rose-400 leading-none">{{ $totalDenied }}</p>
+                <p class="text-3xl font-heading font-extrabold text-rose-600 leading-none">{{ $totalDenied }}</p>
                 <p class="text-[10px] text-[var(--text-muted)] mt-1">Rejected QR attempts</p>
             </div>
         </div>
@@ -112,21 +112,21 @@
                         <span class="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0"></span>
                         <span class="text-xs font-semibold text-[var(--text-body)]">Available</span>
                     </div>
-                    <span class="text-xs font-extrabold text-emerald-400">{{ $availableCount }}</span>
+                    <span class="text-xs font-extrabold text-emerald-600">{{ $availableCount }}</span>
                 </div>
                 <div class="flex items-center justify-between px-1">
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-amber-500 flex-shrink-0"></span>
                         <span class="text-xs font-semibold text-[var(--text-body)]">Borrowed</span>
                     </div>
-                    <span class="text-xs font-extrabold text-amber-400">{{ $borrowedCount }}</span>
+                    <span class="text-xs font-extrabold text-amber-600">{{ $borrowedCount }}</span>
                 </div>
                 <div class="flex items-center justify-between px-1">
                     <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-rose-500 flex-shrink-0"></span>
                         <span class="text-xs font-semibold text-[var(--text-body)]">Missing</span>
                     </div>
-                    <span class="text-xs font-extrabold text-rose-400">{{ $missingCount }}</span>
+                    <span class="text-xs font-extrabold text-rose-600">{{ $missingCount }}</span>
                 </div>
             </div>
         </div>
@@ -138,7 +138,7 @@
         <!-- Most Borrowed Keys -->
         <div class="mockup-card p-6">
             <div class="flex items-center gap-2 mb-5 pb-4 border-b border-[var(--border-subtle)]">
-                <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center text-sm">
+                <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
                     <i class="fa-solid fa-key"></i>
                 </div>
                 <div>
@@ -158,13 +158,13 @@
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-2 min-w-0">
-                                <span class="w-5 h-5 rounded-full bg-[var(--border-subtle)] text-[var(--text-muted)] font-extrabold text-[10px] flex items-center justify-center flex-shrink-0">{{ $i + 1 }}</span>
+                                <span class="w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-extrabold text-[10px] flex items-center justify-center flex-shrink-0">{{ $i + 1 }}</span>
                                 <span class="text-xs font-bold text-[var(--text-heading)] truncate">{{ $pk->key->key_name ?? 'Unknown' }}</span>
                                 <span class="text-[10px] text-[var(--text-muted)] flex-shrink-0">({{ $pk->key->room_name ?? '—' }})</span>
                             </div>
                             <span class="text-xs font-extrabold text-[var(--purple-primary)] ml-2 flex-shrink-0">{{ $pk->total }}×</span>
                         </div>
-                        <div class="w-full h-1.5 rounded-full bg-[var(--border-subtle)]">
+                        <div class="w-full h-1.5 rounded-full bg-slate-100">
                             <div class="h-1.5 rounded-full {{ $bar }} transition-all" style="width: {{ $pct }}%"></div>
                         </div>
                     </div>
@@ -177,7 +177,7 @@
         <!-- Top 10 Borrowers -->
         <div class="mockup-card p-6">
             <div class="flex items-center gap-2 mb-5 pb-4 border-b border-[var(--border-subtle)]">
-                <div class="w-8 h-8 rounded-xl bg-violet-500/15 text-violet-400 flex items-center justify-center text-sm">
+                <div class="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-sm">
                     <i class="fa-solid fa-ranking-star"></i>
                 </div>
                 <div>
@@ -191,7 +191,7 @@
                     <div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[var(--purple-soft)] transition-colors">
                         <!-- Rank -->
                         <span class="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-extrabold flex-shrink-0
-                            {{ $i === 0 ? 'bg-amber-400 text-amber-900' : ($i === 1 ? 'bg-slate-400 text-slate-900' : ($i === 2 ? 'bg-orange-600 text-white' : 'bg-[var(--border-subtle)] text-[var(--text-muted)]')) }}">
+                            {{ $i === 0 ? 'bg-amber-400 text-amber-900' : ($i === 1 ? 'bg-slate-300 text-slate-800' : ($i === 2 ? 'bg-orange-200 text-orange-900' : 'bg-slate-100 text-slate-600')) }}">
                             {{ $i + 1 }}
                         </span>
                         <!-- Avatar -->
@@ -229,8 +229,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const dCtx = dailyCanvas.getContext('2d');
 
     const areaGrad = dCtx.createLinearGradient(0, 0, 0, 220);
-    areaGrad.addColorStop(0, 'rgba(139, 120, 212, 0.25)');
-    areaGrad.addColorStop(1, 'rgba(139, 120, 212, 0)');
+    areaGrad.addColorStop(0, 'rgba(100, 81, 163, 0.2)');
+    areaGrad.addColorStop(1, 'rgba(100, 81, 163, 0)');
 
     new Chart(dailyCanvas, {
         type: 'line',
@@ -239,13 +239,13 @@ document.addEventListener('DOMContentLoaded', function () {
             datasets: [{
                 label: 'Borrows',
                 data: dailyData,
-                borderColor: '#8b78d4',
+                borderColor: '#6451a3',
                 backgroundColor: areaGrad,
                 borderWidth: 2.5,
                 tension: 0.4,
                 pointRadius: 3,
-                pointBackgroundColor: '#8b78d4',
-                pointBorderColor: '#19142c',
+                pointBackgroundColor: '#6451a3',
+                pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 pointHoverRadius: 6,
                 fill: true,
@@ -257,9 +257,9 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#19142c',
-                    borderColor: '#292244',
-                    borderWidth: 1,
+                    backgroundColor: '#1e1938',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e2e8f0',
                     titleFont: { family: 'Outfit', weight: '700', size: 12 },
                     bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
                     padding: 10,
@@ -276,20 +276,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     grid: { display: false },
                     ticks: {
                         font: { family: 'Plus Jakarta Sans', size: 9 },
-                        color: '#847bb0',
+                        color: '#847d9c',
                         maxTicksLimit: 10,
                     }
                 },
                 y: {
                     min: 0,
-                    // Always show at least 5 steps even if max is small
                     max: Math.max(maxVal + 1, 5),
-                    grid: { color: '#292244' },
+                    grid: { color: '#f0edf7' },
                     border: { display: false },
                     ticks: {
                         font: { family: 'Plus Jakarta Sans', size: 10 },
-                        color: '#847bb0',
-                        // Force integer ticks only
+                        color: '#847d9c',
                         callback: val => Number.isInteger(val) ? val : null,
                         stepSize: 1,
                         precision: 0,
@@ -307,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
             datasets: [{
                 data: [{{ $availableCount }}, {{ $borrowedCount }}, {{ $missingCount }}],
                 backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                borderColor: ['#19142c'],
+                borderColor: ['#ffffff'],
                 borderWidth: 3,
                 hoverOffset: 8,
             }]
@@ -319,9 +317,9 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#19142c',
-                    borderColor: '#292244',
-                    borderWidth: 1,
+                    backgroundColor: '#1e1938',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e2e8f0',
                     cornerRadius: 10,
                     padding: 10,
                     titleFont: { family: 'Outfit', weight: '700', size: 12 },

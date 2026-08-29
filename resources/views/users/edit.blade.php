@@ -11,7 +11,7 @@
 
         <div class="flex items-center gap-2">
             <button type="button" @click="showDeleteModal = true"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-800/40 hover:bg-rose-600 hover:text-white hover:border-transparent transition-all shadow-sm">
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-600 hover:text-white hover:border-transparent transition-all shadow-sm">
                 <i class="fa-solid fa-trash-can text-[10px]"></i> Delete User
             </button>
             <a href="{{ route('users.qr', $user) }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-all shadow">
@@ -73,10 +73,10 @@
                 </div>
 
                 <!-- Admin Password Edit Fields (Only shown when Role is Admin) -->
-                <div id="adminPasswordEditFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-purple-950/20 border border-purple-500/30" style="display: none;">
-                    <div class="md:col-span-2 flex items-center gap-2 pb-1 border-b border-purple-500/20">
+                <div id="adminPasswordEditFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-purple-50 border border-purple-200/80" style="display: none;">
+                    <div class="md:col-span-2 flex items-center gap-2 pb-1 border-b border-purple-200">
                         <i class="fa-solid fa-shield-halved text-xs text-[var(--purple-primary)]"></i>
-                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-purple-300">Admin Login Credentials</span>
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-purple-800">Admin Login Credentials</span>
                     </div>
                     <div>
                         <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
@@ -85,7 +85,7 @@
                         <div class="relative">
                             <input type="password" name="password" id="editPasswordInput" placeholder="••••••••"
                                 class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] pl-3.5 pr-10 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                            <button type="button" onclick="togglePasswordVisibility('editPasswordInput', 'eyeIconEditPassword')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--text-muted)] hover:text-white transition-colors cursor-pointer" title="Toggle password visibility">
+                            <button type="button" onclick="togglePasswordVisibility('editPasswordInput', 'eyeIconEditPassword')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--text-muted)] hover:text-slate-700 transition-colors cursor-pointer" title="Toggle password visibility">
                                 <i id="eyeIconEditPassword" class="fa-regular fa-eye text-sm"></i>
                             </button>
                         </div>
@@ -96,7 +96,7 @@
                         <div class="relative">
                             <input type="password" name="password_confirmation" id="editPasswordConfirmInput" placeholder="••••••••"
                                 class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] pl-3.5 pr-10 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                            <button type="button" onclick="togglePasswordVisibility('editPasswordConfirmInput', 'eyeIconEditPasswordConfirm')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--text-muted)] hover:text-white transition-colors cursor-pointer" title="Toggle password visibility">
+                            <button type="button" onclick="togglePasswordVisibility('editPasswordConfirmInput', 'eyeIconEditPasswordConfirm')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--text-muted)] hover:text-slate-700 transition-colors cursor-pointer" title="Toggle password visibility">
                                 <i id="eyeIconEditPasswordConfirm" class="fa-regular fa-eye text-sm"></i>
                             </button>
                         </div>
@@ -128,7 +128,7 @@
                                         {{ ucfirst($sched->day_of_week) }} &bull; {{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }} – {{ \Carbon\Carbon::parse($sched->end_time)->format('h:i A') }}
                                     </span>
                                 </div>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $sched->is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400' }}">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $sched->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
                                     {{ $sched->is_active ? 'Active' : 'Inactive' }}
                                 </span>
                             </div>
@@ -140,16 +140,11 @@
             </div>
 
             <div class="pt-4 flex items-center justify-between border-t border-[var(--border-subtle)]">
-                <div class="flex gap-3">
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
-                        <i class="fa-solid fa-floppy-disk text-xs"></i> Update Profile
-                    </button>
-                    <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700 transition-colors">
-                        Cancel
-                    </a>
-                </div>
-                <button type="button" @click="showDeleteModal = true" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-rose-400 hover:text-white hover:bg-rose-600 transition-colors">
-                    <i class="fa-solid fa-trash-can text-xs"></i> Delete User
+                <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
+                    <i class="fa-solid fa-floppy-disk text-xs"></i> Update Profile
                 </button>
             </div>
         </form>
@@ -166,7 +161,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @keydown.escape.window="showDeleteModal = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
          style="display: none;">
 
         <div @click.away="showDeleteModal = false"
@@ -176,13 +171,13 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
              x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
-             class="w-full max-w-md bg-[var(--surface-white)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
+             class="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
             
             <!-- Glowing Red Ambient Light Accent -->
-            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/15 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
             <!-- Danger Warning Icon -->
-            <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-500/10">
+            <div class="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-100">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
 
@@ -195,15 +190,15 @@
             </div>
 
             <!-- User Detail Preview Card -->
-            <div class="p-3.5 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] flex items-center gap-3 text-left">
-                <div class="w-11 h-11 rounded-xl bg-purple-600/20 border border-purple-500/30 text-[var(--purple-primary)] font-extrabold text-base flex items-center justify-center flex-shrink-0">
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3 text-left">
+                <div class="w-11 h-11 rounded-xl bg-purple-100 border border-purple-200 text-purple-700 font-extrabold text-base flex items-center justify-center flex-shrink-0">
                     {{ strtoupper(substr($user->name, 0, 1)) }}
                 </div>
                 <div class="min-w-0 flex-1">
                     <p class="font-bold text-sm text-[var(--text-heading)] truncate">{{ $user->name }}</p>
                     <p class="text-xs text-[var(--text-muted)] truncate">{{ $user->email }}</p>
                     <div class="flex items-center gap-2 mt-1">
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-500/15 text-[var(--purple-primary)]">{{ ucfirst($user->role) }}</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-100 text-purple-700">{{ ucfirst($user->role) }}</span>
                         <span class="text-[11px] font-mono text-[var(--text-muted)]">ID: <span class="font-bold text-[var(--text-heading)]">{{ $user->employee_id ?? 'N/A' }}</span></span>
                     </div>
                 </div>
@@ -212,14 +207,14 @@
             <!-- Actions -->
             <div class="flex items-center gap-3 pt-1">
                 <button type="button" @click="showDeleteModal = false"
-                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700/50 hover:text-white transition-all">
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                     Cancel
                 </button>
 
                 <form action="{{ route('users.destroy', $user) }}" method="POST" class="flex-1">
                     @csrf @method('DELETE')
                     <button type="submit"
-                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-500 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2">
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-trash-can text-xs"></i> Yes, Delete
                     </button>
                 </form>

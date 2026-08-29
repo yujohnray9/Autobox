@@ -14,7 +14,7 @@
             <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-all shadow">
                 <i class="fa-solid fa-print text-[11px]"></i> Print Badge
             </button>
-            <a href="{{ route('users.create') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700 transition-all">
+            <a href="{{ route('users.create') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                 <i class="fa-solid fa-user-plus text-[11px]"></i> New User
             </a>
         </div>
@@ -34,7 +34,7 @@
                     <p class="text-[10px] text-[var(--text-muted)] font-bold tracking-wider uppercase mt-0.5">CCSICT Key Locker System</p>
                 </div>
             </div>
-            <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider">
+            <span class="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold uppercase tracking-wider">
                 Authorized
             </span>
         </div>
@@ -76,7 +76,7 @@
         </div>
 
         <!-- Authorized Schedule & Key Access Details -->
-        <div class="bg-[var(--app-bg)]/80 border border-[var(--border-subtle)] rounded-2xl p-4 text-left space-y-3">
+        <div class="bg-white border border-[var(--border-subtle)] rounded-2xl p-4 text-left space-y-3 shadow-sm">
             <div class="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-calendar-check text-[var(--purple-primary)] text-xs"></i>
@@ -90,7 +90,7 @@
             @if($user->schedules->count() > 0)
                 <div class="space-y-2">
                     @foreach($user->schedules as $sched)
-                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-[var(--card-bg)] border border-[var(--border-subtle)] text-xs">
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                             <div class="space-y-0.5">
                                 <div class="flex items-center gap-2">
                                     <span class="px-1.5 py-0.5 rounded bg-[var(--purple-soft)] text-[var(--purple-primary)] font-mono font-extrabold text-[10px]">
@@ -106,13 +106,13 @@
                                 <div class="text-[11px] text-[var(--text-muted)] flex items-center gap-1.5">
                                     <span class="capitalize font-semibold text-[var(--text-body)]">{{ $sched->day_of_week }}</span>
                                     <span>&bull;</span>
-                                    <span class="font-mono text-emerald-400 font-bold">{{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }}</span>
+                                    <span class="font-mono text-emerald-700 font-bold">{{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }}</span>
                                     <span>-</span>
-                                    <span class="font-mono text-rose-400 font-bold">{{ \Carbon\Carbon::parse($sched->end_time)->format('h:i A') }}</span>
+                                    <span class="font-mono text-rose-700 font-bold">{{ \Carbon\Carbon::parse($sched->end_time)->format('h:i A') }}</span>
                                 </div>
                             </div>
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold {{ $sched->is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400' }}">
-                                <span class="w-1.5 h-1.5 rounded-full {{ $sched->is_active ? 'bg-emerald-400' : 'bg-slate-400' }}"></span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold {{ $sched->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $sched->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
                                 {{ $sched->is_active ? 'Active' : 'Inactive' }}
                             </span>
                         </div>
@@ -152,7 +152,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @keydown.escape.window="showRegenModal = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
          style="display: none;">
 
         <div @click.away="showRegenModal = false"
@@ -162,13 +162,13 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
              x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
-             class="w-full max-w-md bg-[var(--surface-white)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
+             class="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
             
             <!-- Glowing Purple/Amber Ambient Light Accent -->
-            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-amber-500/15 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
             <!-- Caution Icon -->
-            <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-amber-500/10">
+            <div class="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-amber-100">
                 <i class="fa-solid fa-arrows-rotate"></i>
             </div>
 
@@ -183,14 +183,14 @@
             <!-- Actions -->
             <div class="flex items-center gap-3 pt-1">
                 <button type="button" @click="showRegenModal = false"
-                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700/50 hover:text-white transition-all">
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                     Cancel
                 </button>
 
                 <form method="POST" action="{{ route('users.regenerate-qr', $user) }}" class="flex-1">
                     @csrf
                     <button type="submit"
-                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] active:scale-[0.98] transition-all shadow-lg shadow-purple-900/40 flex items-center justify-center gap-2">
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] active:scale-[0.98] transition-all shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-rotate text-xs"></i> Yes, Regenerate
                     </button>
                 </form>

@@ -11,16 +11,16 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
         <!-- Stat Card 1: Total Keys -->
-        <div class="mockup-stat-card mockup-stat-card-1">
+        <div class="mockup-stat-card">
             <div class="flex items-center justify-between mb-3">
                 <div class="stat-badge-icon">
                     <i class="fa-solid fa-key"></i>
                 </div>
-                <button class="text-slate-400 hover:text-slate-200 transition-colors">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                </button>
+                <span class="text-[10px] font-extrabold text-[var(--purple-primary)] bg-[var(--purple-soft)] px-2 py-0.5 rounded-md uppercase tracking-wider">
+                    Total
+                </span>
             </div>
-            <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Total Key Slots</p>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Key Slots</p>
             <div class="flex items-baseline justify-between mt-2">
                 <h3 class="text-3xl font-heading font-extrabold text-[var(--text-heading)]">{{ $totalKeys }}</h3>
                 <span class="stat-tag stat-tag-negative">
@@ -30,18 +30,18 @@
         </div>
 
         <!-- Stat Card 2: Available Keys -->
-        <div class="mockup-stat-card mockup-stat-card-2">
+        <div class="mockup-stat-card">
             <div class="flex items-center justify-between mb-3">
-                <div class="stat-badge-icon">
+                <div class="stat-badge-icon stat-badge-icon-emerald">
                     <i class="fa-solid fa-lock-open"></i>
                 </div>
-                <button class="text-slate-400 hover:text-slate-200 transition-colors">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                </button>
+                <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                    Ready
+                </span>
             </div>
-            <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Available Keys</p>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Available Keys</p>
             <div class="flex items-baseline justify-between mt-2">
-                <h3 class="text-3xl font-heading font-extrabold text-[var(--text-heading)]">{{ $availableKeys }}</h3>
+                <h3 class="text-3xl font-heading font-extrabold text-emerald-600">{{ $availableKeys }}</h3>
                 <span class="stat-tag stat-tag-positive">
                     <i class="fa-solid fa-arrow-up text-[9px]"></i> +0.70%
                 </span>
@@ -49,18 +49,18 @@
         </div>
 
         <!-- Stat Card 3: Currently Borrowed -->
-        <div class="mockup-stat-card mockup-stat-card-3">
+        <div class="mockup-stat-card">
             <div class="flex items-center justify-between mb-3">
-                <div class="stat-badge-icon">
+                <div class="stat-badge-icon stat-badge-icon-amber">
                     <i class="fa-solid fa-user-clock"></i>
                 </div>
-                <button class="text-slate-400 hover:text-slate-200 transition-colors">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                </button>
+                <span class="text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                    In Use
+                </span>
             </div>
-            <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Currently Borrowed</p>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Currently Borrowed</p>
             <div class="flex items-baseline justify-between mt-2">
-                <h3 class="text-3xl font-heading font-extrabold text-[var(--text-heading)]">{{ $borrowedKeys }}</h3>
+                <h3 class="text-3xl font-heading font-extrabold text-amber-600">{{ $borrowedKeys }}</h3>
                 <span class="stat-tag stat-tag-neutral">
                     <i class="fa-solid fa-clock text-[9px]"></i> Active
                 </span>
@@ -68,18 +68,18 @@
         </div>
 
         <!-- Stat Card 4: Missing / Alerts (HIGH CONTRAST BRIGHT RED NUMBER) -->
-        <div class="mockup-stat-card mockup-stat-card-missing">
+        <div class="mockup-stat-card">
             <div class="flex items-center justify-between mb-3">
                 <div class="stat-badge-icon stat-badge-missing-icon">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
-                <button class="text-rose-300 hover:text-white transition-colors">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                </button>
+                <span class="text-[10px] font-extrabold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                    Notice
+                </span>
             </div>
-            <p class="text-xs font-bold text-rose-300 uppercase tracking-wider">Missing / Alerts</p>
+            <p class="text-xs font-bold text-rose-600 uppercase tracking-wider">Missing / Alerts</p>
             <div class="flex items-baseline justify-between mt-2">
-                <h3 class="text-3xl font-heading font-extrabold text-rose-400 drop-shadow-sm">{{ $missingKeys }}</h3>
+                <h3 class="text-3xl font-heading font-extrabold text-rose-600">{{ $missingKeys }}</h3>
                 <span class="stat-tag stat-tag-negative shadow-sm">
                     <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Alert
                 </span>
@@ -99,7 +99,7 @@
             </div>
             <div class="flex items-center gap-5 text-xs font-bold text-[var(--text-heading)]">
                 <span class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-full bg-[#8b78d4]"></span>
+                    <span class="w-3 h-3 rounded-full bg-[#6451a3]"></span>
                     Borrows
                 </span>
                 <span class="flex items-center gap-2">
@@ -137,20 +137,20 @@
             </div>
 
             <!-- ULTRASONIC & DC MOTOR SLIDER HARDWARE STATUS -->
-            <div class="p-4 rounded-2xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-slate-900/40 border border-purple-500/30 flex items-center justify-between flex-wrap gap-3">
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50/50 to-white border border-purple-200/80 flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-lg shadow-inner">
+                    <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-lg shadow-sm">
                         <i class="fa-solid fa-sliders"></i>
                     </div>
                     <div>
-                        <h4 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <h4 class="text-sm font-extrabold text-[var(--text-heading)] flex items-center gap-2">
                             DC Motor Slider Door
-                            <span id="slider-door-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            <span id="slider-door-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
                                 <i class="fa-solid fa-hand text-[9px]"></i> Ultrasonic Sensor Active
                             </span>
                         </h4>
-                        <p class="text-xs text-slate-300 mt-0.5">
-                            Hand Detected <i class="fa-solid fa-arrow-right text-[10px] text-purple-400"></i> Rolls Open &nbsp;|&nbsp; No Hand <i class="fa-solid fa-arrow-right text-[10px] text-purple-400"></i> Rolls Closed
+                        <p class="text-xs text-[var(--text-muted)] font-medium mt-0.5">
+                            Hand Detected <i class="fa-solid fa-arrow-right text-[10px] text-[var(--purple-primary)]"></i> Rolls Open &nbsp;|&nbsp; No Hand <i class="fa-solid fa-arrow-right text-[10px] text-[var(--purple-primary)]"></i> Rolls Closed
                         </p>
                     </div>
                 </div>
@@ -203,11 +203,11 @@
                                     <p class="text-[11px] font-bold text-[var(--text-heading)] truncate">{{ $borrower->user->name ?? 'User' }}</p>
                                     <p class="text-[9px] text-[var(--text-muted)]"><i class="fa-regular fa-clock"></i> {{ $borrower->created_at->diffForHumans() }}</p>
                                 @elseif($key->status === 'available')
-                                    <span class="text-emerald-400 font-bold text-[11px] flex items-center gap-1.5">
+                                    <span class="text-emerald-600 font-bold text-[11px] flex items-center gap-1.5">
                                         Ready in Lock Box
                                     </span>
                                 @else
-                                    <span class="text-rose-400 font-bold text-[11px] flex items-center gap-1.5">
+                                    <span class="text-rose-600 font-bold text-[11px] flex items-center gap-1.5">
                                         Flagged Missing
                                     </span>
                                 @endif
@@ -259,11 +259,11 @@
                         <!-- Action Badge & Time -->
                         <div class="text-right flex-shrink-0">
                             @if($t->action === 'borrow')
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-950/60 text-amber-300 border border-amber-800/40">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-200">
                                     <i class="fa-solid fa-arrow-up-from-bracket text-[10px]"></i> Borrow
                                 </span>
                             @else
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                     <i class="fa-solid fa-rotate-left text-[10px]"></i> Return
                                 </span>
                             @endif
@@ -304,7 +304,7 @@
                     {
                         label: 'Borrows',
                         data: borrowsData,
-                        backgroundColor: '#8b78d4',
+                        backgroundColor: '#6451a3',
                         borderRadius: 6,
                         borderSkipped: false,
                         barThickness: 12,
@@ -325,7 +325,9 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: '#19142c',
+                        backgroundColor: '#1e1938',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
                         padding: 10,
                         cornerRadius: 8,
                         titleFont: { family: 'Outfit', size: 12, weight: 'bold' },
@@ -335,14 +337,14 @@
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#847bb0' }
+                        ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#847d9c' }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { color: '#292244' },
+                        grid: { color: '#f0edf7' },
                         ticks: {
                             font: { family: 'Plus Jakarta Sans', size: 10 },
-                            color: '#847bb0',
+                            color: '#847d9c',
                             precision: 0
                         }
                     }
@@ -361,10 +363,10 @@
                     const badge = document.getElementById('slider-door-badge');
                     if (badge) {
                         if (e.state === 'opened') {
-                            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-500/30 text-amber-300 border border-amber-500/50 animate-pulse';
+                            badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800 border border-amber-300 animate-pulse';
                             badge.innerHTML = '<i class="fa-solid fa-door-open text-[9px]"></i> SLIDER OPENING / OPEN';
                         } else {
-                            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                            badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300';
                             badge.innerHTML = '<i class="fa-solid fa-hand text-[9px]"></i> Ultrasonic Sensor Active';
                         }
                     }

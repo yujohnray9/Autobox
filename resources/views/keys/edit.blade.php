@@ -31,7 +31,7 @@
             </div>
 
             <!-- Delete Trigger (Opens Modal) -->
-            <button type="button" @click="showDeleteModal = true" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold text-rose-700 bg-rose-100 hover:bg-rose-600 hover:text-white dark:bg-rose-950/60 dark:text-rose-300 dark:hover:bg-rose-600 dark:hover:text-white transition-all shadow-sm">
+            <button type="button" @click="showDeleteModal = true" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold text-rose-700 bg-rose-100 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
                 <i class="fa-solid fa-trash-can text-xs"></i> Delete Key Slot
             </button>
         </div>
@@ -88,7 +88,7 @@
 
                     <!-- Available Option -->
                     <label class="relative flex flex-col p-3.5 rounded-xl border-2 cursor-pointer transition-all shadow-sm"
-                        :class="status === 'available' ? 'border-emerald-500 bg-emerald-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
+                        :class="status === 'available' ? 'border-emerald-500 bg-emerald-50' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
                         <input type="radio" name="status" value="available" x-model="status" class="sr-only">
                         <div class="flex items-center justify-between">
                             <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 text-xs">
@@ -104,7 +104,7 @@
 
                     <!-- Borrowed Option -->
                     <label class="relative flex flex-col p-3.5 rounded-xl border-2 cursor-pointer transition-all shadow-sm"
-                        :class="status === 'borrowed' ? 'border-amber-500 bg-amber-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
+                        :class="status === 'borrowed' ? 'border-amber-500 bg-amber-50' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
                         <input type="radio" name="status" value="borrowed" x-model="status" class="sr-only">
                         <div class="flex items-center justify-between">
                             <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600 text-xs">
@@ -120,7 +120,7 @@
 
                     <!-- Missing Option -->
                     <label class="relative flex flex-col p-3.5 rounded-xl border-2 cursor-pointer transition-all shadow-sm"
-                        :class="status === 'missing' ? 'border-rose-500 bg-rose-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
+                        :class="status === 'missing' ? 'border-rose-500 bg-rose-50' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
                         <input type="radio" name="status" value="missing" x-model="status" class="sr-only">
                         <div class="flex items-center justify-between">
                             <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-rose-100 text-rose-600 text-xs">
@@ -139,7 +139,7 @@
 
             <!-- Form Actions -->
             <div class="pt-4 flex items-center justify-between border-t border-[var(--border-subtle)]">
-                <a href="{{ route('keys.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700 transition-colors">
+                <a href="{{ route('keys.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
                     Cancel
                 </a>
                 <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-extrabold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
@@ -160,7 +160,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @keydown.escape.window="showDeleteModal = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
          style="display: none;">
 
         <div @click.away="showDeleteModal = false"
@@ -170,12 +170,12 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
              x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
-             class="w-full max-w-md bg-[var(--surface-white)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
+             class="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
 
             <!-- Glowing Red Ambient Light Accent -->
-            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/15 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-            <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-500/10">
+            <div class="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-100">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
 
@@ -189,14 +189,14 @@
 
             <div class="flex items-center gap-3 pt-1">
                 <button type="button" @click="showDeleteModal = false"
-                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700/50 hover:text-white transition-all">
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                     Cancel
                 </button>
 
                 <form method="POST" action="{{ route('keys.destroy', $key) }}" class="flex-1">
                     @csrf @method('DELETE')
                     <button type="submit"
-                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-500 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2">
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-trash-can text-xs"></i> Yes, Delete Slot
                     </button>
                 </form>

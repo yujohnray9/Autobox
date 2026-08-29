@@ -17,7 +17,8 @@ class Key extends Model
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
+            'is_active'   => 'boolean',
+            'slot_number' => 'integer',
         ];
     }
 

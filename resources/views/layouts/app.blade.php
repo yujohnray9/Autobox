@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full dark">
+<html lang="en" class="h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,10 +7,10 @@
     <title>{{ config('app.name', 'AUTOBOX') }} — Key Access & Real-Time Monitoring</title>
     <meta name="description" content="AUTOBOX CCSICT — Physical key management, access control, and real-time monitoring dashboard.">
 
-    <!-- Enforce Dark Theme -->
+    <!-- Enforce Light Theme -->
     <script>
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('autobox_theme', 'dark');
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('autobox_theme', 'light');
     </script>
 
     <!-- Google Fonts: Outfit (headings) + Plus Jakarta Sans (body) -->
@@ -142,7 +141,7 @@
                             <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 text-white font-extrabold text-xs flex items-center justify-center shadow-md">
                                 {{ strtoupper(substr(Auth::user()->name ?? 'W', 0, 1)) }}
                             </div>
-                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#19142c]"></span>
+                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
                         </div>
                         <div class="hidden sm:block">
                             <p class="text-xs font-extrabold text-[var(--text-heading)] leading-none">{{ Auth::user()->name ?? 'William Jake' }}</p>

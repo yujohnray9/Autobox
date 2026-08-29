@@ -1,49 +1,30 @@
 @import 'tailwindcss';
 
 /* ======================================
-   AUTOBOX — Dark Mode Theme (Default)
+   AUTOBOX — White / Light Theme (Default)
    ====================================== */
 
-:root {
-    /* Brand & Layout Colors (Dark Mode Default) */
-    --purple-primary: #8b78d4;
-    --purple-dark: #6e5cb7;
-    --purple-soft: #251d3e;
-    --purple-hover: #7a67c3;
+:root, html {
+    /* Brand & Layout Colors */
+    --purple-primary: #6451a3;
+    --purple-dark: #503d8d;
+    --purple-soft: #f2eefb;
+    --purple-hover: #584695;
     
-    --app-bg: #0f0b1e;
-    --surface-white: #19142c;
-    --border-subtle: #292244;
+    --app-bg: #f6f7fb;
+    --surface-white: #ffffff;
+    --border-subtle: #e6e5f0;
     
     /* Text Palette */
-    --text-heading: #f0ecfc;
-    --text-body: #c4beea;
-    --text-muted: #847bb0;
+    --text-heading: #1e1938;
+    --text-body: #4a4468;
+    --text-muted: #847d9c;
 
     /* Card Stat Palette */
-    --card-lilac: #231b3c;
-    --card-pink: #2a1928;
-    --card-peach: #2b1c1e;
-    --card-mint: #152923;
-}
-
-html, html.dark {
-    --purple-primary: #8b78d4;
-    --purple-dark: #6e5cb7;
-    --purple-soft: #251d3e;
-    
-    --app-bg: #0f0b1e;
-    --surface-white: #19142c;
-    --border-subtle: #292244;
-    
-    --text-heading: #f0ecfc;
-    --text-body: #c4beea;
-    --text-muted: #847bb0;
-
-    --card-lilac: #231b3c;
-    --card-pink: #2a1928;
-    --card-peach: #2b1c1e;
-    --card-mint: #152923;
+    --card-lilac: #f0edfb;
+    --card-pink: #fdf0f5;
+    --card-peach: #fef3ec;
+    --card-mint: #eef9f4;
 }
 
 body {
@@ -106,7 +87,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     border: 1px solid var(--border-subtle);
     border-radius: 1.25rem;
     padding: 1rem 1.5rem;
-    box-shadow: 0 4px 20px rgba(100, 81, 163, 0.04);
+    box-shadow: 0 4px 20px rgba(100, 81, 163, 0.05);
     transition: background 0.3s ease, border-color 0.3s ease;
     width: 100%;
 }
@@ -142,51 +123,60 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
 /* ─── TOP STAT CARDS ───────────────── */
 .mockup-stat-card {
+    background: var(--surface-white);
     border-radius: 1.5rem;
     padding: 1.25rem 1.375rem;
     border: 1px solid var(--border-subtle);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    box-shadow: 0 4px 20px rgba(100, 81, 163, 0.05);
 }
 
 .mockup-stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(100, 81, 163, 0.08);
+    box-shadow: 0 8px 25px rgba(100, 81, 163, 0.1);
+    border-color: rgba(100, 81, 163, 0.3);
 }
 
-.mockup-stat-card-1 {
-    background: var(--card-lilac);
-}
-
-.mockup-stat-card-2 {
-    background: var(--card-pink);
-}
-
-.mockup-stat-card-3 {
-    background: var(--card-peach);
-}
-
+.mockup-stat-card-1,
+.mockup-stat-card-2,
+.mockup-stat-card-3,
 .mockup-stat-card-missing {
-    background: #38151b;
-    border-color: #5c1d28;
+    background: var(--surface-white);
+}
+
+.mockup-stat-card-missing:hover {
+    border-color: rgba(239, 68, 68, 0.4);
 }
 
 .stat-badge-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 0.875rem;
-    background: var(--surface-white);
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 1rem;
+    background: var(--purple-soft);
     color: var(--purple-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    font-size: 1.125rem;
+    border: 1px solid rgba(100, 81, 163, 0.15);
+}
+
+.stat-badge-icon-emerald {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+.stat-badge-icon-amber {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #fde68a;
 }
 
 .stat-badge-missing-icon {
-    background: #ef4444;
-    color: #ffffff;
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecdd3;
 }
 
 .stat-tag {
@@ -200,18 +190,18 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 .stat-tag-positive {
-    background: #152923;
-    color: #34d399;
+    background: #ecfdf5;
+    color: #059669;
 }
 
 .stat-tag-negative {
-    background: #3d151c;
-    color: #fb7185;
+    background: #fef2f2;
+    color: #e11d48;
 }
 
 .stat-tag-neutral {
-    background: #1e1b4b;
-    color: #818cf8;
+    background: #eef2ff;
+    color: #4f46e5;
 }
 
 /* ─── MOCKUP CARD CONTAINER ───────── */
@@ -220,7 +210,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     border: 1px solid var(--border-subtle);
     border-radius: 1.5rem;
     padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(100, 81, 163, 0.04);
+    box-shadow: 0 4px 20px rgba(100, 81, 163, 0.05);
     transition: background 0.3s ease, border-color 0.3s ease;
 }
 
@@ -237,7 +227,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     border-radius: 1.25rem;
     padding: 1.125rem;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 2px 10px rgba(100, 81, 163, 0.04);
 }
 
 .redesigned-slot-card:hover {
@@ -247,18 +237,18 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 .slot-badge-available {
-    background: #152923;
-    color: #34d399;
+    background: #ecfdf5;
+    color: #059669;
 }
 
 .slot-badge-borrowed {
-    background: #312613;
-    color: #fbbf24;
+    background: #fffbeb;
+    color: #d97706;
 }
 
 .slot-badge-missing {
-    background: #33151b;
-    color: #fb7185;
+    background: #fef2f2;
+    color: #e11d48;
 }
 
 .slot-status-icon-circle {
@@ -274,17 +264,17 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 .slot-circle-available {
     background: #10b981;
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .slot-circle-borrowed {
     background: #f59e0b;
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
 
 .slot-circle-missing {
     background: #ef4444;
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }

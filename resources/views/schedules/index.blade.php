@@ -15,7 +15,7 @@
 }">
 
     @if(session('conflict_error'))
-    <div class="flex items-start gap-3 px-5 py-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-800 dark:bg-amber-950/40 dark:border-amber-700/50 dark:text-amber-300 shadow-sm">
+    <div class="flex items-start gap-3 px-5 py-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-800 shadow-sm">
         <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 flex-shrink-0"></i>
         <div>
             <p class="font-extrabold text-sm">Schedule Conflict Detected</p>
@@ -25,7 +25,7 @@
     @endif
 
     @if(session('success'))
-    <div class="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-700/50 dark:text-emerald-300 shadow-sm">
+    <div class="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 shadow-sm">
         <i class="fa-solid fa-circle-check text-emerald-500 flex-shrink-0"></i>
         <p class="text-sm font-semibold">{{ session('success') }}</p>
     </div>
@@ -210,22 +210,22 @@
                             </td>
                             <!-- Time Window -->
                             <td class="px-5 py-3.5 font-mono text-sm font-semibold text-[var(--text-body)]">
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">
+                                <span class="text-emerald-600 font-bold">
                                     {{ \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') }}
                                 </span>
                                 <span class="text-[var(--text-muted)] mx-1">—</span>
-                                <span class="text-rose-500 dark:text-rose-400 font-bold">
+                                <span class="text-rose-600 font-bold">
                                     {{ \Carbon\Carbon::parse($schedule->end_time)->format('h:i A') }}
                                 </span>
                             </td>
                             <!-- Status -->
                             <td class="px-5 py-3.5">
                                 @if($schedule->is_active)
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[var(--border-subtle)] text-[var(--text-muted)]">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600">
                                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Inactive
                                     </span>
                                 @endif
@@ -240,7 +240,7 @@
                                             deleteKeyName = '{{ addslashes($schedule->key->key_name ?? 'Key') }}'; 
                                             deleteSlotNum = '{{ $schedule->key->slot_number ?? '?' }}'; 
                                             deleteDayTime = '{{ ucfirst($schedule->day_of_week) }} · {{ \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') }} – {{ \Carbon\Carbon::parse($schedule->end_time)->format('h:i A') }}'"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[var(--border-subtle)] text-[var(--text-body)] hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white transition-all shadow-sm">
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
                                     <i class="fa-solid fa-trash-can text-[10px]"></i> Remove
                                 </button>
                             </td>
@@ -276,7 +276,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @keydown.escape.window="deleteModalOpen = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
          style="display: none;">
 
         <div @click.away="deleteModalOpen = false"
@@ -286,13 +286,13 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
              x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
-             class="w-full max-w-md bg-[var(--surface-white)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
+             class="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
             
             <!-- Glowing Red Ambient Light Accent -->
-            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/15 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
             <!-- Danger Warning Icon -->
-            <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-500/10">
+            <div class="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-100">
                 <i class="fa-solid fa-calendar-xmark"></i>
             </div>
 
@@ -305,13 +305,13 @@
             </div>
 
             <!-- Schedule Detail Preview Card -->
-            <div class="p-4 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] text-left space-y-2.5">
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-2.5">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-user text-[var(--purple-primary)] text-xs"></i>
                         <span class="font-bold text-sm text-[var(--text-heading)]" x-text="deleteUserName"></span>
                     </div>
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-500/15 text-[var(--purple-primary)]" x-text="deleteUserRole"></span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-100 text-purple-700" x-text="deleteUserRole"></span>
                 </div>
 
                 <div class="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
@@ -324,21 +324,21 @@
 
                 <div class="flex items-center justify-between text-xs">
                     <span class="text-[var(--text-muted)] font-medium">Window:</span>
-                    <span class="font-mono font-bold text-rose-400 text-[11px]" x-text="deleteDayTime"></span>
+                    <span class="font-mono font-bold text-rose-600 text-[11px]" x-text="deleteDayTime"></span>
                 </div>
             </div>
 
             <!-- Actions -->
             <div class="flex items-center gap-3 pt-1">
                 <button type="button" @click="deleteModalOpen = false"
-                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700/50 hover:text-white transition-all">
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                     Cancel
                 </button>
 
                 <form :action="'{{ url('/schedules') }}/' + deleteScheduleId" method="POST" class="flex-1">
                     @csrf @method('DELETE')
                     <button type="submit"
-                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-500 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2">
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-trash-can text-xs"></i> Yes, Remove
                     </button>
                 </form>

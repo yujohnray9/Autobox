@@ -10,7 +10,7 @@
         <a href="{{ route('keys.index') }}" class="inline-flex items-center gap-2 text-xs font-bold text-[var(--purple-primary)] hover:underline transition-all">
             <i class="fa-solid fa-arrow-left text-[11px]"></i> Back to Key Slot Management
         </a>
-        <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 uppercase tracking-wider">
+        <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700 uppercase tracking-wider">
             + New Slot
         </span>
     </div>
@@ -82,7 +82,7 @@
 
                     <!-- Available Option -->
                     <label class="relative flex flex-col p-3.5 rounded-xl border-2 cursor-pointer transition-all shadow-sm"
-                        :class="status === 'available' ? 'border-emerald-500 bg-emerald-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
+                        :class="status === 'available' ? 'border-emerald-500 bg-emerald-50' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
                         <input type="radio" name="status" value="available" x-model="status" class="sr-only">
                         <div class="flex items-center justify-between">
                             <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 text-xs">
@@ -98,7 +98,7 @@
 
                     <!-- Missing Option -->
                     <label class="relative flex flex-col p-3.5 rounded-xl border-2 cursor-pointer transition-all shadow-sm"
-                        :class="status === 'missing' ? 'border-rose-500 bg-rose-950/30' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
+                        :class="status === 'missing' ? 'border-rose-500 bg-rose-50' : 'border-[var(--border-subtle)] bg-[var(--app-bg)] hover:border-slate-300'">
                         <input type="radio" name="status" value="missing" x-model="status" class="sr-only">
                         <div class="flex items-center justify-between">
                             <span class="w-7 h-7 rounded-lg flex items-center justify-center bg-rose-100 text-rose-600 text-xs">
@@ -117,7 +117,7 @@
 
             <!-- Form Actions -->
             <div class="pt-4 flex items-center justify-between border-t border-[var(--border-subtle)]">
-                <a href="{{ route('keys.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700 transition-colors">
+                <a href="{{ route('keys.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
                     Cancel
                 </a>
                 <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-extrabold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">

@@ -235,7 +235,7 @@
 
             <!-- Form Actions -->
             <div class="pt-4 flex items-center justify-between gap-3 border-t border-[var(--border-subtle)]">
-                <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700 transition-colors">
+                <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
                     Cancel
                 </a>
                 <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-all shadow-lg hover:shadow-violet-600/30">
@@ -254,18 +254,18 @@
     background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%) !important;
     border-color: #a78bfa !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4) !important;
+    box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.25) !important;
     transform: translateY(-1px);
 }
 .day-pill-inactive {
-    background: var(--app-bg, #130f24) !important;
-    border-color: var(--border-subtle, #292244) !important;
-    color: var(--text-muted, #847bb0) !important;
+    background: var(--surface-white, #ffffff) !important;
+    border-color: var(--border-subtle, #e6e5f0) !important;
+    color: var(--text-muted, #847d9c) !important;
 }
 .day-pill-inactive:hover {
-    border-color: #8b5cf6 !important;
-    color: #ffffff !important;
-    background: rgba(124, 58, 237, 0.1) !important;
+    border-color: var(--purple-primary) !important;
+    color: var(--purple-primary) !important;
+    background: var(--purple-soft, #f2eefb) !important;
 }
 </style>
 

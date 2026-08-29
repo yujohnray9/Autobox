@@ -48,7 +48,7 @@
                             <button type="button"
                                     @click="deleteModalOpen = true; targetKeyId = '{{ $key->id }}'; targetKeyName = '{{ addslashes($key->key_name) }}'; targetSlotNum = '{{ $key->slot_number }}'"
                                     title="Delete Key Slot"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white dark:bg-rose-950/60 dark:text-rose-300 dark:hover:bg-rose-600 dark:hover:text-white transition-all shadow-sm">
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white transition-all shadow-sm">
                                 <i class="fa-solid fa-trash-can text-[9px]"></i> Delete
                             </button>
                         </div>
@@ -70,11 +70,11 @@
                             <p class="text-[11px] font-bold text-[var(--text-heading)] truncate max-w-[110px]" title="{{ $borrower->user->name ?? 'User' }}">{{ $borrower->user->name ?? 'User' }}</p>
                             <p class="text-[9px] text-[var(--text-muted)]"><i class="fa-regular fa-clock"></i> {{ $borrower->created_at->diffForHumans() }}</p>
                         @elseif($key->status === 'available')
-                            <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1.5">
+                            <span class="text-emerald-600 font-bold text-[11px] flex items-center gap-1.5">
                                 <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Ready in Lock Box
                             </span>
                         @else
-                            <span class="text-rose-600 dark:text-rose-400 font-bold text-[11px] flex items-center gap-1.5">
+                            <span class="text-rose-600 font-bold text-[11px] flex items-center gap-1.5">
                                 <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Flagged Missing
                             </span>
                         @endif
@@ -87,7 +87,7 @@
                             <button type="button"
                                     @click="borrowModalOpen = true; borrowKeyId = '{{ $key->id }}'; borrowKeyName = '{{ addslashes($key->key_name) }}'; borrowSlotNum = '{{ $key->slot_number }}'"
                                     title="Borrow this key slot"
-                                    class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white transition-all shadow-sm flex items-center gap-1">
+                                    class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center gap-1">
                                 <i class="fa-solid fa-key text-[9px]"></i> Borrow
                             </button>
                         @elseif($key->status === 'borrowed')
@@ -131,7 +131,7 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
          style="display: none;">
 
         <div @click.away="borrowModalOpen = false"
@@ -141,15 +141,15 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
-             class="w-full max-w-md bg-white dark:bg-[#18132a] rounded-2xl shadow-2xl border border-slate-200 dark:border-purple-900/40 overflow-hidden p-6 space-y-5 text-left z-50">
+             class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden p-6 sm:p-7 space-y-5 text-left z-50">
 
             <div class="flex items-center gap-3 pb-3 border-b border-[var(--border-subtle)]">
-                <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300 text-xl flex items-center justify-center font-extrabold shadow-inner">
+                <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 text-xl flex items-center justify-center font-extrabold shadow-inner">
                     <i class="fa-solid fa-key"></i>
                 </div>
                 <div>
-                    <h3 class="font-heading font-extrabold text-lg text-slate-900 dark:text-white">Borrow Key Slot #<span x-text="borrowSlotNum"></span></h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400" x-text="borrowKeyName"></p>
+                    <h3 class="font-heading font-extrabold text-lg text-slate-900">Borrow Key Slot #<span x-text="borrowSlotNum"></span></h3>
+                    <p class="text-xs text-slate-500" x-text="borrowKeyName"></p>
                 </div>
             </div>
 
@@ -171,7 +171,7 @@
 
                 <div class="flex items-center gap-3 pt-3 border-t border-[var(--border-subtle)]">
                     <button type="button" @click="borrowModalOpen = false"
-                            class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors">
+                            class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
                         Cancel
                     </button>
 
@@ -195,7 +195,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @keydown.escape.window="deleteModalOpen = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
          style="display: none;">
 
         <div @click.away="deleteModalOpen = false"
@@ -205,12 +205,12 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
              x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
-             class="w-full max-w-md bg-[var(--surface-white)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
+             class="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
 
             <!-- Glowing Red Ambient Light Accent -->
-            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/15 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-rose-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-            <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-500/10">
+            <div class="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-rose-100">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
 
@@ -224,14 +224,14 @@
 
             <div class="flex items-center gap-3 pt-1">
                 <button type="button" @click="deleteModalOpen = false"
-                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700/50 hover:text-white transition-all">
+                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                     Cancel
                 </button>
 
                 <form :action="'{{ url('/keys') }}/' + targetKeyId" method="POST" class="flex-1">
                     @csrf @method('DELETE')
                     <button type="submit"
-                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-500 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/25 flex items-center justify-center gap-2">
+                            class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-trash-can text-xs"></i> Yes, Delete Slot
                     </button>
                 </form>

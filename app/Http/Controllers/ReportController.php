@@ -2,70 +2,58 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaction;
-use App\Models\AccessLog;
 use App\Models\Key;
 use App\Models\User;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class ReportController extends Controller
 {
     public function index()
     {
-        // ── Summary Totals ──────────────────────────────────────
-        $totalBorrows  = Transaction::where('action', 'borrow')->count();
-        $totalReturns  = Transaction::where('action', 'return')->count();
+        // ── Key Counts ──────────────────────────────────────
+        $totalKeys     = Key::count();
+        $availableKeys = Key::where('status', 'available')->count();
+        $borrowedKeys  = Key::where('status', 'borrowed')->count();
+        $missingKeys   = Key::where('status', 'missing')->count();
 
-        // QR Access logs (granted / denied) — column is 'result' not 'status'
-        try {
-            $totalGranted = AccessLog::where('result', 'granted')->count();
-            $totalDenied  = AccessLog::where('result', 'denied')->count();
-        } catch (\Exception $e) {
-            $totalGranted = 0;
-            $totalDenied  = 0;
+        // ── User Counts ─────────────────────────────────────
+        $totalUsers   = User::where('role', '!=', 'admin')->where('is_active', true)->count();
+        $totalAdmins  = User::where('role', 'admin')->where('is_active', true)->count();
+        $inactiveUsers = User::where('role', '!=', 'admin')->where('is_active', false)->count();
+
+        // ── Schedule Counts ─────────────────────────────────
+        $totalSchedules  = Schedule::where('is_active', true)->count();
+        $inactiveSchedules = Schedule::where('is_active', false)->count();
+
+        // ── Schedules per day of week (bar chart) ───────────
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $dayLabels      = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        $schedulePerDay = [];
+        foreach ($days as $day) {
+            $schedulePerDay[] = Schedule::where('day_of_week', $day)->where('is_active', true)->count();
         }
 
-        // ── Daily Borrows: Last 30 Days ─────────────────────────
-        $rawDaily = Transaction::select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('count(*) as count')
-            )
-            ->where('action', 'borrow')
-            ->where('created_at', '>=', now()->subDays(30))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->pluck('count', 'date');
-
-        // Fill missing dates with 0
-        $dailyLabels = [];
-        $dailyData   = [];
-        for ($i = 29; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i)->toDateString();
-            $dailyLabels[] = Carbon::parse($date)->format('M d');
-            $dailyData[]   = $rawDaily[$date] ?? 0;
-        }
-
-        // ── Most Borrowed Key Slots ─────────────────────────────
-        $popularKeys = Transaction::select('key_id', DB::raw('count(*) as total'))
-            ->where('action', 'borrow')
-            ->groupBy('key_id')
-            ->orderByDesc('total')
-            ->with('key')
-            ->take(5)
-            ->get();
-
-        // ── Top 10 Borrowers ────────────────────────────────────
-        $topBorrowers = Transaction::select('user_id', DB::raw('count(*) as total'))
-            ->where('action', 'borrow')
+        // ── Users with most schedules ────────────────────────
+        $topScheduledUsers = Schedule::select('user_id', DB::raw('count(*) as total'))
+            ->where('is_active', true)
             ->groupBy('user_id')
             ->orderByDesc('total')
             ->with('user')
             ->take(10)
             ->get();
 
-        // ── Key Status Breakdown ────────────────────────────────
+        // ── Keys with most schedules ─────────────────────────
+        $popularKeys = Schedule::select('key_id', DB::raw('count(*) as total'))
+            ->where('is_active', true)
+            ->groupBy('key_id')
+            ->orderByDesc('total')
+            ->with('key')
+            ->take(5)
+            ->get();
+
+        // ── Key status breakdown ─────────────────────────────
         $statusCounts   = Key::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status');
@@ -75,9 +63,11 @@ class ReportController extends Controller
         $missingCount   = $statusCounts['missing']   ?? 0;
 
         return view('reports.index', compact(
-            'totalBorrows', 'totalReturns', 'totalGranted', 'totalDenied',
-            'dailyLabels', 'dailyData',
-            'popularKeys', 'topBorrowers',
+            'totalKeys', 'availableKeys', 'borrowedKeys', 'missingKeys',
+            'totalUsers', 'totalAdmins', 'inactiveUsers',
+            'totalSchedules', 'inactiveSchedules',
+            'dayLabels', 'schedulePerDay',
+            'topScheduledUsers', 'popularKeys',
             'statusCounts', 'availableCount', 'borrowedCount', 'missingCount'
         ));
     }

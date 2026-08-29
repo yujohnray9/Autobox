@@ -4,63 +4,47 @@ namespace App\Http\Controllers;
 
 use App\Models\Key;
 use App\Models\User;
-use App\Models\Transaction;
-use App\Models\AccessLog;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $totalKeys = Key::count();
+        // ── Key status counts ──────────────────────────────
+        $totalKeys     = Key::count();
         $availableKeys = Key::where('status', 'available')->count();
-        $borrowedKeys = Key::where('status', 'borrowed')->count();
-        $missingKeys = Key::where('status', 'missing')->count();
+        $borrowedKeys  = Key::where('status', 'borrowed')->count();
+        $missingKeys   = Key::where('status', 'missing')->count();
 
         $keys = Key::orderBy('slot_number')->get();
 
-        $recentTransactions = Transaction::with(['user', 'key'])
-            ->latest()
-            ->take(10)
-            ->get();
+        // ── User & Schedule counts ──────────────────────────
+        $totalUsers     = User::where('role', '!=', 'admin')->where('is_active', true)->count();
+        $totalSchedules = Schedule::where('is_active', true)->count();
+        $totalAdmins    = User::where('role', 'admin')->where('is_active', true)->count();
 
-        $recentLogs = AccessLog::with('user')
-            ->latest()
-            ->take(8)
-            ->get();
-
-        $todayBorrows = Transaction::whereDate('created_at', today())
-            ->where('action', 'borrow')
-            ->count();
-
-        $todayReturns = Transaction::whereDate('created_at', today())
-            ->where('action', 'return')
-            ->count();
-
-        // 12-month data aggregation for dashboard Chart.js dual bar chart
-        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        $monthlyBorrows = [];
-        $monthlyReturns = [];
-
-        foreach (range(1, 12) as $m) {
-            $bCount = Transaction::whereMonth('created_at', $m)
-                ->whereYear('created_at', now()->year)
-                ->where('action', 'borrow')
-                ->count();
-
-            $rCount = Transaction::whereMonth('created_at', $m)
-                ->whereYear('created_at', now()->year)
-                ->where('action', 'return')
-                ->count();
-
-            $monthlyBorrows[] = $bCount;
-            $monthlyReturns[] = $rCount;
+        // ── Schedule breakdown per day (for bar chart) ──────
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $dayLabels   = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        $schedulePerDay = [];
+        foreach ($days as $day) {
+            $schedulePerDay[] = Schedule::where('day_of_week', $day)->where('is_active', true)->count();
         }
+
+        // ── Keys per status (for donut / bar data) ──────────
+        $keyStatusData = [
+            'available' => $availableKeys,
+            'borrowed'  => $borrowedKeys,
+            'missing'   => $missingKeys,
+        ];
 
         return view('dashboard', compact(
             'totalKeys', 'availableKeys', 'borrowedKeys', 'missingKeys',
-            'keys', 'recentTransactions', 'recentLogs', 'todayBorrows', 'todayReturns',
-            'months', 'monthlyBorrows', 'monthlyReturns'
+            'keys',
+            'totalUsers', 'totalSchedules', 'totalAdmins',
+            'dayLabels', 'schedulePerDay',
+            'keyStatusData'
         ));
     }
 }

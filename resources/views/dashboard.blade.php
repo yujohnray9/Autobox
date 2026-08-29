@@ -89,27 +89,27 @@
 
 
     <!-- ═══════════════════════════════════
-         MIDDLE ROW — FULL WIDTH STATISTIC CHART (MAX 100 SCALE)
+         MIDDLE ROW — SCHEDULES PER DAY BAR CHART
          ═══════════════════════════════════ -->
     <div class="mockup-card">
         <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div>
-                <h2 class="mockup-card-title">Statistic</h2>
-                <p class="text-xs text-[var(--text-muted)] font-medium mt-0.5">Monthly Key Borrows vs Returns transaction trends (Scale 0 &mdash; 100)</p>
+                <h2 class="mockup-card-title">Active Schedules</h2>
+                <p class="text-xs text-[var(--text-muted)] font-medium mt-0.5">Number of active user schedules per day of the week</p>
             </div>
             <div class="flex items-center gap-5 text-xs font-bold text-[var(--text-heading)]">
                 <span class="flex items-center gap-2">
                     <span class="w-3 h-3 rounded-full bg-[#6451a3]"></span>
-                    Borrows
+                    Schedules per Day
                 </span>
-                <span class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-full bg-[#e5a84b]"></span>
-                    Returns
-                </span>
+                <a href="{{ route('schedules.index') }}" class="text-xs font-extrabold text-[var(--purple-primary)] hover:underline flex items-center gap-1">
+                    <span>Manage</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
             </div>
         </div>
 
-        <!-- Chart.js Dual Bar Canvas -->
+        <!-- Chart.js Bar Canvas -->
         <div class="relative w-full h-[260px]">
             <canvas id="dashboardBarChart"></canvas>
         </div>
@@ -223,99 +223,107 @@
             </div>
         </div>
 
-        <!-- RECENT ACTIVITY (RIGHT 1 COLUMN) -->
+        <!-- USERS & SCHEDULES SUMMARY (RIGHT 1 COLUMN) -->
         <div class="lg:col-span-1 mockup-card p-5 md:p-6 space-y-4">
             <div class="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
                 <h2 class="mockup-card-title text-base flex items-center gap-2">
-                    <i class="fa-solid fa-clock-rotate-left text-[var(--purple-primary)] text-sm"></i>
-                    Recent Activity
+                    <i class="fa-solid fa-users text-[var(--purple-primary)] text-sm"></i>
+                    System Overview
                 </h2>
-                <a href="{{ route('transactions.index') }}" class="text-xs font-bold text-[var(--purple-primary)] hover:underline flex items-center gap-1">
-                    <span>View All</span>
+                <a href="{{ route('users.index') }}" class="text-xs font-bold text-[var(--purple-primary)] hover:underline flex items-center gap-1">
+                    <span>Manage Users</span>
                     <i class="fa-solid fa-chevron-right text-[9px]"></i>
                 </a>
             </div>
 
             <div class="space-y-3">
-                @forelse($recentTransactions as $t)
-                    <div class="p-3 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] hover:border-[var(--purple-primary)]/50 transition-all flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <!-- Large Avatar -->
-                            <div class="w-9 h-9 rounded-full bg-[var(--purple-soft)] text-[var(--purple-primary)] font-extrabold text-xs flex items-center justify-center flex-shrink-0 shadow-sm ring-2 ring-[var(--purple-primary)]/20">
-                                {{ strtoupper(substr($t->user->name ?? 'U', 0, 1)) }}
-                            </div>
-                            <!-- User & Key Details -->
-                            <div class="min-w-0">
-                                <p class="font-heading font-extrabold text-sm text-[var(--text-heading)] truncate">
-                                    {{ $t->user->name ?? 'System User' }}
-                                </p>
-                                <p class="text-xs font-medium text-[var(--text-muted)] truncate flex items-center gap-1 mt-0.5">
-                                    <i class="fa-solid fa-key text-[10px] text-[var(--purple-primary)]"></i>
-                                    {{ $t->key->key_name ?? 'N/A' }} ({{ $t->key->room_name ?? 'N/A' }})
-                                </p>
-                            </div>
+                <!-- Active Users -->
+                <div class="p-3 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-base flex-shrink-0">
+                            <i class="fa-solid fa-user-group"></i>
                         </div>
+                        <div>
+                            <p class="font-heading font-extrabold text-sm text-[var(--text-heading)]">Active Users</p>
+                            <p class="text-[10px] text-[var(--text-muted)]">Non-admin accounts</p>
+                        </div>
+                    </div>
+                    <span class="text-2xl font-extrabold text-violet-600">{{ $totalUsers }}</span>
+                </div>
 
-                        <!-- Action Badge & Time -->
-                        <div class="text-right flex-shrink-0">
-                            @if($t->action === 'borrow')
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-200">
-                                    <i class="fa-solid fa-arrow-up-from-bracket text-[10px]"></i> Borrow
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                    <i class="fa-solid fa-rotate-left text-[10px]"></i> Return
-                                </span>
-                            @endif
-                            <p class="text-[10px] font-semibold text-[var(--text-muted)] mt-1">
-                                {{ $t->created_at->diffForHumans() }}
-                            </p>
+                <!-- Active Schedules -->
+                <div class="p-3 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-base flex-shrink-0">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <p class="font-heading font-extrabold text-sm text-[var(--text-heading)]">Active Schedules</p>
+                            <p class="text-[10px] text-[var(--text-muted)]">Assigned access windows</p>
                         </div>
                     </div>
-                @empty
-                    <div class="text-center py-10 text-[var(--text-muted)] text-sm">
-                        <i class="fa-solid fa-clock-rotate-left text-3xl mb-2 block opacity-20"></i>
-                        No recent activity recorded yet.
+                    <span class="text-2xl font-extrabold text-sky-600">{{ $totalSchedules }}</span>
+                </div>
+
+                <!-- Total Key Slots -->
+                <div class="p-3 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-[var(--purple-soft)] text-[var(--purple-primary)] flex items-center justify-center text-base flex-shrink-0">
+                            <i class="fa-solid fa-key"></i>
+                        </div>
+                        <div>
+                            <p class="font-heading font-extrabold text-sm text-[var(--text-heading)]">Total Key Slots</p>
+                            <p class="text-[10px] text-[var(--text-muted)]">Registered in system</p>
+                        </div>
                     </div>
-                @endforelse
+                    <span class="text-2xl font-extrabold text-[var(--purple-primary)]">{{ $totalKeys }}</span>
+                </div>
+
+                <!-- Admins -->
+                <div class="p-3 rounded-2xl bg-[var(--app-bg)] border border-[var(--border-subtle)] flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base flex-shrink-0">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <p class="font-heading font-extrabold text-sm text-[var(--text-heading)]">Administrators</p>
+                            <p class="text-[10px] text-[var(--text-muted)]">Full-access accounts</p>
+                        </div>
+                    </div>
+                    <span class="text-2xl font-extrabold text-amber-600">{{ $totalAdmins }}</span>
+                </div>
+
+                <div class="pt-1">
+                    <a href="{{ route('schedules.index') }}" class="block w-full text-center py-2.5 rounded-xl bg-[var(--purple-soft)] text-[var(--purple-primary)] text-xs font-extrabold hover:bg-[var(--purple-primary)] hover:text-white transition-all">
+                        <i class="fa-solid fa-calendar-days mr-1"></i> View All Schedules
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- ═══════════════════════════════════
-     CHART.JS BAR CHART SCRIPT (0 - 100 SCALE)
-     ═══════════════════════════════════ -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('dashboardBarChart');
         if (!ctx) return;
 
-        const months = {!! json_encode($months ?? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']) !!};
-        const borrowsData = {!! json_encode($monthlyBorrows ?? []) !!};
-        const returnsData = {!! json_encode($monthlyReturns ?? []) !!};
+        const dayLabels      = {!! json_encode($dayLabels ?? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']) !!};
+        const schedulePerDay = {!! json_encode($schedulePerDay ?? []) !!};
 
         window.dashboardChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: months,
+                labels: dayLabels,
                 datasets: [
                     {
-                        label: 'Borrows',
-                        data: borrowsData,
+                        label: 'Active Schedules',
+                        data: schedulePerDay,
                         backgroundColor: '#6451a3',
-                        borderRadius: 6,
+                        borderRadius: 8,
                         borderSkipped: false,
-                        barThickness: 12,
-                    },
-                    {
-                        label: 'Returns',
-                        data: returnsData,
-                        backgroundColor: '#e5a84b',
-                        borderRadius: 6,
-                        borderSkipped: false,
-                        barThickness: 12,
+                        barThickness: 28,
                     }
                 ]
             },
@@ -331,13 +339,16 @@
                         padding: 10,
                         cornerRadius: 8,
                         titleFont: { family: 'Outfit', size: 12, weight: 'bold' },
-                        bodyFont: { family: 'Plus Jakarta Sans', size: 11 }
+                        bodyFont: { family: 'Plus Jakarta Sans', size: 11 },
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.y} active schedule${ctx.parsed.y !== 1 ? 's' : ''}`,
+                        }
                     }
                 },
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#847d9c' }
+                        ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#847d9c' }
                     },
                     y: {
                         beginAtZero: true,
@@ -345,7 +356,8 @@
                         ticks: {
                             font: { family: 'Plus Jakarta Sans', size: 10 },
                             color: '#847d9c',
-                            precision: 0
+                            precision: 0,
+                            stepSize: 1,
                         }
                     }
                 }

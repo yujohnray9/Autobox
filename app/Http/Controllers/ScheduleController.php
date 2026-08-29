@@ -12,7 +12,8 @@ class ScheduleController extends Controller
     public function index()
     {
         $schedules = Schedule::with(['user', 'key'])->latest()->paginate(20);
-        $users = User::where('is_active', true)->orderBy('name')->get();
+        // Only non-admin users can have schedules
+        $users = User::where('is_active', true)->where('role', '!=', 'admin')->orderBy('name')->get();
         $keys  = Key::orderBy('slot_number')->get();
 
         return view('schedules.index', compact('schedules', 'users', 'keys'));
@@ -20,7 +21,8 @@ class ScheduleController extends Controller
 
     public function create()
     {
-        $users = User::where('is_active', true)->get();
+        // Only non-admin users can be assigned schedules
+        $users = User::where('is_active', true)->where('role', '!=', 'admin')->orderBy('name')->get();
         $keys  = Key::orderBy('slot_number')->get();
         return view('schedules.create', compact('users', 'keys'));
     }
@@ -34,6 +36,14 @@ class ScheduleController extends Controller
             'start_time'  => 'required|date_format:H:i',
             'end_time'    => 'required|date_format:H:i|after:start_time',
         ]);
+
+        // Server-side guard: admins do not need schedules (they have unrestricted access)
+        $selectedUser = User::find($validated['user_id']);
+        if ($selectedUser && $selectedUser->role === 'admin') {
+            return back()->withInput()->with('conflict_error',
+                "⚠️ Admins cannot be assigned a schedule. Admins already have unrestricted access to all key slots."
+            );
+        }
 
         // Check: same user already has this key scheduled on this day
         $userConflict = Schedule::where('user_id', $validated['user_id'])

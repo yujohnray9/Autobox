@@ -15,6 +15,7 @@ use App\Mail\QrMultipleScansAdminAlert;
 use App\Mail\QrMultipleScansUserWarning;
 use App\Mail\KeyUnreturnedUserNotice;
 use App\Mail\KeyUnreturnedAdminAlert;
+use App\Mail\KeyPhysicallyRemovedAlert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
@@ -347,23 +348,47 @@ class AuthQrController extends Controller
     {
         $request->validate([
             'slot_number' => 'required|integer',
+            'reason'      => 'nullable|string|in:unauthorized_removal,manual',
         ]);
 
         $key = Key::where('slot_number', $request->slot_number)->first();
         if ($key) {
             $key->update(['status' => 'missing']);
 
-            // Find borrower using intelligent multi-level fallback (even if returned_at was set or key was marked available)
-            $borrower = self::resolveLastBorrower($key);
+            // Find borrower using intelligent multi-level fallback
+            $borrower   = self::resolveLastBorrower($key);
             $activeBorrow = self::resolveLastTransaction($key);
 
-            // Send notification email to both the unreturned borrower and all admins
-            $this->sendUnreturnedMissingAlerts($key, $borrower, $activeBorrow);
+            $isUnauthorizedRemoval = $request->input('reason') === 'unauthorized_removal';
 
-            $this->safeBroadcast(function () use ($key) {
+            if ($isUnauthorizedRemoval) {
+                // IR sensor detected physical removal without QR scan — send dedicated theft/intrusion alert
+                try {
+                    $admins = User::where('role', 'admin')->whereNotNull('email')->get();
+                    foreach ($admins as $admin) {
+                        if (filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
+                            Mail::to($admin->email)->send(
+                                new KeyPhysicallyRemovedAlert($admin, $borrower, $key, $activeBorrow)
+                            );
+                        }
+                    }
+                    Log::info("[AUTOBOX SECURITY] Unauthorized removal alert emails sent for Slot #{$key->slot_number}");
+                } catch (\Throwable $e) {
+                    Log::error("[AUTOBOX SECURITY] Failed to send unauthorized removal email: " . $e->getMessage());
+                }
+            } else {
+                // Standard missing alert (triggered manually or by admin)
+                $this->sendUnreturnedMissingAlerts($key, $borrower, $activeBorrow);
+            }
+
+            $this->safeBroadcast(function () use ($key, $isUnauthorizedRemoval) {
                 KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'missing', $key->key_name, $key->room_name, null);
-                AccessLogged::dispatch('Hardware Alert', 'missing', 'denied', "Key missing from Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+                $alertMsg = $isUnauthorizedRemoval
+                    ? "SECURITY: Key physically removed WITHOUT QR scan from Slot #{$key->slot_number}"
+                    : "Key missing from Slot #{$key->slot_number}";
+                AccessLogged::dispatch('Hardware Alert', 'missing', 'denied', $alertMsg, $key->key_name, $key->room_name);
             });
+
             return response()->json(['success' => true, 'message' => "Slot #{$key->slot_number} marked as missing"]);
         }
 

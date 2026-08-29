@@ -8,6 +8,8 @@ use App\Models\Schedule;
 use App\Models\Transaction;
 use App\Models\AccessLog;
 use App\Http\Controllers\Api\AuthQrController;
+use App\Events\KeyStatusUpdated;
+use App\Events\AccessLogged;
 use App\Mail\KeyUnreturnedUserNotice;
 use App\Mail\KeyUnreturnedAdminAlert;
 use Illuminate\Console\Command;
@@ -151,14 +153,42 @@ class CheckUnreturnedKeys extends Command
                 }
             }
 
-            // 6. Record audit log so the event is visible on the web dashboard
+            // 6. Mark the key as 'missing' in the database since the schedule has expired
+            // and the key has not been returned. Only flag if it's still 'borrowed' to avoid
+            // overwriting a status that may have been manually corrected.
+            if ($key->status === 'borrowed') {
+                try {
+                    $key->update(['status' => 'missing']);
+                    $this->warn("    --> Key Slot #{$key->slot_number} status updated to MISSING (schedule expired).");
+
+                    // Broadcast real-time status update so the web dashboard reflects instantly
+                    try {
+                        KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'missing', $key->key_name, $key->room_name, null);
+                        AccessLogged::dispatch(
+                            'System',
+                            'missing',
+                            'denied',
+                            "Key auto-flagged MISSING: {$expiredReason}",
+                            $key->key_name,
+                            $key->room_name
+                        );
+                    } catch (\Throwable $e) {
+                        Log::warning("[UNRETURNED] Broadcast skipped (server unreachable): " . $e->getMessage());
+                    }
+                } catch (\Throwable $e) {
+                    $this->error("    --> Failed to mark key as missing: " . $e->getMessage());
+                    Log::error("[UNRETURNED KEY] Failed to update key status to missing: " . $e->getMessage());
+                }
+            }
+
+            // 7. Record audit log so the event is visible on the web dashboard
             try {
                 AccessLog::create([
                     'user_id'    => $borrower->id,
                     'qr_token'   => $borrower->qr_token ?? 'SYSTEM_ALERT',
                     'action'     => 'alert_unreturned',
                     'result'     => 'denied',
-                    'reason'     => "Overdue Notice Email sent to {$borrower->name}: {$expiredReason}",
+                    'reason'     => "Overdue Notice: Key auto-flagged MISSING. {$expiredReason}",
                     'ip_address' => '127.0.0.1',
                 ]);
             } catch (\Throwable $e) {

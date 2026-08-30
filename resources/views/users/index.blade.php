@@ -63,7 +63,12 @@
                                 </span>
                             </td>
                             <td class="px-5 py-3.5">
-                                @if($user->schedules && $user->schedules->count() > 0)
+                                @if($user->role === 'admin')
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-[var(--purple-primary)] text-xs font-bold border border-purple-200">
+                                        <i class="fa-solid fa-shield-halved text-[11px]"></i>
+                                        <span>Full Access (24/7)</span>
+                                    </span>
+                                @elseif($user->schedules && $user->schedules->count() > 0)
                                     <div class="space-y-1">
                                         @foreach($user->schedules->take(2) as $sched)
                                             <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[var(--purple-soft)] text-[var(--purple-primary)] text-[11px] font-bold">

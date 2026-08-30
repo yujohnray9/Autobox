@@ -109,9 +109,41 @@
                     Manage Schedules
                 </a>
             </div>
-            <div class="relative h-[220px]">
-                <canvas id="schedulesBarChart"></canvas>
-            </div>
+            @if($totalSchedules > 0)
+                <div class="relative h-[220px]">
+                    <canvas id="schedulesBarChart"></canvas>
+                </div>
+            @else
+                <div class="py-6 px-4 text-center flex flex-col items-center justify-center space-y-2.5 bg-[var(--app-bg)] rounded-2xl border border-dashed border-[var(--border-subtle)]">
+                    <svg width="80" height="80" style="width: 80px; height: 80px; max-width: 80px; max-height: 80px;" class="mx-auto text-purple-400" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="25" y="35" width="110" height="100" rx="16" fill="#F4F0FF" stroke="#C4B5FD" stroke-width="2.5" stroke-dasharray="6 6"/>
+                        <rect x="25" y="35" width="110" height="28" rx="16" fill="#6451a3"/>
+                        <rect x="25" y="49" width="110" height="14" fill="#6451a3"/>
+                        <rect x="48" y="24" width="8" height="20" rx="4" fill="#4c3d82"/>
+                        <rect x="104" y="24" width="8" height="20" rx="4" fill="#4c3d82"/>
+                        <circle cx="52" cy="84" r="5" fill="#DDD6FE"/>
+                        <circle cx="80" cy="84" r="5" fill="#DDD6FE"/>
+                        <circle cx="108" cy="84" r="5" fill="#DDD6FE"/>
+                        <circle cx="52" cy="108" r="5" fill="#DDD6FE"/>
+                        <circle cx="80" cy="108" r="5" fill="#DDD6FE"/>
+                        <circle cx="108" cy="108" r="5" fill="#DDD6FE"/>
+                        <g filter="drop-shadow(0px 4px 8px rgba(100, 81, 163, 0.2))">
+                            <circle cx="112" cy="112" r="22" fill="#ffffff" stroke="#6451a3" stroke-width="2.5"/>
+                            <circle cx="112" cy="112" r="17" fill="#EDE9FE"/>
+                            <path d="M112 103V112L118 115" stroke="#6451a3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g>
+                    </svg>
+                    <div class="max-w-sm">
+                        <h4 class="font-heading font-extrabold text-sm text-[var(--text-heading)]">No Active Schedules Configured</h4>
+                        <p class="text-xs text-[var(--text-muted)] mt-0.5 font-medium leading-relaxed">
+                            No user schedule rules have been assigned yet.
+                        </p>
+                    </div>
+                    <a href="{{ route('schedules.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-all shadow-sm">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add Schedule
+                    </a>
+                </div>
+            @endif
         </div>
 
         <!-- Key Status Donut — takes 1/3 -->
@@ -247,8 +279,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Schedules per Day Bar Chart ─────────────────────────────
     const dayLabels      = {!! json_encode($dayLabels) !!};
     const schedulePerDay = {!! json_encode($schedulePerDay) !!};
+    const schedCanvas    = document.getElementById('schedulesBarChart');
 
-    new Chart(document.getElementById('schedulesBarChart'), {
+    if (schedCanvas) {
+        new Chart(schedCanvas, {
         type: 'bar',
         data: {
             labels: dayLabels,
@@ -300,8 +334,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
     // ── Key Status Donut Chart ──────────────────────────────
     new Chart(document.getElementById('statusPieChart'), {

@@ -17,7 +17,7 @@ class KeyController extends Controller
     public function index()
     {
         $keys = Key::orderBy('slot_number')->paginate(15);
-        $users = User::where('is_active', true)->get();
+        $users = User::where('is_active', true)->where('role', '!=', 'admin')->orderBy('name')->get();
         return view('keys.index', compact('keys', 'users'));
     }
 

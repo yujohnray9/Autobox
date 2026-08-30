@@ -79,15 +79,29 @@
         <div class="bg-white border border-[var(--border-subtle)] rounded-2xl p-4 text-left space-y-3 shadow-sm">
             <div class="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                 <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-check text-[var(--purple-primary)] text-xs"></i>
-                    <span class="text-xs font-extrabold uppercase tracking-wider text-[var(--text-heading)]">Assigned Key & Access Schedule</span>
+                    <i class="fa-solid {{ $user->role === 'admin' ? 'fa-shield-halved' : 'fa-calendar-check' }} text-[var(--purple-primary)] text-xs"></i>
+                    <span class="text-xs font-extrabold uppercase tracking-wider text-[var(--text-heading)]">
+                        {{ $user->role === 'admin' ? 'Access Authorization' : 'Assigned Key & Access Schedule' }}
+                    </span>
                 </div>
-                <span class="text-[10px] font-bold text-[var(--text-muted)]">
-                    {{ $user->schedules->count() }} {{ Str::plural('rule', $user->schedules->count()) }}
-                </span>
+                @if($user->role !== 'admin')
+                    <span class="text-[10px] font-bold text-[var(--text-muted)]">
+                        {{ $user->schedules->count() }} {{ Str::plural('rule', $user->schedules->count()) }}
+                    </span>
+                @endif
             </div>
 
-            @if($user->schedules->count() > 0)
+            @if($user->role === 'admin')
+                <div class="p-3.5 rounded-xl bg-purple-50 border border-purple-200 flex items-center gap-3 text-left">
+                    <div class="w-9 h-9 rounded-lg bg-purple-100 text-[var(--purple-primary)] flex items-center justify-center flex-shrink-0 text-base shadow-sm">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-extrabold text-purple-900 uppercase tracking-wider">Unrestricted 24/7 System Access</h4>
+                        <p class="text-[11px] text-purple-700 mt-0.5">Master administrator authorization for all key slots at any time.</p>
+                    </div>
+                </div>
+            @elseif($user->schedules->count() > 0)
                 <div class="space-y-2">
                     @foreach($user->schedules as $sched)
                         <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">

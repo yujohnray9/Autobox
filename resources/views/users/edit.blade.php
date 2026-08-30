@@ -108,15 +108,31 @@
             <div class="pt-4 border-t border-[var(--border-subtle)] space-y-3">
                 <div class="flex items-center justify-between">
                     <h3 class="text-xs font-extrabold uppercase tracking-widest text-[var(--text-heading)] flex items-center gap-1.5">
-                        <i class="fa-solid fa-calendar-days text-[var(--purple-primary)]"></i>
-                        Active Schedules ({{ $user->schedules->count() }})
+                        <i class="fa-solid {{ $user->role === 'admin' ? 'fa-shield-halved' : 'fa-calendar-days' }} text-[var(--purple-primary)]"></i>
+                        @if($user->role === 'admin')
+                            System Access Level
+                        @else
+                            Active Schedules ({{ $user->schedules->count() }})
+                        @endif
                     </h3>
-                    <a href="{{ route('schedules.index') }}" class="text-[11px] font-bold text-[var(--purple-primary)] hover:underline">
-                        Manage All Schedules <i class="fa-solid fa-arrow-right text-[9px]"></i>
-                    </a>
+                    @if($user->role !== 'admin')
+                        <a href="{{ route('schedules.index') }}" class="text-[11px] font-bold text-[var(--purple-primary)] hover:underline">
+                            Manage All Schedules <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                        </a>
+                    @endif
                 </div>
 
-                @if($user->schedules->count() > 0)
+                @if($user->role === 'admin')
+                    <div class="p-4 rounded-2xl bg-purple-50 border border-purple-200 flex items-center gap-3 text-left">
+                        <div class="w-10 h-10 rounded-xl bg-purple-100 text-[var(--purple-primary)] flex items-center justify-center flex-shrink-0 text-base shadow-sm">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-extrabold text-purple-900 uppercase tracking-wider">Full Administrative Access (24/7)</h4>
+                            <p class="text-xs text-purple-700 mt-0.5">Administrators have unrestricted access to all lockbox key slots at any time without schedule restrictions.</p>
+                        </div>
+                    </div>
+                @elseif($user->schedules->count() > 0)
                     <div class="space-y-2">
                         @foreach($user->schedules as $sched)
                             <div class="flex items-center justify-between p-3 rounded-xl bg-[var(--app-bg)] border border-[var(--border-subtle)] text-xs">

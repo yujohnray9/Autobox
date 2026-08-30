@@ -55,108 +55,154 @@
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-3"
          style="display: none;">
-        <div class="mockup-card">
-            <div class="flex items-center gap-3 mb-5 pb-4 border-b border-[var(--border-subtle)]">
-                <div class="w-9 h-9 rounded-xl bg-[var(--purple-soft)] text-[var(--purple-primary)] flex items-center justify-center">
-                    <i class="fa-solid fa-calendar-plus text-sm"></i>
+        <div class="mockup-card p-6 sm:p-7 space-y-5">
+            <div class="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-extrabold shadow-sm">
+                        2
+                    </span>
+                    <h3 class="font-heading font-extrabold text-sm sm:text-base uppercase tracking-wider text-[var(--text-heading)]">
+                        Assign Access Schedule & Key Slot
+                    </h3>
                 </div>
-                <div>
-                    <h3 class="mockup-card-title text-base">New Access Schedule</h3>
-                    <p class="text-[11px] text-[var(--text-muted)]">Assign a borrowing window for a user and key slot</p>
-                </div>
+                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" name="is_active" id="assignScheduleToggleIndex" value="1" checked class="w-4 h-4 rounded border-slate-300 text-[var(--purple-primary)] focus:ring-[var(--purple-primary)]/30">
+                    <span class="text-xs font-bold text-[var(--text-body)]">Enable Key Schedule</span>
+                </label>
             </div>
 
-            <form method="POST" action="{{ route('schedules.store') }}" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form method="POST" action="{{ route('schedules.store') }}" class="space-y-5">
                 @csrf
 
                 <!-- User Selection -->
-                <div class="sm:col-span-2">
+                <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        User (Faculty / Staff) <span class="text-rose-500">*</span>
+                        Authorized User (Faculty / Staff) <span class="text-rose-500">*</span>
                     </label>
                     <select name="user_id" required
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                        <option value="">— Select Authorized User —</option>
+                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        <option value="">-- Select User --</option>
                         @foreach($users as $user)
                             <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
                                 {{ $user->name }} ({{ $user->employee_id ?? 'No ID' }}) &mdash; {{ ucfirst($user->role) }}
+                                @if($user->department) &bull; {{ $user->department }} @endif
                             </option>
                         @endforeach
                     </select>
                     @error('user_id') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Key Slot Selection -->
-                <div class="sm:col-span-2">
-                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        Key Slot / Room <span class="text-rose-500">*</span>
-                    </label>
-                    <select name="key_id" required
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                        <option value="">— Select Key Slot —</option>
-                        @foreach($keys as $key)
-                            <option value="{{ $key->id }}" {{ old('key_id') == $key->id ? 'selected' : '' }}>
-                                Slot #{{ $key->slot_number }} &mdash; {{ $key->key_name }} ({{ $key->room_name }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('key_id') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                <div id="scheduleFieldsContainerIndex" class="space-y-4 bg-[var(--app-bg)]/60 border border-[var(--border-subtle)] rounded-2xl p-5">
+                    <!-- Key Slot Selector -->
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
+                            Authorized Key Slot / Room <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="key_id" required
+                            class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                            <option value="">-- Select Key Slot --</option>
+                            @foreach($keys as $key)
+                                <option value="{{ $key->id }}" {{ old('key_id') == $key->id ? 'selected' : '' }}>
+                                    Slot #{{ $key->slot_number }} — {{ $key->key_name }} ({{ $key->room_name }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('key_id') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
 
-                <!-- Day of Week -->
-                <div>
-                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        Day of the Week <span class="text-rose-500">*</span>
-                    </label>
-                    <select name="day_of_week" required
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                        @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
-                            <option value="{{ $day }}" {{ old('day_of_week') == $day ? 'selected' : '' }}>
-                                {{ ucfirst($day) }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('day_of_week') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                    <!-- Days of Week Selector (Multi-Day Select) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2.5 flex-wrap gap-2">
+                            <label class="block text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-widest">
+                                Authorized Days of Week <span class="text-rose-500">*</span>
+                            </label>
+                            <!-- Quick Preset Badges -->
+                            <div class="flex items-center gap-1.5 text-[10px]">
+                                <button type="button" onclick="selectDayPresetIndex('weekdays')" class="px-2.5 py-1 rounded-lg bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white font-bold transition-all">
+                                    Weekdays (M-F)
+                                </button>
+                                <button type="button" onclick="selectDayPresetIndex('all')" class="px-2.5 py-1 rounded-lg bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white font-bold transition-all">
+                                    All 7 Days
+                                </button>
+                                <button type="button" onclick="selectDayPresetIndex('clear')" class="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 font-bold transition-all">
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
 
-                <!-- Active Status -->
-                <div class="flex items-center gap-3 pt-5">
-                    <input type="checkbox" name="is_active" id="is_active" value="1" checked
-                        class="w-4 h-4 rounded text-[var(--purple-primary)] border-[var(--border-subtle)] focus:ring-[var(--purple-primary)]">
-                    <label for="is_active" class="text-xs font-bold text-[var(--text-heading)] cursor-pointer">
-                        Enable this schedule rule immediately
-                    </label>
-                </div>
+                        <!-- Interactive Day Pills Grid -->
+                        <div class="grid grid-cols-7 gap-1.5 sm:gap-2.5">
+                            @php
+                                $daysConfig = [
+                                    'monday'    => ['short' => 'MON', 'sub' => 'Mon'],
+                                    'tuesday'   => ['short' => 'TUE', 'sub' => 'Tue'],
+                                    'wednesday' => ['short' => 'WED', 'sub' => 'Wed'],
+                                    'thursday'  => ['short' => 'THU', 'sub' => 'Thu'],
+                                    'friday'    => ['short' => 'FRI', 'sub' => 'Fri'],
+                                    'saturday'  => ['short' => 'SAT', 'sub' => 'Sat'],
+                                    'sunday'    => ['short' => 'SUN', 'sub' => 'Sun'],
+                                ];
+                                $selectedDays = (array) old('days', ['monday', 'wednesday', 'friday']);
+                            @endphp
 
-                <!-- Start Time -->
-                <div>
-                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        Start Time <span class="text-rose-500">*</span>
-                    </label>
-                    <input type="time" name="start_time" value="{{ old('start_time', '08:00') }}" required
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                    @error('start_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                            @foreach($daysConfig as $val => $info)
+                                @php $isSelected = in_array($val, $selectedDays); @endphp
+                                <button type="button"
+                                        onclick="toggleDaySelectionIndex('{{ $val }}')"
+                                        id="index-day-btn-{{ $val }}"
+                                        class="day-pill-btn relative flex flex-col items-center justify-center py-3.5 px-1 rounded-2xl border transition-all select-none cursor-pointer {{ $isSelected ? 'day-pill-active' : 'day-pill-inactive' }}">
+                                    <span class="text-xs sm:text-sm font-extrabold uppercase tracking-tight">{{ $info['short'] }}</span>
+                                    <span class="text-[9px] font-semibold opacity-75 capitalize hidden sm:inline mt-0.5">{{ $info['sub'] }}</span>
+                                    <div class="day-check-indicator w-2 h-2 rounded-full mt-1.5 transition-all {{ $isSelected ? 'bg-white shadow' : 'bg-transparent' }}"></div>
+                                    <input type="checkbox" name="days[]" value="{{ $val }}" id="index-day-input-{{ $val }}" {{ $isSelected ? 'checked' : '' }} class="sr-only">
+                                </button>
+                            @endforeach
+                        </div>
 
-                <!-- End Time -->
-                <div>
-                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
-                        End Time <span class="text-rose-500">*</span>
-                    </label>
-                    <input type="time" name="end_time" value="{{ old('end_time', '17:00') }}" required
-                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
-                    @error('end_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        <!-- Active Days Summary Indicator -->
+                        <div class="mt-2.5 flex items-center justify-between text-[11px] text-[var(--text-muted)]">
+                            <span id="indexSelectedDaysSummary">Selected: <strong class="text-[var(--text-heading)] font-bold">Mon, Wed, Fri</strong> (3 days)</span>
+                            <span class="text-[10px] opacity-70 italic">Click day to toggle</span>
+                        </div>
+                        @error('days') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Time Window -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest flex items-center gap-1">
+                                <i class="fa-regular fa-clock text-emerald-500 text-xs"></i> START TIME <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="time" name="start_time" value="{{ old('start_time', '08:00') }}" required
+                                class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                            @error('start_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest flex items-center gap-1">
+                                <i class="fa-regular fa-clock text-rose-500 text-xs"></i> END TIME <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="time" name="end_time" value="{{ old('end_time', '17:00') }}" required
+                                class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                            @error('end_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-[11px] text-[var(--text-muted)] pt-1">
+                        <i class="fa-solid fa-circle-info text-[var(--purple-primary)] text-xs"></i>
+                        <span>The hardware QR scanner will authorize key unlock during this scheduled time window.</span>
+                    </div>
                 </div>
 
                 <!-- Submit Buttons -->
-                <div class="sm:col-span-2 flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-subtle)]">
+                <div class="flex items-center justify-between gap-3 pt-2 border-t border-[var(--border-subtle)]">
                     <button type="button" @click="showForm = false"
-                        class="px-4 py-2 rounded-xl text-xs font-bold text-[var(--text-body)] bg-[var(--border-subtle)] hover:bg-slate-700 transition-colors">
+                        class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
                         Cancel
                     </button>
                     <button type="submit"
-                        class="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
-                        <i class="fa-solid fa-floppy-disk text-xs"></i> Save Access Rule
+                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-all shadow-lg hover:shadow-purple-600/30">
+                        <i class="fa-solid fa-calendar-check text-xs"></i> Save Access Schedule
                     </button>
                 </div>
             </form>
@@ -346,4 +392,114 @@
         </div>
     </div>
 </div>
+
+<style>
+.day-pill-btn {
+    min-height: 62px;
+}
+.day-pill-active {
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%) !important;
+    border-color: #a78bfa !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.3) !important;
+    transform: translateY(-1px);
+}
+.day-pill-inactive {
+    background: #ffffff !important;
+    border-color: #e6e5f0 !important;
+    color: #847d9c !important;
+}
+.day-pill-inactive:hover {
+    border-color: #6451a3 !important;
+    color: #6451a3 !important;
+    background: #f2eefb !important;
+}
+</style>
+
+<script>
+    function toggleDaySelectionIndex(dayVal) {
+        const input = document.getElementById('index-day-input-' + dayVal);
+        if (!input) return;
+
+        input.checked = !input.checked;
+        updateDayPillVisualIndex(dayVal);
+        updateDaysSummaryIndex();
+    }
+
+    function updateDayPillVisualIndex(dayVal) {
+        const btn = document.getElementById('index-day-btn-' + dayVal);
+        const input = document.getElementById('index-day-input-' + dayVal);
+        const dot = btn ? btn.querySelector('.day-check-indicator') : null;
+        if (!btn || !input) return;
+
+        if (input.checked) {
+            btn.classList.remove('day-pill-inactive');
+            btn.classList.add('day-pill-active');
+            if (dot) {
+                dot.classList.remove('bg-transparent');
+                dot.classList.add('bg-white', 'shadow');
+            }
+        } else {
+            btn.classList.remove('day-pill-active');
+            btn.classList.add('day-pill-inactive');
+            if (dot) {
+                dot.classList.remove('bg-white', 'shadow');
+                dot.classList.add('bg-transparent');
+            }
+        }
+    }
+
+    function selectDayPresetIndex(type) {
+        const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        allDays.forEach(day => {
+            const input = document.getElementById('index-day-input-' + day);
+            if (!input) return;
+
+            if (type === 'all') {
+                input.checked = true;
+            } else if (type === 'weekdays') {
+                input.checked = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(day);
+            } else if (type === 'clear') {
+                input.checked = false;
+            }
+            updateDayPillVisualIndex(day);
+        });
+        updateDaysSummaryIndex();
+    }
+
+    function updateDaysSummaryIndex() {
+        const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const names = { monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun' };
+        const checked = allDays.filter(d => {
+            const input = document.getElementById('index-day-input-' + d);
+            return input && input.checked;
+        }).map(d => names[d]);
+
+        const summary = document.getElementById('indexSelectedDaysSummary');
+        if (summary) {
+            if (checked.length > 0) {
+                summary.innerHTML = 'Selected: <strong class="text-[var(--text-heading)] font-bold">' + checked.join(', ') + '</strong> (' + checked.length + ' ' + (checked.length === 1 ? 'day' : 'days') + ')';
+            } else {
+                summary.innerHTML = '<span class="text-amber-500 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> No days selected</span>';
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggle = document.getElementById('assignScheduleToggleIndex');
+        const container = document.getElementById('scheduleFieldsContainerIndex');
+
+        if (toggle && container) {
+            toggle.addEventListener('change', function () {
+                if (toggle.checked) {
+                    container.classList.remove('opacity-40', 'pointer-events-none');
+                } else {
+                    container.classList.add('opacity-40', 'pointer-events-none');
+                }
+            });
+        }
+
+        updateDaysSummaryIndex();
+    });
+</script>
 @endsection

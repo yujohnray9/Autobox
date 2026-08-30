@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Key;
-use App\Models\Schedule;
 use App\Models\Transaction;
 use App\Models\AccessLog;
 use Illuminate\Database\Seeder;
@@ -64,8 +63,8 @@ class DatabaseSeeder extends Seeder
         // 3. Create Only 3 Keys (Room 1, Room 2, Room 3)
         $keys = [
             ['key_name' => 'Room 1', 'room_name' => 'Room 1', 'description' => 'Programming & Multi-Media Lab', 'slot_number' => 1, 'status' => 'available'],
-            ['key_name' => 'Room 2', 'room_name' => 'Room 2', 'description' => 'Networking & Cisco Lab', 'slot_number' => 2, 'status' => 'borrowed'],
-            ['key_name' => 'Room 3', 'room_name' => 'Room 3', 'description' => 'Hardware & IoT Lab', 'slot_number' => 3, 'status' => 'missing'],
+            ['key_name' => 'Room 2', 'room_name' => 'Room 2', 'description' => 'Networking & Cisco Lab', 'slot_number' => 2, 'status' => 'available'],
+            ['key_name' => 'Room 3', 'room_name' => 'Room 3', 'description' => 'Hardware & IoT Lab', 'slot_number' => 3, 'status' => 'available'],
         ];
 
         $createdKeys = [];
@@ -73,58 +72,10 @@ class DatabaseSeeder extends Seeder
             $createdKeys[] = Key::create($k);
         }
 
-        // 4. Create Schedules
-        Schedule::create([
+        // 4. Create Historical (Returned) Transactions
+        Transaction::create([
             'user_id'     => $faculty1->id,
             'key_id'      => $createdKeys[0]->id, // Lab 1 Key
-            'day_of_week' => 'monday',
-            'start_time'  => '08:00:00',
-            'end_time'    => '12:00:00',
-            'is_active'   => true,
-        ]);
-
-        Schedule::create([
-            'user_id'     => $faculty1->id,
-            'key_id'      => $createdKeys[1]->id, // Lab 2 Key
-            'day_of_week' => 'tuesday',
-            'start_time'  => '13:00:00',
-            'end_time'    => '17:00:00',
-            'is_active'   => true,
-        ]);
-
-        Schedule::create([
-            'user_id'     => $faculty2->id,
-            'key_id'      => $createdKeys[1]->id, // Lab 2 Key
-            'day_of_week' => 'wednesday',
-            'start_time'  => '09:00:00',
-            'end_time'    => '12:00:00',
-            'is_active'   => true,
-        ]);
-
-        // 5. Create Transactions
-        Transaction::create([
-            'user_id'     => $faculty1->id,
-            'key_id'      => $createdKeys[1]->id, // Lab 2 Key (currently borrowed)
-            'action'      => 'borrow',
-            'status'      => 'success',
-            'notes'       => 'Borrowed for Networking class',
-            'borrowed_at' => now()->subHours(2),
-            'returned_at' => null,
-        ]);
-
-        Transaction::create([
-            'user_id'     => $faculty2->id,
-            'key_id'      => $createdKeys[2]->id, // Lab 3 Key
-            'action'      => 'borrow',
-            'status'      => 'success',
-            'notes'       => 'Borrowed for IT101 Lecture',
-            'borrowed_at' => now()->subMinutes(45),
-            'returned_at' => null,
-        ]);
-
-        Transaction::create([
-            'user_id'     => $faculty1->id,
-            'key_id'      => $createdKeys[0]->id, // Lab 1 Key (returned earlier)
             'action'      => 'return',
             'status'      => 'success',
             'notes'       => 'Returned key after lab class',
@@ -132,7 +83,7 @@ class DatabaseSeeder extends Seeder
             'returned_at' => now()->subHours(1),
         ]);
 
-        // 6. Access Logs
+        // 5. Access Logs
         AccessLog::create([
             'user_id'    => $faculty1->id,
             'qr_token'   => $faculty1->qr_token,

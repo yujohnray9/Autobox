@@ -17,7 +17,9 @@
             </h2>
             <p class="text-xs text-[var(--text-muted)] mt-0.5">Manage physical key slots, assign manual borrows, or restore returned keys.</p>
         </div>
-    
+         <a href="{{ route('keys.create') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
+            <i class="fa-solid fa-plus text-xs"></i> Add New Key Slot
+        </a>
     </div>
 
     <!-- Key Slots Grid -->

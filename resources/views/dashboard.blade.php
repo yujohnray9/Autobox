@@ -109,10 +109,45 @@
             </div>
         </div>
 
-        <!-- Chart.js Bar Canvas -->
-        <div class="relative w-full h-[260px]">
-            <canvas id="dashboardBarChart"></canvas>
-        </div>
+        @if($totalSchedules > 0)
+            <!-- Chart.js Bar Canvas -->
+            <div class="relative w-full h-[260px]">
+                <canvas id="dashboardBarChart"></canvas>
+            </div>
+        @else
+            <!-- Beautiful No-Schedule Empty SVG State -->
+            <div class="py-8 px-4 text-center flex flex-col items-center justify-center space-y-3 bg-[var(--app-bg)] rounded-2xl border border-dashed border-[var(--border-subtle)]">
+                <svg width="90" height="90" style="width: 90px; height: 90px; max-width: 90px; max-height: 90px;" class="mx-auto text-purple-400" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="25" y="35" width="110" height="100" rx="16" fill="#F4F0FF" stroke="#C4B5FD" stroke-width="2.5" stroke-dasharray="6 6"/>
+                    <rect x="25" y="35" width="110" height="28" rx="16" fill="#6451a3"/>
+                    <rect x="25" y="49" width="110" height="14" fill="#6451a3"/>
+                    <rect x="48" y="24" width="8" height="20" rx="4" fill="#4c3d82"/>
+                    <rect x="104" y="24" width="8" height="20" rx="4" fill="#4c3d82"/>
+                    <circle cx="52" cy="84" r="5" fill="#DDD6FE"/>
+                    <circle cx="80" cy="84" r="5" fill="#DDD6FE"/>
+                    <circle cx="108" cy="84" r="5" fill="#DDD6FE"/>
+                    <circle cx="52" cy="108" r="5" fill="#DDD6FE"/>
+                    <circle cx="80" cy="108" r="5" fill="#DDD6FE"/>
+                    <circle cx="108" cy="108" r="5" fill="#DDD6FE"/>
+                    <g filter="drop-shadow(0px 4px 8px rgba(100, 81, 163, 0.2))">
+                        <circle cx="112" cy="112" r="22" fill="#ffffff" stroke="#6451a3" stroke-width="2.5"/>
+                        <circle cx="112" cy="112" r="17" fill="#EDE9FE"/>
+                        <path d="M112 103V112L118 115" stroke="#6451a3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <path d="M38 18L39.5 22L43.5 23.5L39.5 25L38 29L36.5 25L32.5 23.5L36.5 22L38 18Z" fill="#A78BFA"/>
+                    <path d="M136 55L137.5 58.5L141 59.5L137.5 60.5L136 64L134.5 60.5L131 59.5L134.5 58.5L136 55Z" fill="#C4B5FD"/>
+                </svg>
+                <div class="max-w-sm">
+                    <h3 class="font-heading font-extrabold text-base text-[var(--text-heading)]">No Active Schedules</h3>
+                    <p class="text-xs text-[var(--text-muted)] mt-1 font-medium leading-relaxed">
+                        There are currently no access schedules configured for faculty or staff.
+                    </p>
+                </div>
+                <a href="{{ route('schedules.create') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-all shadow-sm">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Create Schedule
+                </a>
+            </div>
+        @endif
     </div>
 
     <!-- ═══════════════════════════════════

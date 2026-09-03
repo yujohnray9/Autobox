@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         // 1. Create Admin User
         $admin = User::create([
             'name'        => 'CCSICT Admin',
-            'email'       => 'admin@autobox.edu.ph',
+            'email'       => 'yujohnray96@gmail.com',
             'password'    => Hash::make('admin123'),
             'role'        => 'admin',
             'department'  => 'CCSICT',

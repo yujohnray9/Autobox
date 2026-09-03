@@ -106,6 +106,7 @@ def lcd_print(line1="", line2=""):
 
 
 def setup_gpio():
+    GPIO.cleanup()    
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
 
@@ -484,13 +485,25 @@ def authenticate_qr_offline(qr_token, slot_number=None):
 
     target_key = None
     if user.get("role") == "admin":
-        if slot_number is not None:
-            target_key = keys.get(str(slot_number)) or keys.get(int(slot_number))
-        else:
-            for s_num, k in keys.items():
-                if k.get("status") == "available":
-                    target_key = k
-                    break
+        append_pending_log({
+            "type": "access_log",
+            "user_id": user["id"],
+            "qr_token": qr_token,
+            "action": "admin_access",
+            "result": "granted",
+            "reason": "Admin Access: Main lockbox door opened (Offline)",
+            "timestamp": now_str,
+        })
+        return {
+            "success": True,
+            "status": "GRANTED",
+            "action": "ADMIN_DOOR_OPEN",
+            "slot_number": None,
+            "key_name": "Lock Box Main Door",
+            "user_name": user.get("name", "Admin"),
+            "message": "Admin Access: Opening Door",
+            "offline": True,
+        }
     else:
         now_dt = datetime.now()
         today = now_dt.strftime("%A").lower()
@@ -683,7 +696,34 @@ def process_scan(qr_token):
         time.sleep(1)
         lcd_print(f"Slot #{slot}", key_name[:16])
 
-        if slot:
+        if action == "ADMIN_DOOR_OPEN" or slot is None:
+            lcd_print("ADMIN ACCESS", user_name[:16])
+            time.sleep(1)
+            lcd_print("Unlocking Slots", "Opening Door...")
+
+            try:
+                if ENABLE_SOLENOIDS:
+                    print(f"[AUTOBOX] Unlocking Main Door & All Slot Solenoids for Admin ({user_name})...")
+                    GPIO.output(MAIN_LOCK_PIN, GPIO.HIGH)
+                    for s_num, pin in SLOT_PINS.items():
+                        GPIO.output(pin, GPIO.HIGH)
+
+                print("[AUTOBOX] Opening motorized slider door...")
+                slider_open()
+
+                print("[AUTOBOX] Waiting for user hand removal (5s safety timer)...")
+                wait_no_hand_and_close()
+
+            finally:
+                if ENABLE_SOLENOIDS:
+                    GPIO.output(MAIN_LOCK_PIN, GPIO.LOW)
+                    for s_num, pin in SLOT_PINS.items():
+                        GPIO.output(pin, GPIO.LOW)
+                    print("[AUTOBOX] All solenoids relocked.")
+
+            get_key_statuses()
+            update_key_presence_and_leds()
+        elif slot:
             if ENABLE_SOLENOIDS:
                 print(f"[AUTOBOX] Unlocking Main Door and Slot #{slot}...")
                 GPIO.output(MAIN_LOCK_PIN, GPIO.HIGH)

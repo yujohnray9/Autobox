@@ -117,19 +117,34 @@ class AuthQrController extends Controller
             ]);
         }
 
-        // ACTION: BORROW KEY - Check active schedule
         $today = strtolower(now()->format('l'));
         $currentTime = now()->format('H:i:s');
         $key = null;
 
         if ($user->role === 'admin') {
-            if ($request->filled('slot_number')) {
-                $key = Key::where('slot_number', $request->slot_number)->first();
-            } else {
-                $key = Key::where('status', 'available')->first();
-            }
+            AccessLog::create([
+                'user_id'    => $user->id,
+                'qr_token'   => $qrToken,
+                'action'     => 'admin_access',
+                'result'     => 'granted',
+                'reason'     => 'Admin Access: Main lockbox door opened',
+                'ip_address' => $ip,
+            ]);
+
+            $this->safeBroadcast(function () use ($user) {
+                AccessLogged::dispatch($user->name, 'admin_access', 'granted', 'Admin Access: Door opened', null, null);
+            });
+
+            return response()->json([
+                'success'     => true,
+                'status'      => 'GRANTED',
+                'action'      => 'ADMIN_DOOR_OPEN',
+                'slot_number' => null,
+                'key_name'    => 'Lock Box Main Door',
+                'user_name'   => $user->name,
+                'message'     => 'Admin Access: Opening Door',
+            ]);
         } else {
-            // Regular user: Must have an active schedule for TODAY within the scheduled time window
             $schedule = Schedule::where('user_id', $user->id)
                 ->where('day_of_week', $today)
                 ->where('is_active', true)
@@ -648,7 +663,7 @@ class AuthQrController extends Controller
                 if ($key && $userId) {
                     $user = User::find($userId);
 
-                    if ($action === 'borrow') {
+                    if ($action === 'borrow' && $user && $user->role !== 'admin') {
                         Transaction::create([
                             'user_id'     => $userId,
                             'key_id'      => $key->id,

@@ -72,11 +72,12 @@ class CheckUnreturnedKeys extends Command
                 continue;
             }
 
-            // 2. Find schedule for this user and key
+            // 2. Find schedule for this user and key (latest active schedule)
             $schedule = Schedule::where('user_id', $borrower->id)
                 ->where('key_id', $key->id)
                 ->where('day_of_week', $today)
                 ->where('is_active', true)
+                ->latest()
                 ->first();
 
             // Fallback: check any active schedule for this user & key
@@ -84,6 +85,7 @@ class CheckUnreturnedKeys extends Command
                 $schedule = Schedule::where('user_id', $borrower->id)
                     ->where('key_id', $key->id)
                     ->where('is_active', true)
+                    ->latest()
                     ->first();
             }
 
@@ -92,10 +94,13 @@ class CheckUnreturnedKeys extends Command
 
             if ($schedule) {
                 if ($schedule->day_of_week === $today) {
-                    // Check if current time is PAST the schedule end_time (e.g. ended at 08:00, now 08:01)
-                    if ($currentTime > $schedule->end_time) {
+                    // Add 1-minute grace period past schedule end_time (e.g. ends at 11:20 -> alert at 11:21+)
+                    $endTimeCarbon = \Carbon\Carbon::parse($schedule->end_time);
+                    $graceEndTime = $endTimeCarbon->copy()->addMinute();
+
+                    if (now()->format('H:i:s') >= $graceEndTime->format('H:i:s')) {
                         $isExpired = true;
-                        $endTimeFormatted = \Carbon\Carbon::parse($schedule->end_time)->format('h:i A');
+                        $endTimeFormatted = $endTimeCarbon->format('h:i A');
                         $expiredReason = "Your scheduled access on " . ucfirst($today) . " ended at {$endTimeFormatted}, but Key {$key->key_name} (Slot #{$key->slot_number}) has NOT yet been returned.";
                     }
                 } else {

@@ -101,11 +101,17 @@
                     @enderror
                 </div>
 
-                <!-- Remember Me -->
-                <div class="flex items-center gap-2">
-                    <input id="remember_me" type="checkbox" name="remember"
-                           class="rounded border-slate-300 text-violet-600 focus:ring-violet-500">
-                    <label for="remember_me" class="text-xs font-medium text-slate-600">Remember me on this device</label>
+                <!-- Remember Me & Forgot Password -->
+                <div class="flex items-center justify-between gap-2 pt-0.5">
+                    <label for="remember_me" class="inline-flex items-center gap-2 cursor-pointer select-none">
+                        <input id="remember_me" type="checkbox" name="remember"
+                               class="rounded border-slate-300 text-violet-600 focus:ring-violet-500">
+                        <span class="text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors">Remember me</span>
+                    </label>
+                    <a href="{{ route('password.request') }}"
+                       class="text-xs font-semibold text-violet-600 hover:text-violet-700 hover:underline transition-colors flex items-center gap-1">
+                        Forgot password?
+                    </a>
                 </div>
 
                 <!-- Submit -->

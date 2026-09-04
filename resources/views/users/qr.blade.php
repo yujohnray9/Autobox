@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="max-w-xl mx-auto space-y-6" x-data="{ showRegenModal: false }">
+
     <!-- Top Action Nav -->
     <div class="flex items-center justify-between no-print">
         <a href="{{ route('users.index') }}" class="inline-flex items-center gap-2 text-xs font-bold text-[var(--purple-primary)] hover:underline transition-all">
@@ -14,54 +15,117 @@
             <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-all shadow">
                 <i class="fa-solid fa-print text-[11px]"></i> Print Badge
             </button>
+
             <a href="{{ route('users.create') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                 <i class="fa-solid fa-user-plus text-[11px]"></i> New User
             </a>
         </div>
     </div>
 
-    <!-- Printable QR Badge Card -->
+
+    <!-- =========================================================
+         PRINTABLE QR BADGE
+         ========================================================= -->
     <div class="mockup-card p-6 md:p-8 text-center space-y-6 print-badge-card" id="printableQr">
 
-        <!-- Header Badge Title -->
+        <!-- Header -->
         <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
             <div class="flex items-center gap-2 text-left">
                 <div class="w-8 h-8 rounded-xl bg-[var(--purple-soft)] text-[var(--purple-primary)] flex items-center justify-center font-extrabold text-sm shadow-sm">
                     <i class="fa-solid fa-key"></i>
                 </div>
+
                 <div>
-                    <h3 class="font-heading font-extrabold text-sm text-[var(--text-heading)] leading-none">AUTOBOX ACCESS BADGE</h3>
-                    <p class="text-[10px] text-[var(--text-muted)] font-bold tracking-wider uppercase mt-0.5">CCSICT Key Locker System</p>
+                    <h3 class="font-heading font-extrabold text-sm text-[var(--text-heading)] leading-none">
+                        AUTOBOX ACCESS BADGE
+                    </h3>
+
+                    <p class="text-[10px] text-[var(--text-muted)] font-bold tracking-wider uppercase mt-0.5">
+                        CCSIСT Key Locker System
+                    </p>
                 </div>
             </div>
+
             <span class="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold uppercase tracking-wider">
                 Authorized
             </span>
         </div>
 
-        <!-- User Avatar & Profile info -->
-        <div>
+
+        <!-- =====================================================
+             PRINT-ONLY INFORMATION
+             Only Name + Department + QR Code
+             ===================================================== -->
+        <div class="print-only-badge">
+
+            <!-- User Name -->
+            <div class="mb-4">
+                <h2 class="font-heading font-extrabold text-2xl text-[var(--text-heading)]">
+                    {{ $user->name }}
+                </h2>
+
+                <!-- Department -->
+                @if($user->department)
+                    <p class="text-sm text-[var(--text-muted)] font-semibold mt-1">
+                        {{ $user->department }}
+                    </p>
+                @endif
+            </div>
+
+            <!-- QR Code -->
+            @php
+                $token = $user->qr_token ?? $user->generateQrToken();
+                $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($token);
+            @endphp
+
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-inner inline-block">
+                <img src="{{ $qrUrl }}"
+                     alt="QR Access Code for {{ $user->name }}"
+                     class="w-64 h-64 mx-auto rounded-lg">
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             SCREEN-ONLY INFORMATION
+             ===================================================== -->
+
+        <!-- User Avatar & Profile Info -->
+        <div class="screen-only">
             <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 text-white text-2xl font-extrabold flex items-center justify-center mx-auto mb-3 shadow-md ring-4 ring-violet-500/20">
                 {{ strtoupper(substr($user->name, 0, 1)) }}
             </div>
-            <h2 class="font-heading font-extrabold text-xl text-[var(--text-heading)]">{{ $user->name }}</h2>
+
+            <h2 class="font-heading font-extrabold text-xl text-[var(--text-heading)]">
+                {{ $user->name }}
+            </h2>
+
             <p class="text-xs text-[var(--text-muted)] font-medium mt-0.5">
-                ID: <span class="font-mono font-bold text-[var(--text-heading)]">{{ $user->employee_id ?? 'N/A' }}</span>
+                ID:
+                <span class="font-mono font-bold text-[var(--text-heading)]">
+                    {{ $user->employee_id ?? 'N/A' }}
+                </span>
+
                 &middot;
-                <span class="capitalize font-bold text-[var(--purple-primary)]">{{ $user->role }}</span>
+
+                <span class="capitalize font-bold text-[var(--purple-primary)]">
+                    {{ $user->role }}
+                </span>
+
                 @if($user->department)
-                    &middot; <span class="text-[var(--text-body)]">{{ $user->department }}</span>
+                    &middot;
+                    <span class="text-[var(--text-body)]">
+                        {{ $user->department }}
+                    </span>
                 @endif
             </p>
         </div>
 
-        <!-- Dynamic Real QR Code Image -->
-        @php
-            $token = $user->qr_token ?? $user->generateQrToken();
-            $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=" . urlencode($token);
-        @endphp
 
-        <div class="space-y-3">
+        <!-- Screen QR -->
+        <div class="screen-only space-y-3">
+
             <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-inner inline-block relative group">
                 <img src="{{ $qrUrl }}"
                      alt="QR Access Code for {{ $user->name }}"
@@ -70,94 +134,170 @@
 
             <!-- Display Token -->
             <div class="bg-[var(--app-bg)] px-3 py-2 rounded-xl max-w-sm mx-auto border border-[var(--border-subtle)]">
-                <p class="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Physical Scanner Token</p>
-                <p class="text-[11px] font-mono font-bold text-[var(--text-heading)] break-all">{{ $token }}</p>
+                <p class="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">
+                    Physical Scanner Token
+                </p>
+
+                <p class="text-[11px] font-mono font-bold text-[var(--text-heading)] break-all">
+                    {{ $token }}
+                </p>
             </div>
+
         </div>
 
+
         <!-- Authorized Schedule & Key Access Details -->
-        <div class="bg-white border border-[var(--border-subtle)] rounded-2xl p-4 text-left space-y-3 shadow-sm">
+        <div class="screen-only bg-white border border-[var(--border-subtle)] rounded-2xl p-4 text-left space-y-3 shadow-sm">
+
             <div class="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+
                 <div class="flex items-center gap-2">
                     <i class="fa-solid {{ $user->role === 'admin' ? 'fa-shield-halved' : 'fa-calendar-check' }} text-[var(--purple-primary)] text-xs"></i>
+
                     <span class="text-xs font-extrabold uppercase tracking-wider text-[var(--text-heading)]">
                         {{ $user->role === 'admin' ? 'Access Authorization' : 'Assigned Key & Access Schedule' }}
                     </span>
                 </div>
+
                 @if($user->role !== 'admin')
                     <span class="text-[10px] font-bold text-[var(--text-muted)]">
-                        {{ $user->schedules->count() }} {{ Str::plural('rule', $user->schedules->count()) }}
+                        {{ $user->schedules->count() }}
+                        {{ Str::plural('rule', $user->schedules->count()) }}
                     </span>
                 @endif
+
             </div>
 
+
             @if($user->role === 'admin')
+
                 <div class="p-3.5 rounded-xl bg-purple-50 border border-purple-200 flex items-center gap-3 text-left">
+
                     <div class="w-9 h-9 rounded-lg bg-purple-100 text-[var(--purple-primary)] flex items-center justify-center flex-shrink-0 text-base shadow-sm">
                         <i class="fa-solid fa-shield-halved"></i>
                     </div>
+
                     <div>
-                        <h4 class="text-xs font-extrabold text-purple-900 uppercase tracking-wider">Unrestricted 24/7 System Access</h4>
-                        <p class="text-[11px] text-purple-700 mt-0.5">Master administrator authorization for all key slots at any time.</p>
+                        <h4 class="text-xs font-extrabold text-purple-900 uppercase tracking-wider">
+                            Unrestricted 24/7 System Access
+                        </h4>
+
+                        <p class="text-[11px] text-purple-700 mt-0.5">
+                            Master administrator authorization for all key slots at any time.
+                        </p>
                     </div>
+
                 </div>
+
             @elseif($user->schedules->count() > 0)
+
                 <div class="space-y-2">
+
                     @foreach($user->schedules as $sched)
+
                         <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+
                             <div class="space-y-0.5">
+
                                 <div class="flex items-center gap-2">
+
                                     <span class="px-1.5 py-0.5 rounded bg-[var(--purple-soft)] text-[var(--purple-primary)] font-mono font-extrabold text-[10px]">
                                         Slot #{{ $sched->key->slot_number ?? '?' }}
                                     </span>
+
                                     <span class="font-bold text-[var(--text-heading)]">
                                         {{ $sched->key->key_name ?? 'Key Slot' }}
                                     </span>
+
                                     <span class="text-[var(--text-muted)] text-[11px]">
                                         ({{ $sched->key->room_name ?? 'Room' }})
                                     </span>
+
                                 </div>
+
                                 <div class="text-[11px] text-[var(--text-muted)] flex items-center gap-1.5">
-                                    <span class="capitalize font-semibold text-[var(--text-body)]">{{ $sched->day_of_week }}</span>
+
+                                    <span class="capitalize font-semibold text-[var(--text-body)]">
+                                        {{ $sched->day_of_week }}
+                                    </span>
+
                                     <span>&bull;</span>
-                                    <span class="font-mono text-emerald-700 font-bold">{{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }}</span>
+
+                                    <span class="font-mono text-emerald-700 font-bold">
+                                        {{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }}
+                                    </span>
+
                                     <span>-</span>
-                                    <span class="font-mono text-rose-700 font-bold">{{ \Carbon\Carbon::parse($sched->end_time)->format('h:i A') }}</span>
+
+                                    <span class="font-mono text-rose-700 font-bold">
+                                        {{ \Carbon\Carbon::parse($sched->end_time)->format('h:i A') }}
+                                    </span>
+
                                 </div>
+
                             </div>
+
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold {{ $sched->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
+
                                 <span class="w-1.5 h-1.5 rounded-full {{ $sched->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
+
                                 {{ $sched->is_active ? 'Active' : 'Inactive' }}
+
                             </span>
+
                         </div>
+
                     @endforeach
+
                 </div>
+
             @else
+
                 <div class="py-2 text-center text-xs text-[var(--text-muted)]">
-                    <p class="font-semibold">No scheduled access rules currently assigned.</p>
-                    <a href="{{ route('schedules.index') }}" class="text-[var(--purple-primary)] hover:underline font-bold text-[11px] mt-1 inline-block no-print">
+
+                    <p class="font-semibold">
+                        No scheduled access rules currently assigned.
+                    </p>
+
+                    <a href="{{ route('schedules.index') }}"
+                       class="text-[var(--purple-primary)] hover:underline font-bold text-[11px] mt-1 inline-block no-print">
                         + Assign Schedule Now
                     </a>
+
                 </div>
+
             @endif
+
         </div>
 
-        <p class="text-[11px] text-[var(--text-muted)] leading-relaxed max-w-xs mx-auto font-medium">
+
+        <!-- Screen Instruction -->
+        <p class="screen-only text-[11px] text-[var(--text-muted)] leading-relaxed max-w-xs mx-auto font-medium">
             Scan this QR code at the physical terminal to unlock your assigned key slot during authorized schedule hours.
         </p>
 
-        <!-- Action Buttons (Hidden on Print) -->
+
+        <!-- Action Buttons -->
         <div class="pt-2 border-t border-[var(--border-subtle)] space-y-3 no-print">
-            <button type="button" @click="showRegenModal = true"
+
+            <button type="button"
+                    @click="showRegenModal = true"
                     class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-md">
-                <i class="fa-solid fa-rotate text-xs"></i> Regenerate QR Token
+
+                <i class="fa-solid fa-rotate text-xs"></i>
+                Regenerate QR Token
+
             </button>
+
         </div>
+
     </div>
 
-    <!-- ═══════════════════════════════════
-         PREMIUM CONFIRMATION REGENERATE QR MODAL
-         ═══════════════════════════════════ -->
+
+    <!-- =========================================================
+         REGENERATE QR MODAL
+         ========================================================= -->
+
     <div x-show="showRegenModal"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
@@ -170,67 +310,134 @@
          style="display: none;">
 
         <div @click.away="showRegenModal = false"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-             x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
              class="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 text-center relative overflow-hidden">
-            
-            <!-- Glowing Purple/Amber Ambient Light Accent -->
+
             <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-            <!-- Caution Icon -->
             <div class="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 text-2xl flex items-center justify-center mx-auto shadow-inner ring-4 ring-amber-100">
                 <i class="fa-solid fa-arrows-rotate"></i>
             </div>
 
-            <!-- Header Content -->
             <div>
-                <h3 class="font-heading font-extrabold text-xl text-[var(--text-heading)]">Regenerate QR Token?</h3>
+                <h3 class="font-heading font-extrabold text-xl text-[var(--text-heading)]">
+                    Regenerate QR Token?
+                </h3>
+
                 <p class="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed font-medium">
-                    This will immediately revoke the current QR badge for <strong class="text-[var(--text-heading)]">{{ $user->name }}</strong>. Any previously saved or printed copies will no longer unlock the terminal.
+                    This will immediately revoke the current QR badge for
+                    <strong class="text-[var(--text-heading)]">{{ $user->name }}</strong>.
+                    Any previously saved or printed copies will no longer unlock the terminal.
                 </p>
             </div>
 
-            <!-- Actions -->
             <div class="flex items-center gap-3 pt-1">
-                <button type="button" @click="showRegenModal = false"
+
+                <button type="button"
+                        @click="showRegenModal = false"
                         class="flex-1 py-2.5 px-4 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                     Cancel
                 </button>
 
-                <form method="POST" action="{{ route('users.regenerate-qr', $user) }}" class="flex-1">
+                <form method="POST"
+                      action="{{ route('users.regenerate-qr', $user) }}"
+                      class="flex-1">
+
                     @csrf
+
                     <button type="submit"
                             class="w-full py-2.5 px-4 rounded-xl text-sm font-extrabold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] active:scale-[0.98] transition-all shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-rotate text-xs"></i> Yes, Regenerate
+
+                        <i class="fa-solid fa-rotate text-xs"></i>
+                        Yes, Regenerate
+
                     </button>
+
                 </form>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
+
+<!-- =========================================================
+     PRINT STYLES
+     ========================================================= -->
+
 <style>
+
+.print-only-badge {
+    display: none;
+}
+
 @media print {
-    .no-print, header, aside, .sidebar, #toastContainer {
+
+    /* Hide everything by default */
+    body * {
+        visibility: hidden !important;
+    }
+
+    /* Show only the badge */
+    #printableQr,
+    #printableQr * {
+        visibility: visible !important;
+    }
+
+    /* Hide normal screen content */
+    .screen-only,
+    .no-print {
         display: none !important;
     }
+
+    /* Show print-only content */
+    .print-only-badge {
+        display: block !important;
+    }
+
+    /* Remove page background */
     body {
         background: white !important;
         color: black !important;
+        margin: 0 !important;
     }
+
+    /* Badge itself */
     .print-badge-card {
+        position: absolute !important;
+        left: 50% !important;
+        top: 20px !important;
+        transform: translateX(-50%) !important;
+
+        width: 450px !important;
+        max-width: 450px !important;
+
+        margin: 0 !important;
+        padding: 30px !important;
+
         border: 2px solid #333 !important;
+        border-radius: 20px !important;
+
         box-shadow: none !important;
         background: white !important;
-        color: black !important;
-        max-width: 450px !important;
-        margin: 0 auto !important;
+    }
+
+    /* Make QR clear when printed */
+    .print-only-badge img {
+        width: 260px !important;
+        height: 260px !important;
+        display: block !important;
+    }
+
+    /* Remove unnecessary page margins */
+    @page {
+        margin: 0;
+        size: auto;
     }
 }
-</style>
-@endsection
 
+</style>
+
+@endsection

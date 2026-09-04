@@ -73,7 +73,7 @@
                         </div>
                         <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
                                class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                               placeholder="admin@autobox.edu.ph">
+                               placeholder="Enter Email Address">
                     </div>
                     @error('email')
                         <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>

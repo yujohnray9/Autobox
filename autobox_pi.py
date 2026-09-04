@@ -547,8 +547,8 @@ def authenticate_qr_offline(qr_token, slot_number=None):
             "offline": True,
         }
 
-    if target_key.get("status") == "borrowed":
-        reason = f"Slot #{target_key.get('slot_number')} already borrowed"
+    if target_key.get("status") in ["borrowed", "missing"]:
+        reason = f"Slot #{target_key.get('slot_number')} Key has not Return Yet"
         print(f"[OFFLINE AUTH] Denied: {reason}")
         append_pending_log({
             "type": "access_log",
@@ -562,7 +562,10 @@ def authenticate_qr_offline(qr_token, slot_number=None):
         return {
             "success": False,
             "status": "DENIED",
-            "message": "Already Borrowed",
+            "error_code": "KEY_NOT_RETURNED",
+            "message": "Key has not Return Yet",
+            "lcd_line1": "Key has not",
+            "lcd_line2": "Return Yet",
             "offline": True,
         }
 
@@ -763,11 +766,18 @@ def process_scan(qr_token):
             deny_access()
     else:
         message = result.get("message", "Access Denied")
+        lcd_l1 = result.get("lcd_line1")
+        lcd_l2 = result.get("lcd_line2")
         print(f"[AUTOBOX] Access Denied: {message}")
-        lcd_print("ACCESS DENIED", message[:16])
+        if lcd_l1 and lcd_l2:
+            lcd_print(lcd_l1, lcd_l2)
+        elif "has not return" in message.lower() or "not return" in message.lower():
+            lcd_print("Key has not", "Return Yet")
+        else:
+            lcd_print("ACCESS DENIED", message[:16])
         deny_access()
+        time.sleep(2.0)
 
-    time.sleep(1.5)
     lcd_print("AUTOBOX Ready", "Scan QR Code")
 
 

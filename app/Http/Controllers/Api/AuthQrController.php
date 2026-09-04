@@ -213,24 +213,29 @@ class AuthQrController extends Controller
             ], 404);
         }
 
-        if ($key->status === 'borrowed') {
+        if ($key->status === 'borrowed' || $key->status === 'missing') {
+            $reason = "Access Denied: Key has not Return Yet (Slot #{$key->slot_number} is {$key->status})";
+
             AccessLog::create([
                 'user_id'    => $user->id,
                 'qr_token'   => $qrToken,
                 'action'     => 'borrow',
                 'result'     => 'denied',
-                'reason'     => "Key Slot #{$key->slot_number} is already borrowed",
+                'reason'     => $reason,
                 'ip_address' => $ip,
             ]);
 
             $this->safeBroadcast(function () use ($user, $key) {
-                AccessLogged::dispatch($user->name, 'borrow', 'denied', "Slot #{$key->slot_number} already borrowed", $key->key_name, $key->room_name);
+                AccessLogged::dispatch($user->name, 'borrow', 'denied', "Key has not Return Yet (Slot #{$key->slot_number})", $key->key_name, $key->room_name);
             });
 
             return response()->json([
-                'success' => false,
-                'status'  => 'DENIED',
-                'message' => "Key is currently borrowed by another user",
+                'success'    => false,
+                'status'     => 'DENIED',
+                'error_code' => 'KEY_NOT_RETURNED',
+                'message'    => 'Key has not Return Yet',
+                'lcd_line1'  => 'Key has not',
+                'lcd_line2'  => 'Return Yet',
             ], 409);
         }
 
@@ -349,7 +354,17 @@ class AuthQrController extends Controller
      */
     public function getKeyStatuses()
     {
-        $keys = Key::orderBy('slot_number')->get(['id', 'key_name', 'room_name', 'slot_number', 'status']);
+        $keys = Key::orderBy('slot_number')->get()->map(function ($k) {
+            return [
+                'id'            => $k->id,
+                'key_name'      => $k->key_name,
+                'room_name'     => $k->room_name,
+                'slot_number'   => $k->slot_number,
+                'status'        => $k->status,
+                'schedule_info' => $k->getScheduleStatusInfo(),
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'keys'    => $keys,

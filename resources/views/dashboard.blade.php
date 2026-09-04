@@ -197,6 +197,7 @@
                     @php
                         $borrower = $key->currentBorrower();
                         $badgeClass = match($key->status) { 'available' => 'slot-badge-available', 'borrowed' => 'slot-badge-borrowed', default => 'slot-badge-missing' };
+                        $scheduleInfo = $key->getScheduleStatusInfo();
                     @endphp
 
                     <div class="redesigned-slot-card flex flex-col justify-between">
@@ -228,6 +229,30 @@
                                 <p class="text-xs font-semibold text-[var(--purple-primary)] flex items-center gap-1 mt-0.5">
                                     <i class="fa-solid fa-door-open text-[10px]"></i> {{ $key->room_name }}
                                 </p>
+
+                                @if($scheduleInfo && !empty($scheduleInfo['in_grace']))
+                                    <div class="mt-2.5 p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-1.5 grace-countdown-container"
+                                         data-seconds-left="{{ $scheduleInfo['seconds_left'] }}"
+                                         data-slot="{{ $key->slot_number }}">
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <span class="relative flex h-2 w-2">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                            </span>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-amber-800 truncate">
+                                                Return Timer
+                                            </span>
+                                        </div>
+                                        <span class="grace-countdown-display font-mono font-black text-xs text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 flex-shrink-0">
+                                            --:--
+                                        </span>
+                                    </div>
+                                @elseif($scheduleInfo && $scheduleInfo['state'] === 'active')
+                                    <div class="mt-2 text-[10px] font-semibold text-slate-500 flex items-center gap-1">
+                                        <i class="fa-regular fa-clock text-[9px] text-[var(--purple-primary)]"></i>
+                                        <span>Schedule: {{ $scheduleInfo['schedule_start'] }} - {{ $scheduleInfo['schedule_end'] }}</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -431,7 +456,30 @@
                         }
                     }
                 });
+        // ═══════════════════════════════════
+        // LIVE 10-MINUTE RETURN GRACE COUNTDOWN
+        // ═══════════════════════════════════
+        function updateGraceCountdowns() {
+            const containers = document.querySelectorAll('.grace-countdown-container');
+            containers.forEach(container => {
+                let sec = parseInt(container.getAttribute('data-seconds-left') || '0', 10);
+                const displayEl = container.querySelector('.grace-countdown-display');
+                if (!displayEl) return;
+
+                if (sec > 0) {
+                    const mins = Math.floor(sec / 60);
+                    const remainder = sec % 60;
+                    displayEl.textContent = String(mins).padStart(2, '0') + ':' + String(remainder).padStart(2, '0');
+                    sec--;
+                    container.setAttribute('data-seconds-left', sec);
+                } else {
+                    displayEl.textContent = '00:00';
+                    displayEl.className = 'grace-countdown-display font-mono font-black text-xs text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 animate-pulse';
+                }
+            });
         }
+        updateGraceCountdowns();
+        setInterval(updateGraceCountdowns, 1000);
     });
 </script>
 @endsection

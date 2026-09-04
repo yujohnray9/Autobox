@@ -94,14 +94,24 @@ class CheckUnreturnedKeys extends Command
 
             if ($schedule) {
                 if ($schedule->day_of_week === $today) {
-                    // Add 1-minute grace period past schedule end_time (e.g. ends at 11:20 -> alert at 11:21+)
-                    $endTimeCarbon = \Carbon\Carbon::parse($schedule->end_time);
-                    $graceEndTime = $endTimeCarbon->copy()->addMinute();
+                    $endTimeCarbon = \Carbon\Carbon::today()->setTimeFromTimeString($schedule->end_time);
+                    // 10-minute countdown grace period past schedule end_time (e.g. ends 9:00 -> grace until 9:10)
+                    $graceEndTime = $endTimeCarbon->copy()->addMinutes(10);
+                    $now = now();
 
-                    if (now()->format('H:i:s') >= $graceEndTime->format('H:i:s')) {
+                    // If schedule ended, but still within the 10-minute return countdown:
+                    if ($now->greaterThanOrEqualTo($endTimeCarbon) && $now->lessThan($graceEndTime)) {
+                        $secondsLeft = max(0, (int) $now->diffInSeconds($graceEndTime, false));
+                        $minsLeft = ceil($secondsLeft / 60);
+                        $this->line("  [GRACE COUNTDOWN] Slot #{$key->slot_number} ({$key->key_name}) borrowed by {$borrower->name} - Schedule ended at {$endTimeCarbon->format('h:i A')}. 10-min return countdown active (~{$minsLeft}m left, ends at {$graceEndTime->format('h:i A')}). NOT missing yet.");
+                        continue;
+                    }
+
+                    // 10-minute return countdown has completed and key was NOT returned:
+                    if ($now->greaterThanOrEqualTo($graceEndTime)) {
                         $isExpired = true;
                         $endTimeFormatted = $endTimeCarbon->format('h:i A');
-                        $expiredReason = "Your scheduled access on " . ucfirst($today) . " ended at {$endTimeFormatted}, but Key {$key->key_name} (Slot #{$key->slot_number}) has NOT yet been returned.";
+                        $expiredReason = "Your scheduled access on " . ucfirst($today) . " ended at {$endTimeFormatted}. The 10-minute return countdown has expired and Key {$key->key_name} (Slot #{$key->slot_number}) has NOT been returned.";
                     }
                 } else {
                     // Scheduled for another day (e.g. yesterday) and key is still not returned today
@@ -109,10 +119,10 @@ class CheckUnreturnedKeys extends Command
                     $expiredReason = "Your schedule was for " . ucfirst($schedule->day_of_week) . ", but Key {$key->key_name} (Slot #{$key->slot_number}) has NOT yet been returned today.";
                 }
             } else {
-                // If user has no specific schedule, flag if borrowed over 1 hour ago
-                if ($tx->borrowed_at && $tx->borrowed_at->diffInMinutes(now()) >= 60) {
+                // If user has no specific schedule, flag if borrowed over 1 hour + 10 mins grace period
+                if ($tx->borrowed_at && $tx->borrowed_at->diffInMinutes(now()) >= 70) {
                     $isExpired = true;
-                    $expiredReason = "Key {$key->key_name} (Slot #{$key->slot_number}) was borrowed {$tx->borrowed_at->diffForHumans()} and has not been returned.";
+                    $expiredReason = "Key {$key->key_name} (Slot #{$key->slot_number}) was borrowed {$tx->borrowed_at->diffForHumans()} and the 10-minute return window has expired.";
                 }
             }
 

@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+[x-cloak] {
+    display: none !important;
+}
+
 /* ======================================
    AUTOBOX — White / Light Theme (Default)
    ====================================== */

@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'autobox' => [
+        'hardware_key' => env('AUTOBOX_HARDWARE_KEY', 'autobox-sec-hw-token-ccsict-2026'),
+    ],
+
 ];
+

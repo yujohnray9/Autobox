@@ -7,6 +7,9 @@ export default defineConfig({
         host: '0.0.0.0',
         cors: true,
     },
+    build: {
+        emptyOutDir: false,
+    },
     plugins: [
         tailwindcss(),
         laravel({
@@ -15,3 +18,4 @@ export default defineConfig({
         }),
     ],
 });
+

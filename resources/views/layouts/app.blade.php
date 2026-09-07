@@ -6,6 +6,7 @@
 
     <title>{{ config('app.name', 'AUTOBOX') }} — Key Access & Real-Time Monitoring</title>
     <meta name="description" content="AUTOBOX CCSICT — Physical key management, access control, and real-time monitoring dashboard.">
+    <link rel="icon" type="image/jpeg" href="{{ asset('build/assets/logo.jpg') }}">
 
     <!-- Enforce Light Theme -->
     <script>
@@ -40,11 +41,14 @@
         <div>
             <!-- Brand Logo Header -->
             <div class="px-2 py-3 mb-4 flex items-center justify-between">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-                    <div class="sidebar-brand-logo shadow-lg">
-                        <i class="fa-solid fa-key text-lg text-white"></i>
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
+                    <div class="sidebar-brand-logo w-11 h-11 rounded-full bg-white shadow-lg overflow-hidden p-0.5 flex items-center justify-center border-2 border-white/50 flex-shrink-0">
+                        <img src="{{ asset('build/assets/logo.jpg') }}" alt="AutoBox Logo" class="w-full h-full object-contain rounded-full">
                     </div>
-                    <span class="font-heading font-extrabold text-2xl tracking-tight text-white">AUTOBOX</span>
+                    <div>
+                        <span class="font-heading font-extrabold text-2xl tracking-tight text-white group-hover:text-purple-100 transition-colors block leading-none">AUTOBOX</span>
+                        <span class="text-[10px] font-bold text-purple-200 uppercase tracking-widest block mt-1">CCSICT ISU</span>
+                    </div>
                 </a>
             </div>
 
@@ -117,7 +121,7 @@
                 <!-- Left: Welcome Title with Purple Branded Badge -->
                 <div class="flex items-center gap-3.5">
                     <div class="w-10 h-10 rounded-2xl bg-[var(--purple-soft)] text-[var(--purple-primary)] flex items-center justify-center text-base shadow-sm border border-[var(--border-subtle)]">
-                        <i class="fa-solid fa-crown text-[var(--purple-primary)]"></i>
+                        <i class="fa-solid fa-key text-[var(--purple-primary)]"></i>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">

@@ -5,8 +5,9 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                        <x-application-logo class="block h-9 w-9 rounded-full object-contain shadow-sm border border-slate-200" />
+                        <span class="font-bold text-lg text-slate-800 tracking-tight">AUTOBOX</span>
                     </a>
                 </div>
 

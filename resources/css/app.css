@@ -45,16 +45,20 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 .sidebar-brand-logo {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 0.875rem;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 9999px;
+    background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    padding: 2px;
+    flex-shrink: 0;
 }
+
 
 .sidebar-nav-link {
     display: flex;

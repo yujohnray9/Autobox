@@ -22,9 +22,6 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full antialiased flex flex-col md:flex-row min-h-screen">

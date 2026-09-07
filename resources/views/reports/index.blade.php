@@ -147,18 +147,29 @@
         </div>
 
         <!-- Key Status Donut — takes 1/3 -->
-        <div class="mockup-card p-6 flex flex-col">
-            <div class="mb-4">
-                <h3 class="mockup-card-title text-base flex items-center gap-2">
-                    <i class="fa-solid fa-chart-pie text-[var(--purple-primary)] text-sm"></i>
-                    Key Status
-                </h3>
-                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Current slot breakdown</p>
-            </div>
+        <div class="mockup-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="mb-4">
+                    <h3 class="mockup-card-title text-base flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-[var(--purple-primary)] text-sm"></i>
+                        Key Status
+                    </h3>
+                    <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Current slot breakdown</p>
+                </div>
 
-            <!-- Donut canvas -->
-            <div class="relative h-[160px] flex items-center justify-center">
-                <canvas id="statusPieChart"></canvas>
+                @if(($availableCount + $borrowedCount + $missingCount) > 0)
+                    <!-- Donut canvas -->
+                    <div class="relative h-[180px] w-full flex items-center justify-center my-2">
+                        <canvas id="statusPieChart" style="max-height: 180px; max-width: 100%;"></canvas>
+                    </div>
+                @else
+                    <!-- Clean empty state if no keys -->
+                    <div class="py-8 px-4 text-center flex flex-col items-center justify-center space-y-2 bg-[var(--app-bg)] rounded-2xl border border-dashed border-[var(--border-subtle)] my-2">
+                        <i class="fa-solid fa-chart-pie text-3xl text-[var(--purple-primary)] opacity-30"></i>
+                        <h4 class="font-heading font-extrabold text-xs text-[var(--text-heading)]">No Key Data</h4>
+                        <p class="text-[10px] text-[var(--text-muted)] font-medium">No key slots registered yet.</p>
+                    </div>
+                @endif
             </div>
 
             <!-- Manual legend pills -->
@@ -275,6 +286,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const ChartClass = window.Chart || (typeof Chart !== 'undefined' ? Chart : null);
+    if (!ChartClass) {
+        console.error('[Analytics] Chart.js is not loaded.');
+        return;
+    }
 
     // ── Schedules per Day Bar Chart ─────────────────────────────
     const dayLabels      = {!! json_encode($dayLabels) !!};
@@ -282,55 +298,56 @@ document.addEventListener('DOMContentLoaded', function () {
     const schedCanvas    = document.getElementById('schedulesBarChart');
 
     if (schedCanvas) {
-        new Chart(schedCanvas, {
-        type: 'bar',
-        data: {
-            labels: dayLabels,
-            datasets: [{
-                label: 'Active Schedules',
-                data: schedulePerDay,
-                backgroundColor: '#6451a3',
-                borderRadius: 8,
-                borderSkipped: false,
-                barThickness: 30,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e1938',
-                    titleColor: '#ffffff',
-                    bodyColor: '#e2e8f0',
-                    titleFont: { family: 'Outfit', weight: '700', size: 12 },
-                    bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
-                    padding: 10,
-                    cornerRadius: 10,
-                    displayColors: false,
-                    callbacks: {
-                        label: ctx => ` ${ctx.parsed.y} active schedule${ctx.parsed.y !== 1 ? 's' : ''}`,
-                    }
-                },
+        new ChartClass(schedCanvas, {
+            type: 'bar',
+            data: {
+                labels: dayLabels,
+                datasets: [{
+                    label: 'Active Schedules',
+                    data: schedulePerDay,
+                    backgroundColor: '#6451a3',
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barThickness: 30,
+                }]
             },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: {
-                        font: { family: 'Plus Jakarta Sans', size: 11 },
-                        color: '#847d9c',
-                    }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e1938',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        titleFont: { family: 'Outfit', weight: '700', size: 12 },
+                        bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+                        padding: 10,
+                        cornerRadius: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.y} active schedule${ctx.parsed.y !== 1 ? 's' : ''}`,
+                        }
+                    },
                 },
-                y: {
-                    min: 0,
-                    grid: { color: '#f0edf7' },
-                    border: { display: false },
-                    ticks: {
-                        font: { family: 'Plus Jakarta Sans', size: 10 },
-                        color: '#847d9c',
-                        precision: 0,
-                        stepSize: 1,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { family: 'Plus Jakarta Sans', size: 11 },
+                            color: '#847d9c',
+                        }
+                    },
+                    y: {
+                        min: 0,
+                        grid: { color: '#f0edf7' },
+                        border: { display: false },
+                        ticks: {
+                            font: { family: 'Plus Jakarta Sans', size: 10 },
+                            color: '#847d9c',
+                            precision: 0,
+                            stepSize: 1,
+                        }
                     }
                 }
             }
@@ -338,36 +355,39 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Key Status Donut Chart ──────────────────────────────
-    new Chart(document.getElementById('statusPieChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Available', 'Borrowed', 'Missing'],
-            datasets: [{
-                data: [{{ $availableCount }}, {{ $borrowedCount }}, {{ $missingCount }}],
-                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                borderColor: ['#ffffff'],
-                borderWidth: 3,
-                hoverOffset: 8,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '72%',
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e1938',
-                    titleColor: '#ffffff',
-                    bodyColor: '#e2e8f0',
-                    cornerRadius: 10,
-                    padding: 10,
-                    titleFont: { family: 'Outfit', weight: '700', size: 12 },
-                    bodyFont: { family: 'Plus Jakarta Sans', size: 11 },
+    const statusCanvas = document.getElementById('statusPieChart');
+    if (statusCanvas) {
+        new ChartClass(statusCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Available', 'Borrowed', 'Missing'],
+                datasets: [{
+                    data: [{{ $availableCount }}, {{ $borrowedCount }}, {{ $missingCount }}],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e1938',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e2e8f0',
+                        cornerRadius: 10,
+                        padding: 10,
+                        titleFont: { family: 'Outfit', weight: '700', size: 12 },
+                        bodyFont: { family: 'Plus Jakarta Sans', size: 11 },
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 });
 </script>
 @endsection

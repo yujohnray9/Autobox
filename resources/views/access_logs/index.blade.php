@@ -92,4 +92,16 @@
         @endif
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.Echo) {
+            window.Echo.channel('autobox-hardware')
+                .listen('.AccessLogged', (e) => {
+                    console.log('[Pusher Echo] New Access Logged — refreshing audit logs...', e);
+                    setTimeout(() => window.location.reload(), 800);
+                });
+        }
+    });
+</script>
 @endsection

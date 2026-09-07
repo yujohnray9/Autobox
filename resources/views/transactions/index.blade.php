@@ -77,4 +77,22 @@
         @endif
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.Echo) {
+            window.Echo.channel('autobox-hardware')
+                .listen('.KeyStatusUpdated', (e) => {
+                    console.log('[Pusher Echo] Key Status Updated — refreshing transactions...', e);
+                    setTimeout(() => window.location.reload(), 800);
+                })
+                .listen('.AccessLogged', (e) => {
+                    if (e.action === 'borrow' || e.action === 'return') {
+                        console.log('[Pusher Echo] Transaction Access Logged — refreshing transactions...', e);
+                        setTimeout(() => window.location.reload(), 800);
+                    }
+                });
+        }
+    });
+</script>
 @endsection

@@ -25,24 +25,77 @@ class LoginRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
     public function rules(): array
     {
-        return [
-            'email' => ['required', 'string', 'email'],
+        $rules = [
+            'email'    => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
+
+        if (!app()->environment('testing') && !empty(config('services.recaptcha.secret_key'))) {
+            $rules['g-recaptcha-response'] = ['required', 'string'];
+        }
+
+        return $rules;
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Verify Google reCAPTCHA response if configured.
+     */
+    public function verifyRecaptcha(): void
+    {
+        if (app()->environment('testing')) {
+            return;
+        }
+
+        $secret = config('services.recaptcha.secret_key');
+        if (empty($secret)) {
+            return;
+        }
+
+        $recaptchaResponse = $this->input('g-recaptcha-response');
+        if (empty($recaptchaResponse)) {
+            throw ValidationException::withMessages([
+                'g-recaptcha-response' => 'Please check the "I\'m not a robot" box before submitting.',
+            ]);
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::asForm()->timeout(6)->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret'   => $secret,
+                'response' => $recaptchaResponse,
+                'remoteip' => $this->ip(),
+            ]);
+
+            if (!$response->successful() || !$response->json('success')) {
+                throw ValidationException::withMessages([
+                    'g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            if ($e instanceof ValidationException) {
+                throw $e;
+            }
+            \Illuminate\Support\Facades\Log::warning('[reCAPTCHA] Failed to contact Google verification server: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Validate user credentials and return the user without logging in yet.
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function validateCredentials(): \App\Models\User
     {
         $this->ensureIsNotRateLimited();
+        $this->verifyRecaptcha();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (! Auth::validate($this->only('email', 'password'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -50,7 +103,26 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = \App\Models\User::where('email', $this->string('email'))->first();
+
+        if ($user && !$user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => 'Your account has been deactivated. Please contact an administrator.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
+
+        return $user;
+    }
+
+    /**
+     * Legacy authenticate (calls validate and attempts login directly).
+     */
+    public function authenticate(): void
+    {
+        $user = $this->validateCredentials();
+        Auth::login($user, $this->boolean('remember'));
     }
 
     /**

@@ -11,6 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    @if(config('services.recaptcha.site_key'))
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    @endif
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
@@ -114,6 +118,16 @@
                         Forgot password?
                     </a>
                 </div>
+
+                <!-- Google reCAPTCHA v2 -->
+                @if(config('services.recaptcha.site_key'))
+                    <div class="flex flex-col items-center justify-center pt-2">
+                        <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+                        @error('g-recaptcha-response')
+                            <p class="text-xs text-rose-600 mt-1.5 text-center font-medium">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
 
                 <!-- Submit -->
                 <button type="submit"

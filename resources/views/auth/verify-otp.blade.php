@@ -75,7 +75,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login.otp.verify') }}" class="space-y-5">
+            <form method="POST" action="{{ route('login.otp.verify') }}" class="space-y-5" id="otpForm">
                 @csrf
 
                 <!-- OTP Input -->
@@ -83,9 +83,21 @@
                     <label for="otp" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 text-center">
                         6-Digit Security Code
                     </label>
-                    <input id="otp" type="text" name="otp" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required autofocus
-                           class="w-full py-3 px-4 text-center text-2xl font-mono font-extrabold tracking-[0.5em] rounded-2xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/20 transition-all placeholder:text-slate-300"
-                           placeholder="••••••" autocomplete="one-time-code">
+                    <div class="relative">
+                        <input id="otp" type="text" name="otp" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required autofocus
+                               class="w-full py-3 px-4 text-center text-2xl font-mono font-extrabold tracking-[0.5em] rounded-2xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-500/20 transition-all placeholder:text-slate-300"
+                               placeholder="••••••" autocomplete="one-time-code">
+                        <div id="otpInputSpinner" class="hidden absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <i class="fa-solid fa-circle-notch fa-spin text-violet-600 text-lg"></i>
+                        </div>
+                    </div>
+
+                    <!-- Submitting Indicator -->
+                    <div id="verifyingIndicator" class="hidden mt-2.5 items-center justify-center gap-2 text-xs font-semibold text-violet-700 bg-violet-50 py-2 px-3 rounded-xl border border-violet-200 animate-pulse">
+                        <i class="fa-solid fa-circle-notch fa-spin text-violet-600"></i>
+                        <span>Verifying security code...</span>
+                    </div>
+
                     @error('otp')
                         <p class="text-xs text-rose-600 mt-2 text-center font-medium">{{ $message }}</p>
                     @enderror
@@ -105,9 +117,9 @@
                         <span class="text-xs text-slate-500">Didn't receive the email?</span>
                         <form method="POST" action="{{ route('login.otp.resend') }}" id="resendInlineForm" class="inline ml-1">
                             @csrf
-                            <button type="submit" class="text-xs font-bold text-violet-600 hover:text-violet-800 hover:underline inline-flex items-center gap-1 cursor-pointer">
+                            <button type="submit" id="resendBtn" class="text-xs font-bold text-violet-600 hover:text-violet-800 hover:underline inline-flex items-center gap-1 cursor-pointer">
                                 <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i>
-                                Resend Code
+                                <span>Resend Code</span>
                             </button>
                         </form>
                     </div>
@@ -116,8 +128,8 @@
                 <!-- Submit Button -->
                 <button type="submit" id="submitBtn"
                         class="w-full py-3 rounded-xl gradient-violet-blue text-white font-bold text-sm shadow-lg shadow-violet-300/50 hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-lock-open"></i>
-                    Verify & Sign In
+                    <i id="submitIcon" class="fa-solid fa-lock-open"></i>
+                    <span id="submitText">Verify & Sign In</span>
                 </button>
 
                 <!-- Code Expiration Notice -->
@@ -146,11 +158,101 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Auto-focus and filter input to numbers only
+            const otpForm = document.getElementById('otpForm');
             const otpInput = document.getElementById('otp');
+            const otpInputSpinner = document.getElementById('otpInputSpinner');
+            const verifyingIndicator = document.getElementById('verifyingIndicator');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitIcon = document.getElementById('submitIcon');
+            const submitText = document.getElementById('submitText');
+            const resendInlineForm = document.getElementById('resendInlineForm');
+            const resendBtn = document.getElementById('resendBtn');
+
+            let isSubmitting = false;
+
+            function triggerLoadingState() {
+                if (isSubmitting) return;
+                isSubmitting = true;
+
+                // Update Submit Button to loading circle
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-80', 'cursor-not-allowed', 'pointer-events-none');
+                }
+                if (submitIcon) {
+                    submitIcon.className = 'fa-solid fa-circle-notch fa-spin text-sm';
+                }
+                if (submitText) {
+                    submitText.textContent = 'Verifying...';
+                }
+
+                // Show spinner in input & alert bar
+                if (otpInputSpinner) {
+                    otpInputSpinner.classList.remove('hidden');
+                }
+                if (verifyingIndicator) {
+                    verifyingIndicator.classList.remove('hidden');
+                    verifyingIndicator.classList.add('flex');
+                }
+                if (otpInput) {
+                    otpInput.readOnly = true;
+                }
+            }
+
+            // Auto-submit and number filtering for OTP input
             if (otpInput) {
+                otpInput.focus();
+
                 otpInput.addEventListener('input', function () {
                     this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
+
+                    if (this.value.length === 6 && !isSubmitting) {
+                        triggerLoadingState();
+                        setTimeout(() => {
+                            if (otpForm) {
+                                otpForm.submit();
+                            }
+                        }, 120);
+                    }
+                });
+
+                // Support pasting 6-digit OTP code directly from email
+                otpInput.addEventListener('paste', function (e) {
+                    e.preventDefault();
+                    const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+                    const digits = text.replace(/[^0-9]/g, '').slice(0, 6);
+                    if (digits) {
+                        this.value = digits;
+                        if (digits.length === 6 && !isSubmitting) {
+                            triggerLoadingState();
+                            setTimeout(() => {
+                                if (otpForm) {
+                                    otpForm.submit();
+                                }
+                            }, 120);
+                        }
+                    }
+                });
+            }
+
+            // Form submit event (e.g. user clicks button or presses Enter)
+            if (otpForm) {
+                otpForm.addEventListener('submit', function (e) {
+                    if (isSubmitting) {
+                        return;
+                    }
+                    triggerLoadingState();
+                });
+            }
+
+            // Resend loading spinner
+            if (resendInlineForm) {
+                resendInlineForm.addEventListener('submit', function () {
+                    if (resendBtn) {
+                        resendBtn.disabled = true;
+                        resendBtn.classList.add('opacity-75', 'cursor-not-allowed', 'pointer-events-none');
+                        resendBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i> <span>Sending...</span>';
+                    }
                 });
             }
 
@@ -162,7 +264,6 @@
             const resendCountdown = document.getElementById('resendCountdown');
             const resendActionBox = document.getElementById('resendActionBox');
             const expiryDisplay = document.getElementById('expiryDisplay');
-            const submitBtn = document.getElementById('submitBtn');
 
             function formatTime(totalSecs) {
                 const total = Math.max(0, Math.floor(totalSecs));

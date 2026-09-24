@@ -5,12 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Key;
 use App\Models\User;
 use App\Models\Schedule;
+use App\Console\Commands\CheckUnreturnedKeys;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        // Auto-scan for unreturned keys that passed the 10-minute return window / schedule grace
+        try {
+            CheckUnreturnedKeys::scanExpiredBorrows();
+        } catch (\Throwable $e) {
+            Log::warning("[DASHBOARD] Auto-scan unreturned keys error: " . $e->getMessage());
+        }
+
         // ── Key status counts ──────────────────────────────
         $totalKeys     = Key::count();
         $availableKeys = Key::where('status', 'available')->count();

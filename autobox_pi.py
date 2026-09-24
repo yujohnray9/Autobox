@@ -79,35 +79,35 @@ NO_HAND_WAIT_SECONDS = 5
 MAIN_LOCK_PIN = 23
 
 SLOT_PINS = {
-    1: 22,
-    2: 27,
-    3: 17,
+    1: 17,  # Slot 1 Solenoid: GPIO 17 (Pin 11) - Relay IN1
+    2: 27,  # Slot 2 Solenoid: GPIO 27 (Pin 13) - Relay IN2
+    3: 22,  # Slot 3 Solenoid: GPIO 22 (Pin 15) - Relay IN3
 }
 
 LED_GREEN_PINS = {
-    1: 5,
-    2: 6,
-    3: 13,
+    1: 5,   # Green LED Slot 1: GPIO 5 (Pin 29)
+    2: 6,   # Green LED Slot 2: GPIO 6 (Pin 31)
+    3: 13,  # Green LED Slot 3: GPIO 13 (Pin 33)
 }
 
 LED_RED_PINS = {
-    1: 12,
-    2: 16,
-    3: 20,
+    1: 12,  # Red LED Slot 1: GPIO 12 (Pin 32)
+    2: 16,  # Red LED Slot 2: GPIO 16 (Pin 36)
+    3: 20,  # Red LED Slot 3: GPIO 20 (Pin 38)
 }
 
 IR_SENSOR_PINS = {
-    1: 4,   # Slot 1: GPIO 4
-    2: 8,   # Slot 2: GPIO 8
-    3: 7,   # Slot 3: GPIO 7
+    1: 4,   # IR Sensor Slot 1: GPIO 4 (Pin 7)
+    2: 8,   # IR Sensor Slot 2: GPIO 8 (Pin 24)
+    3: 7,   # IR Sensor Slot 3: GPIO 7 (Pin 26)
 }
 
-ULTRASONIC_TRIG = 24
-ULTRASONIC_ECHO = 25
+ULTRASONIC_TRIG = 24  # Pin 18
+ULTRASONIC_ECHO = 25  # Pin 22
 
-MOTOR_IN1 = 19
-MOTOR_IN2 = 26
-MOTOR_ENA = 21
+MOTOR_IN1 = 19        # Pin 35
+MOTOR_IN2 = 26        # Pin 37
+MOTOR_ENA = 21        # Pin 40
 
 LCD_I2C_ADDRESS = 0x27
 LCD_I2C_PORT = 1
@@ -791,23 +791,20 @@ def process_scan(qr_token):
         if action == "ADMIN_DOOR_OPEN" or slot is None:
             lcd_print("ADMIN ACCESS", user_name[:16])
             time.sleep(1)
-            lcd_print("Unlocking Slots", "Opening Door...")
+            lcd_print("Unlocking Door", "Please wait...")
 
             try:
                 if ENABLE_SOLENOIDS:
-                    print(f"[AUTOBOX] Unlocking Main Door & All Slot Solenoids for Admin ({user_name})...")
+                    print(f"[AUTOBOX] Unlocking Main Door for Admin ({user_name})...")
                     GPIO.output(MAIN_LOCK_PIN, RELAY_ON)
-                    for s_num, pin in SLOT_PINS.items():
-                        GPIO.output(pin, RELAY_ON)
 
                 print("[AUTOBOX] Opening motorized slider door...")
                 slider_open()
 
                 if ENABLE_SOLENOIDS:
-                    GPIO.output(MAIN_LOCK_PIN, RELAY_OFF)
+                    print("[AUTOBOX] DC motor stopped. Pulling all slot solenoids for Admin...")
                     for s_num, pin in SLOT_PINS.items():
-                        GPIO.output(pin, RELAY_OFF)
-                    print("[AUTOBOX] Solenoids de-energized (thermal protection).")
+                        GPIO.output(pin, RELAY_ON)
 
                 print("[AUTOBOX] Waiting for hand clearance...")
                 wait_no_hand_and_close()
@@ -817,34 +814,36 @@ def process_scan(qr_token):
                     GPIO.output(MAIN_LOCK_PIN, RELAY_OFF)
                     for s_num, pin in SLOT_PINS.items():
                         GPIO.output(pin, RELAY_OFF)
-                    print("[AUTOBOX] All solenoids relocked.")
+                    print("[AUTOBOX] All solenoids relocked (pushed).")
 
             get_key_statuses()
             update_key_presence_and_leds()
         elif slot:
             slot_pin = SLOT_PINS.get(slot)
             try:
+                # 1. Unlock main lock and run DC motor to open the slider door first
                 if ENABLE_SOLENOIDS:
-                    print(f"[AUTOBOX] Unlocking Main Door and Slot #{slot}...")
+                    print(f"[AUTOBOX] Unlocking Main Door lock...")
                     GPIO.output(MAIN_LOCK_PIN, RELAY_ON)
-                    if slot_pin:
-                        GPIO.output(slot_pin, RELAY_ON)
 
                 print("[AUTOBOX] Opening motorized slider door...")
                 slider_open()
-
-                if ENABLE_SOLENOIDS:
-                    GPIO.output(MAIN_LOCK_PIN, RELAY_OFF)
+                print("[AUTOBOX] DC motor stopped. Motorized slider door is open.")
 
                 if action == "RETURN":
+                    # 2. After DC motor finishes opening the door, pull the slot solenoid
+                    if ENABLE_SOLENOIDS and slot_pin:
+                        print(f"[AUTOBOX] DC motor finished opening door. Pulling Slot #{slot} solenoid...")
+                        GPIO.output(slot_pin, RELAY_ON)
+
                     print(f"[AUTOBOX] Slot #{slot} open for return. Waiting for key insertion into IR slot...")
                     lcd_print(f"Return Slot #{slot}", "Insert Key...")
 
-                    max_return_wait = 30.0
+                    max_return_wait = 20.0
                     start_wait = time.time()
                     returned = False
                     key_detected_start = None
-                    KEY_CONFIRM_SECONDS = 2.0
+                    KEY_CONFIRM_SECONDS = 0.5
 
                     while (time.time() - start_wait) < max_return_wait:
                         if is_key_present(slot):
@@ -861,8 +860,14 @@ def process_scan(qr_token):
 
                         time.sleep(0.05)
 
+                    # 3. Wait 2 seconds, then push the solenoid again
+                    print(f"[AUTOBOX] Waiting 2 seconds before pushing Slot #{slot} solenoid again...")
+                    time.sleep(2.0)
+
                     if ENABLE_SOLENOIDS and slot_pin:
                         GPIO.output(slot_pin, RELAY_OFF)
+                        print(f"[AUTOBOX] Slot #{slot} solenoid pushed (RELAY_OFF).")
+
                     if returned:
                         lcd_print("Key Inserted!", f"Slot #{slot} Locked")
                         time.sleep(0.8)
@@ -871,6 +876,11 @@ def process_scan(qr_token):
                         time.sleep(0.8)
 
                 elif action == "BORROW":
+                    # 2. After DC motor stops running / door is open, pull the slot solenoid so user can get the key
+                    if ENABLE_SOLENOIDS and slot_pin:
+                        print(f"[AUTOBOX] DC motor stopped. Pulling Slot #{slot} solenoid to get key...")
+                        GPIO.output(slot_pin, RELAY_ON)
+
                     print(f"[AUTOBOX] Slot #{slot} unlocked for borrow. Waiting for key removal...")
                     lcd_print(f"Borrow Slot #{slot}", "Take Key...")
 
@@ -885,12 +895,24 @@ def process_scan(qr_token):
                             break
                         time.sleep(0.05)
 
+                    # 3. After they get the key, wait 2 seconds to push the solenoid again
+                    if taken:
+                        lcd_print("Key Taken!", "Wait 2s to lock")
+                        print(f"[AUTOBOX] Key taken from Slot #{slot}. Waiting 2 seconds before pushing solenoid...")
+                        time.sleep(2.0)
+                    else:
+                        print(f"[AUTOBOX] Borrow timeout for Slot #{slot}. Waiting 2 seconds before pushing solenoid...")
+                        time.sleep(2.0)
+
                     if ENABLE_SOLENOIDS and slot_pin:
                         GPIO.output(slot_pin, RELAY_OFF)
-                        print(f"[AUTOBOX] Slot #{slot} solenoid turned OFF (pushed).")
+                        print(f"[AUTOBOX] Slot #{slot} solenoid pushed (RELAY_OFF).")
 
                     if taken:
-                        lcd_print("Key Taken!", "Please clear hand")
+                        lcd_print("Slot Relocked", "Please clear hand")
+                        time.sleep(0.8)
+                    else:
+                        lcd_print("Borrow Timeout", "Slot Relocked")
                         time.sleep(0.8)
                 else:
                     if ENABLE_SOLENOIDS and slot_pin:
@@ -1033,8 +1055,7 @@ def main():
     try:
         while True:
             now = time.time()
-            if ENABLE_IR_SENSORS and (now - last_ir_check >= 3):
-                get_key_statuses()
+            if ENABLE_IR_SENSORS and (now - last_ir_check >= 0.5):
                 update_key_presence_and_leds()
                 last_ir_check = now
 

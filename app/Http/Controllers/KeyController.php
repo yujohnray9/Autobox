@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Mail\KeyUnreturnedUserNotice;
 use App\Mail\KeyUnreturnedAdminAlert;
 use App\Http\Controllers\Api\AuthQrController;
+use App\Console\Commands\CheckUnreturnedKeys;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,13 @@ class KeyController extends Controller
 {
     public function index()
     {
+        // Auto-scan for unreturned keys that passed the 10-minute return window / schedule grace
+        try {
+            CheckUnreturnedKeys::scanExpiredBorrows();
+        } catch (\Throwable $e) {
+            Log::warning("[KEY CONTROLLER] Auto-scan unreturned keys error: " . $e->getMessage());
+        }
+
         $keys = Key::orderBy('slot_number')->paginate(15);
         $users = User::where('is_active', true)->where('role', '!=', 'admin')->orderBy('name')->get();
         return view('keys.index', compact('keys', 'users'));

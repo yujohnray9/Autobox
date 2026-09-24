@@ -267,6 +267,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        let hasTriggeredReload = false;
         function updateGraceCountdowns() {
             const containers = document.querySelectorAll('.grace-countdown-container');
             containers.forEach(container => {
@@ -283,6 +284,10 @@
                 } else {
                     displayEl.textContent = '00:00';
                     displayEl.className = 'grace-countdown-display font-mono font-black text-xs text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-300 animate-pulse';
+                    if (!hasTriggeredReload) {
+                        hasTriggeredReload = true;
+                        setTimeout(() => window.location.reload(), 2000);
+                    }
                 }
             });
         }

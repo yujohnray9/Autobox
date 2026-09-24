@@ -39,7 +39,16 @@ class CheckUnreturnedKeys extends Command
     public function handle()
     {
         $this->info("Checking for borrowed keys with EXPIRED schedules...");
+        $expiredCount = self::scanExpiredBorrows($this->option('force'), $this);
+        $this->info("Finished scan. Processed {$expiredCount} expired unreturned key(s).");
+        return Command::SUCCESS;
+    }
 
+    /**
+     * Scan and mark unreturned keys past their schedule end + 10-min grace or past 10-min manual borrow window.
+     */
+    public static function scanExpiredBorrows(bool $force = false, ?Command $cli = null): int
+    {
         // 1. Find all active unreturned borrow transactions
         $unreturnedBorrows = Transaction::where('action', 'borrow')
             ->whereNull('returned_at')
@@ -47,12 +56,13 @@ class CheckUnreturnedKeys extends Command
             ->get();
 
         if ($unreturnedBorrows->isEmpty()) {
-            $this->info("All keys are accounted for. No unreturned keys.");
-            return Command::SUCCESS;
+            if ($cli) {
+                $cli->info("All keys are accounted for. No unreturned keys.");
+            }
+            return 0;
         }
 
         $today = strtolower(now()->format('l'));
-        $currentTime = now()->format('H:i:s');
         $admins = User::where('role', 'admin')->whereNotNull('email')->get();
         $expiredCount = 0;
 
@@ -103,7 +113,9 @@ class CheckUnreturnedKeys extends Command
                     if ($now->greaterThanOrEqualTo($endTimeCarbon) && $now->lessThan($graceEndTime)) {
                         $secondsLeft = max(0, (int) $now->diffInSeconds($graceEndTime, false));
                         $minsLeft = ceil($secondsLeft / 60);
-                        $this->line("  [GRACE COUNTDOWN] Slot #{$key->slot_number} ({$key->key_name}) borrowed by {$borrower->name} - Schedule ended at {$endTimeCarbon->format('h:i A')}. 10-min return countdown active (~{$minsLeft}m left, ends at {$graceEndTime->format('h:i A')}). NOT missing yet.");
+                        if ($cli) {
+                            $cli->line("  [GRACE COUNTDOWN] Slot #{$key->slot_number} ({$key->key_name}) borrowed by {$borrower->name} - Schedule ended at {$endTimeCarbon->format('h:i A')}. 10-min return countdown active (~{$minsLeft}m left, ends at {$graceEndTime->format('h:i A')}). NOT missing yet.");
+                        }
                         continue;
                     }
 
@@ -119,26 +131,50 @@ class CheckUnreturnedKeys extends Command
                     $expiredReason = "Your schedule was for " . ucfirst($schedule->day_of_week) . ", but Key {$key->key_name} (Slot #{$key->slot_number}) has NOT yet been returned today.";
                 }
             } else {
-                // If user has no specific schedule, flag if borrowed over 1 hour + 10 mins grace period
-                if ($tx->borrowed_at && $tx->borrowed_at->diffInMinutes(now()) >= 70) {
+                // If user has no specific schedule (e.g. manual web borrow), flag after the 10-minute return window
+                $borrowedTime = $tx->borrowed_at ?? $tx->created_at;
+                $graceEndTime = $borrowedTime ? $borrowedTime->copy()->addMinutes(10) : now();
+                $now = now();
+
+                if ($now->lessThan($graceEndTime)) {
+                    $secondsLeft = max(0, (int) $now->diffInSeconds($graceEndTime, false));
+                    $minsLeft = ceil($secondsLeft / 60);
+                    if ($cli) {
+                        $cli->line("  [GRACE COUNTDOWN] Slot #{$key->slot_number} ({$key->key_name}) borrowed by {$borrower->name} - Manual borrow at " . ($borrowedTime ? $borrowedTime->format('h:i A') : 'now') . ". 10-min return countdown active (~{$minsLeft}m left, ends at {$graceEndTime->format('h:i A')}). NOT missing yet.");
+                    }
+                    continue;
+                } else {
                     $isExpired = true;
-                    $expiredReason = "Key {$key->key_name} (Slot #{$key->slot_number}) was borrowed {$tx->borrowed_at->diffForHumans()} and the 10-minute return window has expired.";
+                    $expiredReason = "Key {$key->key_name} (Slot #{$key->slot_number}) was borrowed " . ($borrowedTime ? $borrowedTime->diffForHumans() : 'earlier') . " and the 10-minute return window has expired.";
                 }
             }
 
-            // IF SCHEDULE IS NOT EXPIRED: DO NOT SEND EMAIL!
+            // IF SCHEDULE / BORROW WINDOW IS NOT EXPIRED: DO NOT SEND EMAIL!
             if (!$isExpired) {
-                $this->line("  [ACTIVE] Slot #{$key->slot_number} borrowed by {$borrower->name} - Schedule still active / within time window.");
+                if ($cli) {
+                    $cli->line("  [ACTIVE] Slot #{$key->slot_number} borrowed by {$borrower->name} - Schedule still active / within time window.");
+                }
                 continue;
             }
 
             $expiredCount++;
-            $this->warn("  [EXPIRED] Slot #{$key->slot_number} borrowed by {$borrower->name} - {$expiredReason}");
+            if ($cli) {
+                $cli->warn("  [EXPIRED] Slot #{$key->slot_number} borrowed by {$borrower->name} - {$expiredReason}");
+            }
 
             // 3. Cooldown check: prevent sending emails every single minute (30 min cooldown per transaction)
             $cooldownKey = 'unreturned_alert_cooldown_' . $tx->id;
-            if (!$this->option('force') && Cache::has($cooldownKey)) {
-                $this->line("    --> Email notification on cooldown (already alerted recently).");
+            if (!$force && Cache::has($cooldownKey)) {
+                if ($cli) {
+                    $cli->line("    --> Email notification on cooldown (already alerted recently).");
+                }
+                // Even if email is on cooldown, ensure database status is marked missing if still borrowed
+                if ($key->status === 'borrowed') {
+                    $key->update(['status' => 'missing']);
+                    try {
+                        KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'missing', $key->key_name, $key->room_name, null);
+                    } catch (\Throwable $e) {}
+                }
                 continue;
             }
 
@@ -148,9 +184,13 @@ class CheckUnreturnedKeys extends Command
             if (!empty($borrower->email) && filter_var($borrower->email, FILTER_VALIDATE_EMAIL)) {
                 try {
                     Mail::to($borrower->email)->send(new KeyUnreturnedUserNotice($borrower, $key, $tx, $expiredReason));
-                    $this->info("    --> Alert email sent to borrower: {$borrower->email}");
+                    if ($cli) {
+                        $cli->info("    --> Alert email sent to borrower: {$borrower->email}");
+                    }
                 } catch (\Throwable $e) {
-                    $this->error("    --> Failed to email borrower: " . $e->getMessage());
+                    if ($cli) {
+                        $cli->error("    --> Failed to email borrower: " . $e->getMessage());
+                    }
                     Log::error("[UNRETURNED EMAIL] Failed to email borrower: " . $e->getMessage());
                 }
             }
@@ -160,9 +200,13 @@ class CheckUnreturnedKeys extends Command
                 if (filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
                     try {
                         Mail::to($admin->email)->send(new KeyUnreturnedAdminAlert($admin, $borrower, $key, $tx, $expiredReason));
-                        $this->info("    --> Alert email sent to admin: {$admin->email}");
+                        if ($cli) {
+                            $cli->info("    --> Alert email sent to admin: {$admin->email}");
+                        }
                     } catch (\Throwable $e) {
-                        $this->error("    --> Failed to email admin: " . $e->getMessage());
+                        if ($cli) {
+                            $cli->error("    --> Failed to email admin: " . $e->getMessage());
+                        }
                         Log::error("[UNRETURNED EMAIL] Failed to email admin: " . $e->getMessage());
                     }
                 }
@@ -174,7 +218,9 @@ class CheckUnreturnedKeys extends Command
             if ($key->status === 'borrowed') {
                 try {
                     $key->update(['status' => 'missing']);
-                    $this->warn("    --> Key Slot #{$key->slot_number} status updated to MISSING (schedule expired).");
+                    if ($cli) {
+                        $cli->warn("    --> Key Slot #{$key->slot_number} status updated to MISSING (schedule/return window expired).");
+                    }
 
                     // Broadcast real-time status update so the web dashboard reflects instantly
                     try {
@@ -191,7 +237,9 @@ class CheckUnreturnedKeys extends Command
                         Log::warning("[UNRETURNED] Broadcast skipped (server unreachable): " . $e->getMessage());
                     }
                 } catch (\Throwable $e) {
-                    $this->error("    --> Failed to mark key as missing: " . $e->getMessage());
+                    if ($cli) {
+                        $cli->error("    --> Failed to mark key as missing: " . $e->getMessage());
+                    }
                     Log::error("[UNRETURNED KEY] Failed to update key status to missing: " . $e->getMessage());
                 }
             }
@@ -211,7 +259,6 @@ class CheckUnreturnedKeys extends Command
             }
         }
 
-        $this->info("Finished scan. Processed {$expiredCount} expired unreturned key(s).");
-        return Command::SUCCESS;
+        return $expiredCount;
     }
 }

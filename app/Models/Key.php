@@ -86,7 +86,33 @@ class Key extends Model
         }
 
         if (!$schedule) {
-            return null;
+            $borrowedTime = $borrowerTx->borrowed_at ?? $borrowerTx->created_at;
+            if (!$borrowedTime) {
+                return null;
+            }
+
+            $graceEndTime = $borrowedTime->copy()->addMinutes(10);
+            $now = now();
+
+            if ($now->lessThan($graceEndTime)) {
+                $secondsLeft = max(0, (int) $now->diffInSeconds($graceEndTime, false));
+                return [
+                    'state'          => 'grace_period',
+                    'in_grace'       => true,
+                    'schedule_end'   => $graceEndTime->format('h:i A'),
+                    'grace_end'      => $graceEndTime->format('h:i A'),
+                    'grace_end_iso'  => $graceEndTime->toIso8601String(),
+                    'seconds_left'   => $secondsLeft,
+                    'borrower_name'  => $user->name,
+                ];
+            } else {
+                return [
+                    'state'          => 'overdue',
+                    'in_grace'       => false,
+                    'schedule_end'   => $graceEndTime->format('h:i A'),
+                    'borrower_name'  => $user->name,
+                ];
+            }
         }
 
         $now = now();

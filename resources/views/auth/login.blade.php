@@ -130,10 +130,10 @@
                 @endif
 
                 <!-- Submit -->
-                <button type="submit"
+                <button type="submit" id="loginSubmitBtn"
                         class="w-full py-3 rounded-xl gradient-violet-blue text-white font-bold text-sm shadow-lg shadow-violet-300/50 hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2">
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    Sign In to AUTOBOX
+                    <i id="loginSubmitIcon" class="fa-solid fa-right-to-bracket"></i>
+                    <span id="loginSubmitText">Sign In to AUTOBOX</span>
                 </button>
 
             </form>
@@ -162,6 +162,27 @@
                 icon.classList.add('fa-eye');
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginForm = document.querySelector('form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function () {
+                    const btn = document.getElementById('loginSubmitBtn');
+                    const icon = document.getElementById('loginSubmitIcon');
+                    const text = document.getElementById('loginSubmitText');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-80', 'cursor-not-allowed', 'pointer-events-none');
+                    }
+                    if (icon) {
+                        icon.className = 'fa-solid fa-circle-notch fa-spin text-sm';
+                    }
+                    if (text) {
+                        text.textContent = 'Signing In...';
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['hardware.key', 'throttle:60,1'])->group(function () {
+Route::middleware(['hardware.firewall', 'hardware.key', 'throttle:60,1'])->group(function () {
     Route::post('/authenticate-qr', [AuthQrController::class, 'authenticate']);
     Route::get('/keys', [AuthQrController::class, 'getKeyStatuses']);
     Route::post('/key-missing', [AuthQrController::class, 'reportMissing']);

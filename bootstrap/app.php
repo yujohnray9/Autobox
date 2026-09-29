@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
+            'hardware.firewall' => \App\Http\Middleware\HardwareNetworkFirewall::class,
             'hardware.key' => \App\Http\Middleware\ValidateHardwareApiKey::class,
         ]);
     })

@@ -37,6 +37,7 @@ return [
 
     'autobox' => [
         'hardware_key' => env('AUTOBOX_HARDWARE_KEY', 'autobox-sec-hw-token-ccsict-2026'),
+        'allowed_hardware_ips' => env('AUTOBOX_ALLOWED_HARDWARE_IPS', ''),
     ],
 
     'recaptcha' => [

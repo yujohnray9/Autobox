@@ -30,10 +30,8 @@ class HardwareApiSecurityTest extends TestCase
         $payload = ['qr_token' => 'original_token'];
         $rawBody = json_encode($payload);
 
-        // Sign original payload
         $signature = hash_hmac('sha256', "{$timestamp}:{$rawBody}", $this->hardwareKey);
 
-        // Tamper with payload in transit
         $tamperedPayload = ['qr_token' => 'tampered_token'];
 
         $response = $this->postJson('/api/authenticate-qr', $tamperedPayload, [
@@ -49,7 +47,6 @@ class HardwareApiSecurityTest extends TestCase
 
     public function test_hardware_request_fails_with_expired_timestamp(): void
     {
-        // 10 minutes in the past (beyond 300s window)
         $expiredTimestamp = (string) (time() - 600);
         $signature = hash_hmac('sha256', "{$expiredTimestamp}:", $this->hardwareKey);
 
@@ -81,5 +78,32 @@ class HardwareApiSecurityTest extends TestCase
         $response->assertJson([
             'status' => 'UNAUTHORIZED',
         ]);
+    }
+
+    public function test_firewall_blocks_unauthorized_ip(): void
+    {
+        config(['services.autobox.allowed_hardware_ips' => '192.168.11.145']);
+
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '192.168.11.99'])
+            ->getJson('/api/keys', [
+                'X-AUTOBOX-API-KEY' => $this->hardwareKey,
+            ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'status' => 'FIREWALL_BLOCKED',
+        ]);
+    }
+
+    public function test_firewall_allows_whitelisted_ip(): void
+    {
+        config(['services.autobox.allowed_hardware_ips' => '192.168.11.145']);
+
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '192.168.11.145'])
+            ->getJson('/api/keys', [
+                'X-AUTOBOX-API-KEY' => $this->hardwareKey,
+            ]);
+
+        $response->assertStatus(200);
     }
 }

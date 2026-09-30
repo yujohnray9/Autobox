@@ -24,7 +24,11 @@ class HardwareNetworkFirewall
         }
 
         $allowedList = array_filter(array_map('trim', explode(',', (string) $allowedIpsConfig)));
-        $clientIp = (string) $request->ip();
+
+        // Resolve real client IP even behind Hostinger reverse proxy or Cloudflare
+        $clientIp = $request->header('cf-connecting-ip')
+            ?: ($request->header('x-real-ip')
+            ?: ($request->header('x-forwarded-for') ? trim(explode(',', $request->header('x-forwarded-for'))[0]) : (string) $request->ip()));
 
         if (in_array($clientIp, ['127.0.0.1', '::1'], true)) {
             return $next($request);
@@ -48,9 +52,10 @@ class HardwareNetworkFirewall
             ]);
 
             return response()->json([
-                'success' => false,
-                'status'  => 'FIREWALL_BLOCKED',
-                'message' => 'Access Denied: Your device IP is not permitted to communicate with Autobox hardware.',
+                'success'     => false,
+                'status'      => 'FIREWALL_BLOCKED',
+                'message'     => 'Access Denied: Your device IP is not permitted to communicate with Autobox hardware.',
+                'detected_ip' => $clientIp,
             ], 403);
         }
 
@@ -62,25 +67,55 @@ class HardwareNetworkFirewall
      */
     protected function ipMatches(string $clientIp, string $pattern): bool
     {
-        // 1. Exact match
+        $clientIp = strtolower(trim($clientIp));
+        $pattern  = strtolower(trim($pattern));
+
+        // 1. Exact match (IPv4 or IPv6)
         if ($clientIp === $pattern) {
             return true;
         }
 
-        // 2. Wildcard pattern match (e.g. 192.168.11.*)
-        if (str_contains($pattern, '*') && fnmatch($pattern, $clientIp)) {
+        // 2. Wildcard pattern match (e.g. 192.168.11.* or 2001:fd8:2aac:51c4:*)
+        if (str_contains($pattern, '*') && fnmatch($pattern, $clientIp, FNM_CASEFOLD)) {
             return true;
         }
 
-        // 3. CIDR subnet match (e.g. 192.168.11.0/24)
+        // 3. Prefix matching for IPv6 (e.g. 2001:fd8:2aac:51c4)
+        if (str_contains($clientIp, ':') && !str_contains($pattern, '/') && str_starts_with($clientIp, rtrim($pattern, ':*'))) {
+            return true;
+        }
+
+        // 4. CIDR subnet match (IPv4 and IPv6)
         if (str_contains($pattern, '/')) {
             [$subnet, $bits] = explode('/', $pattern, 2);
+            $bits = (int) $bits;
+
+            // IPv4 CIDR
             if (filter_var($clientIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) &&
                 filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
                 $ipLong = ip2long($clientIp);
                 $subnetLong = ip2long($subnet);
-                $mask = -1 << (32 - (int) $bits);
+                $mask = -1 << (32 - $bits);
                 return ($ipLong & $mask) === ($subnetLong & $mask);
+            }
+
+            // IPv6 CIDR
+            if (filter_var($clientIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) &&
+                filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                $ipBin = inet_pton($clientIp);
+                $subnetBin = inet_pton($subnet);
+                if ($ipBin !== false && $subnetBin !== false) {
+                    $bytes = (int) ($bits / 8);
+                    $remBits = $bits % 8;
+                    if (substr($ipBin, 0, $bytes) !== substr($subnetBin, 0, $bytes)) {
+                        return false;
+                    }
+                    if ($remBits > 0) {
+                        $mask = chr(0xFF << (8 - $remBits));
+                        return (ord($ipBin[$bytes]) & ord($mask)) === (ord($subnetBin[$bytes]) & ord($mask));
+                    }
+                    return true;
+                }
             }
         }
 

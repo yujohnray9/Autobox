@@ -34,7 +34,7 @@ class UserController extends Controller
             'password'        => 'required_if:role,admin|nullable|string|min:6|confirmed',
             'department'      => 'nullable|string|max:255',
             'employee_id'     => 'nullable|string|unique:users,employee_id|regex:/^EMP-\d{4}-\d{3,}$/',
-            
+
             // Schedule fields (optional / conditional)
             'assign_schedule' => 'nullable',
             'key_id'          => 'required_if:assign_schedule,1|nullable|exists:keys,id',
@@ -69,16 +69,14 @@ class UserController extends Controller
 
         if ($hasSchedule) {
             foreach ($days as $day) {
+                // CHANGED: strict overlap check (existing.start < new.end AND existing.end > new.start).
+                // The old whereBetween() was inclusive, so 8:00–9:00 then 9:00–10:00 was wrongly blocked.
                 $keyConflict = Schedule::where('key_id', $validated['key_id'])
                     ->where('day_of_week', $day)
-                    ->where(function ($q) use ($validated) {
-                        $q->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
-                          ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']])
-                          ->orWhere(function ($q2) use ($validated) {
-                              $q2->where('start_time', '<=', $validated['start_time'])
-                                 ->where('end_time', '>=', $validated['end_time']);
-                          });
-                    })->with('user')->first();
+                    ->where('start_time', '<', $validated['end_time'])
+                    ->where('end_time', '>', $validated['start_time'])
+                    ->with('user')
+                    ->first();
 
                 if ($keyConflict) {
                     $key = Key::find($validated['key_id']);
@@ -122,7 +120,7 @@ class UserController extends Controller
             }
         });
 
-        $message = $hasSchedule 
+        $message = $hasSchedule
             ? 'User created successfully with generated QR code and access schedule.'
             : 'User created successfully with generated QR code.';
 
@@ -182,4 +180,3 @@ class UserController extends Controller
         return redirect()->back()->with('success', 'QR Code regenerated successfully.');
     }
 }
-

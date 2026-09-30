@@ -150,4 +150,58 @@ class UserScheduleCreationTest extends TestCase
         $this->assertNotNull($createdUser->qr_token);
         $this->assertCount(0, Schedule::where('user_id', $createdUser->id)->get());
     }
+
+    public function test_qr_view_print_section_contains_schedule_information(): void
+    {
+        $admin = User::first() ?? User::create([
+            'name' => 'Admin Test',
+            'email' => 'admin_qr_print@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $key = Key::create([
+            'key_name' => 'Server Room A',
+            'room_name' => 'Room 401',
+            'slot_number' => 8,
+            'status' => 'available',
+        ]);
+
+        $faculty = User::create([
+            'name' => 'Dr. Printable Sched',
+            'email' => 'printable_sched@autobox.edu.ph',
+            'role' => 'faculty',
+            'department' => 'Information Technology',
+            'employee_id' => 'EMP-2024-999',
+            'password' => bcrypt('password'),
+            'is_active' => true,
+        ]);
+
+        Schedule::create([
+            'user_id' => $faculty->id,
+            'key_id' => $key->id,
+            'day_of_week' => 'tuesday',
+            'start_time' => '10:00:00',
+            'end_time' => '13:00:00',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('users.qr', $faculty));
+        $response->assertStatus(200);
+
+        // Verify print-only section has user details and schedule
+        $content = $response->getContent();
+        $this->assertStringContainsString('print-only-badge', $content);
+        $this->assertStringContainsString('Dr. Printable Sched', $content);
+        $this->assertStringContainsString('EMP-2024-999', $content);
+        $this->assertStringContainsString('Information Technology', $content);
+        $this->assertStringContainsString('Slot #8', $content);
+        $this->assertStringContainsString('Server Room A', $content);
+        $this->assertStringContainsString('Room 401', $content);
+        $this->assertStringContainsString('Tue', $content);
+        $this->assertStringContainsString('10:00 AM', $content);
+        $this->assertStringContainsString('01:00 PM', $content);
+    }
 }
+

@@ -54,22 +54,29 @@
 
         <!-- =====================================================
              PRINT-ONLY INFORMATION
-             Only Name + Department + QR Code
+             Name + Department/Role/ID + QR Code + Authorized Schedule
              ===================================================== -->
-        <div class="print-only-badge">
+        <div class="print-only-badge space-y-3">
 
-            <!-- User Name -->
-            <div class="mb-4">
-                <h2 class="font-heading font-extrabold text-2xl text-[var(--text-heading)]">
+            <!-- User Name & Details -->
+            <div class="mb-2">
+                <h2 class="font-heading font-extrabold text-2xl text-slate-900 leading-tight">
                     {{ $user->name }}
                 </h2>
 
-                <!-- Department -->
-                @if($user->department)
-                    <p class="text-sm text-[var(--text-muted)] font-semibold mt-1">
-                        {{ $user->department }}
-                    </p>
-                @endif
+                <p class="text-xs text-slate-600 font-semibold mt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                    @if($user->employee_id)
+                        <span class="font-mono font-bold text-slate-800">ID: {{ $user->employee_id }}</span>
+                        <span>&bull;</span>
+                    @endif
+
+                    <span class="capitalize font-bold text-purple-800">{{ $user->role }}</span>
+
+                    @if($user->department)
+                        <span>&bull;</span>
+                        <span class="text-slate-700">{{ $user->department }}</span>
+                    @endif
+                </p>
             </div>
 
             <!-- QR Code -->
@@ -78,10 +85,63 @@
                 $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($token);
             @endphp
 
-            <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-inner inline-block">
+            <div class="p-3 rounded-2xl bg-white border-2 border-slate-300 inline-block shadow-sm">
                 <img src="{{ $qrUrl }}"
                      alt="QR Access Code for {{ $user->name }}"
-                     class="w-64 h-64 mx-auto rounded-lg">
+                     class="w-48 h-48 mx-auto rounded-lg">
+            </div>
+
+            <!-- Authorized Schedule & Key Access Details (PRINT VIEW) -->
+            <div class="mt-3 pt-3 border-t-2 border-slate-200 text-left space-y-2">
+
+                <div class="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid {{ $user->role === 'admin' ? 'fa-shield-halved text-purple-700' : 'fa-calendar-check text-purple-700' }} text-xs"></i>
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                            {{ $user->role === 'admin' ? 'Access Authorization' : 'Assigned Key & Access Schedule' }}
+                        </span>
+                    </div>
+
+                    @if($user->role !== 'admin' && $user->schedules->count() > 0)
+                        <span class="text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded-full">
+                            {{ $user->schedules->count() }} {{ Str::plural('rule', $user->schedules->count()) }}
+                        </span>
+                    @endif
+                </div>
+
+                @if($user->role === 'admin')
+                    <div class="p-3 rounded-xl bg-purple-50 border border-purple-200 flex items-center gap-3 text-left">
+                        <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center flex-shrink-0 text-sm font-bold">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-extrabold text-purple-900 uppercase tracking-wider">
+                                Unrestricted 24/7 System Access
+                            </h4>
+                            <p class="text-[11px] text-purple-800 mt-0.5 font-medium">
+                                Master administrator authorization for all key slots at any time.
+                            </p>
+                        </div>
+                    </div>
+                @elseif($user->schedules->count() > 0)
+                       @include('users.partials.schedule-groups', ['user' => $user])
+                @else
+                    <div class="py-2.5 text-center text-xs text-slate-600 border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                        <p class="font-semibold">
+                            No scheduled access rules currently assigned.
+                        </p>
+                    </div>
+                @endif
+
+                <div class="pt-2 border-t border-slate-200 text-center space-y-0.5">
+                    <p class="text-[10px] text-slate-500 font-medium leading-relaxed">
+                        Scan this QR code at the physical terminal to unlock your assigned key slot during authorized schedule hours.
+                    </p>
+                    <p class="text-[9px] text-slate-400 font-medium">
+                        Printed on {{ now()->format('M d, Y · h:i A') }}
+                    </p>
+                </div>
+
             </div>
 
         </div>
@@ -191,65 +251,7 @@
 
             @elseif($user->schedules->count() > 0)
 
-                <div class="space-y-2">
-
-                    @foreach($user->schedules as $sched)
-
-                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-
-                            <div class="space-y-0.5">
-
-                                <div class="flex items-center gap-2">
-
-                                    <span class="px-1.5 py-0.5 rounded bg-[var(--purple-soft)] text-[var(--purple-primary)] font-mono font-extrabold text-[10px]">
-                                        Slot #{{ $sched->key->slot_number ?? '?' }}
-                                    </span>
-
-                                    <span class="font-bold text-[var(--text-heading)]">
-                                        {{ $sched->key->key_name ?? 'Key Slot' }}
-                                    </span>
-
-                                    <span class="text-[var(--text-muted)] text-[11px]">
-                                        ({{ $sched->key->room_name ?? 'Room' }})
-                                    </span>
-
-                                </div>
-
-                                <div class="text-[11px] text-[var(--text-muted)] flex items-center gap-1.5">
-
-                                    <span class="capitalize font-semibold text-[var(--text-body)]">
-                                        {{ $sched->day_of_week }}
-                                    </span>
-
-                                    <span>&bull;</span>
-
-                                    <span class="font-mono text-emerald-700 font-bold">
-                                        {{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }}
-                                    </span>
-
-                                    <span>-</span>
-
-                                    <span class="font-mono text-rose-700 font-bold">
-                                        {{ \Carbon\Carbon::parse($sched->end_time)->format('h:i A') }}
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold {{ $sched->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
-
-                                <span class="w-1.5 h-1.5 rounded-full {{ $sched->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
-
-                                {{ $sched->is_active ? 'Active' : 'Inactive' }}
-
-                            </span>
-
-                        </div>
-
-                    @endforeach
-
-                </div>
+                   @include('users.partials.schedule-groups', ['user' => $user])
 
             @else
 
@@ -375,6 +377,11 @@
 
 @media print {
 
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
     /* Hide everything by default */
     body * {
         visibility: hidden !important;
@@ -411,29 +418,32 @@
         top: 20px !important;
         transform: translateX(-50%) !important;
 
-        width: 450px !important;
-        max-width: 450px !important;
+        width: 480px !important;
+        max-width: 480px !important;
 
         margin: 0 !important;
-        padding: 30px !important;
+        padding: 24px 28px !important;
 
-        border: 2px solid #333 !important;
+        border: 2px solid #0f172a !important;
         border-radius: 20px !important;
 
         box-shadow: none !important;
         background: white !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 
-    /* Make QR clear when printed */
+    /* Make QR clear and balanced when printed */
     .print-only-badge img {
-        width: 260px !important;
-        height: 260px !important;
+        width: 190px !important;
+        height: 190px !important;
         display: block !important;
+        margin: 0 auto !important;
     }
 
     /* Remove unnecessary page margins */
     @page {
-        margin: 0;
+        margin: 10mm;
         size: auto;
     }
 }

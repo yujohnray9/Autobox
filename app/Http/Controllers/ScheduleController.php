@@ -11,17 +11,20 @@ class ScheduleController extends Controller
 {
     public function index()
     {
-        $schedules = Schedule::with(['user', 'key'])->latest()->paginate(20);
-        // Only non-admin users can have schedules
+        $schedulesByDay = Schedule::with(['user', 'key'])
+            ->orderBy('start_time')
+            ->orderBy('end_time')
+            ->get()
+            ->groupBy(fn ($s) => strtolower($s->day_of_week));
+
         $users = User::where('is_active', true)->where('role', '!=', 'admin')->orderBy('name')->get();
         $keys  = Key::orderBy('slot_number')->get();
 
-        return view('schedules.index', compact('schedules', 'users', 'keys'));
+        return view('schedules.index', compact('schedulesByDay', 'users', 'keys'));
     }
 
     public function create()
     {
-        // Only non-admin users can be assigned schedules
         $users = User::where('is_active', true)->where('role', '!=', 'admin')->orderBy('name')->get();
         $keys  = Key::orderBy('slot_number')->get();
         return view('schedules.create', compact('users', 'keys'));
@@ -59,20 +62,23 @@ class ScheduleController extends Controller
             );
         }
 
+        // CHANGED: strict overlap check. Two windows overlap only if
+        // existing.start < new.end AND existing.end > new.start.
+        // The old whereBetween() was inclusive, so back-to-back slots like
+        // 8:00–9:00 and 9:00–10:00 were wrongly flagged as conflicts.
+        $overlaps = function ($q) use ($validated) {
+            $q->where('start_time', '<', $validated['end_time'])
+              ->where('end_time', '>', $validated['start_time']);
+        };
+
         // Validate conflicts across each selected day
         foreach ($days as $day) {
             // Check: same user already has this key scheduled on this day
             $userConflict = Schedule::where('user_id', $validated['user_id'])
                 ->where('key_id', $validated['key_id'])
                 ->where('day_of_week', $day)
-                ->where(function ($q) use ($validated) {
-                    $q->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
-                      ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']])
-                      ->orWhere(function ($q2) use ($validated) {
-                          $q2->where('start_time', '<=', $validated['start_time'])
-                             ->where('end_time', '>=', $validated['end_time']);
-                      });
-                })->first();
+                ->where($overlaps)
+                ->first();
 
             if ($userConflict) {
                 $user = User::find($validated['user_id']);
@@ -87,14 +93,9 @@ class ScheduleController extends Controller
             $keyConflict = Schedule::where('key_id', $validated['key_id'])
                 ->where('day_of_week', $day)
                 ->where('user_id', '!=', $validated['user_id'])
-                ->where(function ($q) use ($validated) {
-                    $q->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
-                      ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']])
-                      ->orWhere(function ($q2) use ($validated) {
-                          $q2->where('start_time', '<=', $validated['start_time'])
-                             ->where('end_time', '>=', $validated['end_time']);
-                      });
-                })->with('user')->first();
+                ->where($overlaps)
+                ->with('user')
+                ->first();
 
             if ($keyConflict) {
                 $key = Key::find($validated['key_id']);

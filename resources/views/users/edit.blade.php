@@ -140,8 +140,8 @@
                                     <span class="font-bold text-[var(--text-heading)]">
                                         Slot #{{ $sched->key->slot_number ?? '?' }} — {{ $sched->key->key_name ?? 'Key' }}
                                     </span>
-                                    <span class="text-[var(--text-muted)] text-[11px] block">
-                                        {{ ucfirst($sched->day_of_week) }} &bull; {{ \Carbon\Carbon::parse($sched->start_time)->format('h:i A') }} – {{ \Carbon\Carbon::parse($sched->end_time)->format('h:i A') }}
+                                    <span class="text-[var(--text-muted)] text-[11px] font-mono block">
+                                        {{ ucfirst($sched->day_of_week) }} &bull; {{ \Carbon\Carbon::parse($sched->start_time)->format('Hi') }} – {{ \Carbon\Carbon::parse($sched->end_time)->format('Hi') }}
                                     </span>
                                 </div>
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $sched->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">

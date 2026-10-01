@@ -14,20 +14,28 @@
 @endphp
 
 @section('content')
-{{-- For managing active day tab, form visibility, and modal data --}}
+{{-- For managing active day tab, room selection, form visibility, and modal data --}}
 <div class="space-y-6" x-data="{
     showForm: {{ session('conflict_error') ? 'true' : 'false' }},
     // Determines today's day of week in lowercase ('sunday', 'monday', etc.)
     todayKey: ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][new Date().getDay()],
     // Holds the currently clicked/active day tab (defaults to monday, then switches to today in init())
     activeDay: 'monday',
+    // Holds the currently clicked/active room card (defaults to the first room key)
+    activeRoom: {{ $keys->first()->id ?? 1 }},
+    formKeyId: '{{ old('key_id', '') }}',
     formDays: {!! $oldDaysJs !!},
     init() { 
         this.activeDay = this.todayKey; // Automatically select today's tab on page load
         if (!this.formDays.length) { this.formDays = [this.todayKey]; } 
     },
     toggleDay(d) { this.formDays = this.formDays.includes(d) ? this.formDays.filter(x => x !== d) : [...this.formDays, d]; },
-    openFormFor(d) { this.formDays = [d]; this.showForm = true; window.scrollTo({ top: 0, behavior: 'smooth' }); },
+    openFormFor(d, kId = null) { 
+        this.formDays = [d]; 
+        if (kId) { this.formKeyId = kId; }
+        this.showForm = true; 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    },
     deleteModalOpen: false, deleteScheduleId: null, deleteUserName: '', deleteUserRole: '',
     deleteKeyName: '', deleteSlotNum: '', deleteDayTime: ''
 }">
@@ -105,7 +113,7 @@
                 {{-- Key Selection: Loop through available physical key slots --}}
                 <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Key Slot / Room <span class="text-rose-500">*</span></label>
-                    <select name="key_id" required class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30">
+                    <select name="key_id" x-model="formKeyId" required class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30">
                         <option value="">-- Select Key Slot --</option>
                         @foreach($keys as $key)
                             <option value="{{ $key->id }}" {{ old('key_id') == $key->id ? 'selected' : '' }}>
@@ -198,13 +206,13 @@
         @endforeach
     </div>
 
-    <!-- Day panels: timeline of time slots for each day -->
+    <!-- Day panels: Room 1–3 cards and schedule list for each day -->
     @foreach($days as $key => $full)
         @php
             // 1. Get all schedule records for this day (fallback to empty collection if none exist)
             $daySchedules = $schedulesByDay[$key] ?? collect();
 
-            // 2. Group schedules by time window (e.g. "08:00|09:00") so users sharing the same hour appear together
+            // 2. Group schedules by time window (e.g. "08:00|09:00")
             $slots = $daySchedules->groupBy(fn ($s) => $s->start_time . '|' . $s->end_time);
         @endphp
 
@@ -212,86 +220,134 @@
         <div x-show="activeDay === '{{ $key }}'" x-transition.opacity style="display: none;" class="mockup-card overflow-hidden">
             <div class="flex items-center justify-between flex-wrap gap-3 px-5 py-4 border-b border-[var(--border-subtle)]">
                 <div>
-                    {{-- Full day name (e.g. "Monday", "Tuesday") --}}
-                    <h3 class="font-heading font-extrabold text-lg text-[var(--text-heading)]">{{ $full }}</h3>
-                    <p class="text-[11px] text-[var(--text-muted)]">{{ $slots->count() }} time {{ \Illuminate\Support\Str::plural('slot', $slots->count()) }} &bull; {{ $daySchedules->count() }} {{ \Illuminate\Support\Str::plural('borrower', $daySchedules->count()) }}</p>
+                    {{-- Full day name (e.g. "Wednesday") --}}
+                    <h3 class="font-heading font-extrabold text-xl text-[var(--text-heading)]">{{ $full }}</h3>
+                    <p class="text-xs text-[var(--text-muted)] mt-0.5">{{ $slots->count() }} time {{ \Illuminate\Support\Str::plural('slot', $slots->count()) }} &bull; {{ $daySchedules->count() }} {{ \Illuminate\Support\Str::plural('borrower', $daySchedules->count()) }}</p>
                 </div>
-                <button type="button" @click="openFormFor('{{ $key }}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white transition-all">
+                <button type="button" @click="openFormFor('{{ $key }}', activeRoom)" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white transition-all shadow-sm">
                     <i class="fa-solid fa-plus text-[10px]"></i> Add for {{ $full }}
                 </button>
             </div>
 
             <div class="p-5">
-                {{-- Loop through each grouped time slot --}}
-                @forelse($slots as $items)
-                    @php $first = $items->first(); @endphp
-                    <div class="flex gap-4">
-                        <!-- Time column (e.g., 8:00 AM to 9:00 AM) printed once per time slot -->
-                        <div class="w-20 sm:w-24 flex-shrink-0 text-right pt-2">
-                            <p class="font-mono font-extrabold text-sm text-[var(--purple-primary)]">{{ \Carbon\Carbon::parse($first->start_time)->format('g:i A') }}</p>
-                            <p class="font-mono text-[10px] text-[var(--text-muted)]">to {{ \Carbon\Carbon::parse($first->end_time)->format('g:i A') }}</p>
+                <!-- Room Selection Cards (Room 1, Room 2, Room 3) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
+                    @foreach($keys as $k)
+                        @php
+                            $roomScheds = $daySchedules->where('key_id', $k->id);
+                            $roomCount = $roomScheds->count();
+                            $roomLabel = $k->room_name ?: $k->key_name ?: ('Room ' . $k->slot_number);
+                        @endphp
+                        <button type="button"
+                                @click="activeRoom = {{ $k->id }}"
+                                :class="activeRoom == {{ $k->id }} 
+                                    ? 'bg-[var(--purple-primary)] text-white shadow-md shadow-[var(--purple-primary)]/25 border-[var(--purple-primary)] ring-2 ring-[var(--purple-primary)]/20' 
+                                    : 'bg-white text-[var(--text-heading)] border-[var(--border-subtle)] hover:border-[var(--purple-primary)]/40 hover:bg-[var(--purple-soft)]/30'"
+                                class="flex items-center gap-3.5 p-4 rounded-2xl border transition-all text-left cursor-pointer select-none">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+                                 :class="activeRoom == {{ $k->id }} ? 'bg-white/20 text-white' : 'bg-[var(--purple-soft)] text-[var(--purple-primary)]'">
+                                <i class="fa-solid fa-door-closed text-base"></i>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-heading font-extrabold text-sm sm:text-base leading-tight truncate"
+                                   :class="activeRoom == {{ $k->id }} ? 'text-white' : 'text-[var(--text-heading)]'">
+                                    {{ $roomLabel }}
+                                </p>
+                                <p class="text-xs font-semibold mt-0.5"
+                                   :class="activeRoom == {{ $k->id }} ? 'text-white/85' : 'text-[var(--text-muted)]'">
+                                    {{ $roomCount }} {{ \Illuminate\Support\Str::plural('schedule', $roomCount) }}
+                                </p>
+                            </div>
+                        </button>
+                    @endforeach
+                </div>
+
+                <!-- Selected Room Schedules Section -->
+                @foreach($keys as $k)
+                    @php
+                        $roomScheds = $daySchedules->where('key_id', $k->id)->sortBy('start_time');
+                        $roomCount = $roomScheds->count();
+                        $roomLabel = $k->room_name ?: $k->key_name ?: ('Room ' . $k->slot_number);
+                    @endphp
+                    <div x-show="activeRoom == {{ $k->id }}" x-transition.opacity style="display: none;" class="space-y-4">
+                        <!-- Room Header Bar -->
+                        <div class="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-door-closed text-[var(--purple-primary)] text-sm"></i>
+                                <h4 class="font-heading font-extrabold text-sm sm:text-base text-[var(--text-heading)]">{{ $roomLabel }} Schedules</h4>
+                            </div>
+                            <span class="text-xs font-bold text-[var(--text-muted)]">{{ $roomCount }} {{ \Illuminate\Support\Str::plural('schedule', $roomCount) }}</span>
                         </div>
-                        <!-- Timeline rail + user cards -->
-                        <div class="relative flex-1 border-l-2 border-[var(--purple-soft)] pl-5 pb-6 space-y-2">
-                            <span class="absolute -left-[7px] top-3 w-3 h-3 rounded-full bg-[var(--purple-primary)] ring-4 ring-white"></span>
-                            
-                            {{-- Loop through each user/borrower who has access during this time slot --}}
-                            @foreach($items as $schedule)
-                                <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-white hover:bg-[var(--purple-soft)]/40 transition-colors">
-                                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                                        <!-- User Avatar Initial -->
-                                        <div class="w-8 h-8 rounded-full bg-[var(--purple-soft)] text-[var(--purple-primary)] font-extrabold text-xs flex items-center justify-center flex-shrink-0">
+
+                        <!-- Room Schedule List -->
+                        <div class="space-y-2.5">
+                            @forelse($roomScheds as $schedule)
+                                <div class="flex items-center justify-between gap-4 p-3.5 sm:p-4 rounded-2xl border border-[var(--border-subtle)] bg-white hover:border-[var(--purple-primary)]/40 hover:bg-[var(--purple-soft)]/20 transition-all">
+                                    <!-- Time Column (Military Time, e.g. 1200 to 1300) -->
+                                    <div class="w-24 sm:w-28 flex-shrink-0 text-left">
+                                        <p class="font-mono font-extrabold text-xs sm:text-sm text-[var(--text-heading)] leading-tight">
+                                            {{ \Carbon\Carbon::parse($schedule->start_time)->format('Hi') }}
+                                        </p>
+                                        <p class="font-mono text-[11px] font-semibold text-[var(--text-muted)] mt-0.5">
+                                            to {{ \Carbon\Carbon::parse($schedule->end_time)->format('Hi') }}
+                                        </p>
+                                    </div>
+
+                                    <!-- User Avatar & Information -->
+                                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                                        <div class="w-9 h-9 rounded-full bg-[var(--purple-soft)] text-[var(--purple-primary)] font-extrabold text-xs flex items-center justify-center flex-shrink-0">
                                             {{ strtoupper(substr($schedule->user->name ?? '?', 0, 1)) }}
                                         </div>
-                                        <!-- User Name and Room / Slot Details -->
-                                        <div class="min-w-0">
-                                            <p class="font-bold text-xs text-[var(--text-heading)] truncate">{{ $schedule->user->name ?? 'Unknown User' }}</p>
-                                            <p class="text-[10px] text-[var(--text-muted)] truncate">
-                                                {{ ucfirst($schedule->user->role ?? 'user') }} &bull;
-                                                <i class="fa-solid fa-door-open text-[9px]"></i>
-                                                Slot #{{ $schedule->key->slot_number ?? '?' }} {{ $schedule->key->key_name ?? '' }}
+                                        <div class="min-w-0 flex-1">
+                                            <p class="font-bold text-xs sm:text-sm text-[var(--text-heading)] truncate">
+                                                {{ $schedule->user->name ?? 'Unknown User' }}
+                                            </p>
+                                            <p class="text-[11px] font-medium text-[var(--text-muted)] truncate mt-0.5">
+                                                {{ ucfirst($schedule->user->role ?? 'user') }} &bull; 
+                                                Slot #{{ $schedule->key->slot_number ?? '?' }} &bull; 
+                                                {{ $schedule->key->key_name ?? '' }}
                                                 @if(!empty($schedule->key->room_name)) ({{ $schedule->key->room_name }}) @endif
                                             </p>
                                         </div>
                                     </div>
-                                    {{-- Badge shown only if this schedule rule is currently disabled --}}
-                                    @unless($schedule->is_active)
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600">Inactive</span>
-                                    @endunless
 
-                                    {{-- QR Code Button: Links to the user's printable QR access badge --}}
-                                    @if($schedule->user)
-                                        <a href="{{ route('users.qr', $schedule->user) }}"
-                                           title="View & Print QR Badge for {{ $schedule->user->name }}"
-                                           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white transition-all shadow-sm">
-                                            <i class="fa-solid fa-qrcode text-[10px]"></i> Print QR
-                                        </a>
-                                    @endif
+                                    <!-- Action Buttons -->
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        @unless($schedule->is_active)
+                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600">Inactive</span>
+                                        @endunless
 
-                                    {{-- Remove Button: Populates and opens the Alpine delete confirmation modal --}}
-                                    <button type="button"
-                                        @click="deleteModalOpen = true;
-                                                deleteScheduleId = '{{ $schedule->id }}';
-                                                deleteUserName = '{{ addslashes($schedule->user->name ?? 'Unknown User') }}';
-                                                deleteUserRole = '{{ ucfirst($schedule->user->role ?? 'User') }}';
-                                                deleteKeyName = '{{ addslashes($schedule->key->key_name ?? 'Key') }}';
-                                                deleteSlotNum = '{{ $schedule->key->slot_number ?? '?' }}';
-                                                deleteDayTime = '{{ $full }} · {{ \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') }} – {{ \Carbon\Carbon::parse($schedule->end_time)->format('h:i A') }}'"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 hover:bg-rose-600 hover:text-white transition-all">
-                                        <i class="fa-solid fa-trash-can text-[10px]"></i> Remove
-                                    </button>
+                                        @if($schedule->user)
+                                            <a href="{{ route('users.qr', $schedule->user) }}"
+                                               title="View & Print QR Badge for {{ $schedule->user->name }}"
+                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white transition-all shadow-sm">
+                                                <i class="fa-solid fa-qrcode text-[11px]"></i> <span>Print QR</span>
+                                            </a>
+                                        @endif
+
+                                        <button type="button"
+                                            @click="deleteModalOpen = true;
+                                                    deleteScheduleId = '{{ $schedule->id }}';
+                                                    deleteUserName = '{{ addslashes($schedule->user->name ?? 'Unknown User') }}';
+                                                    deleteUserRole = '{{ ucfirst($schedule->user->role ?? 'User') }}';
+                                                    deleteKeyName = '{{ addslashes($schedule->key->key_name ?? 'Key') }}';
+                                                    deleteSlotNum = '{{ $schedule->key->slot_number ?? '?' }}';
+                                                    deleteDayTime = '{{ $full }} · {{ \Carbon\Carbon::parse($schedule->start_time)->format('Hi') }} – {{ \Carbon\Carbon::parse($schedule->end_time)->format('Hi') }}'"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-rose-600 hover:text-white transition-all">
+                                            <i class="fa-solid fa-trash-can text-[11px]"></i> <span>Remove</span>
+                                        </button>
+                                    </div>
                                 </div>
-                            @endforeach
+                            @empty
+                                <div class="py-12 text-center text-[var(--text-muted)] bg-slate-50/60 rounded-2xl border border-dashed border-[var(--border-subtle)]">
+                                    <i class="fa-solid fa-calendar-xmark text-3xl block mb-2 opacity-30"></i>
+                                    <p class="font-heading font-bold text-sm">No schedules for {{ $roomLabel }} on {{ $full }}.</p>
+                                    <p class="text-xs mt-1">Click <strong>Add for {{ $full }}</strong> above to assign access to this room.</p>
+                                </div>
+                            @endforelse
                         </div>
                     </div>
-                {{-- Empty state: Displayed when no schedules exist for this selected day --}}
-                @empty
-                    <div class="py-14 text-center text-[var(--text-muted)]">
-                        <i class="fa-solid fa-calendar-xmark text-4xl block mb-3 opacity-20"></i>
-                        <p class="font-heading font-bold text-sm">No schedules on {{ $full }}.</p>
-                        <p class="text-xs mt-1">Use <strong>Add for {{ $full }}</strong> to create one.</p>
-                    </div>
-                @endforelse
+                @endforeach
             </div>
         </div>
     @endforeach

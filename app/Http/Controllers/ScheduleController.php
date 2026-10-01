@@ -84,8 +84,8 @@ class ScheduleController extends Controller
                 $user = User::find($validated['user_id']);
                 return back()->withInput()->with('conflict_error',
                     "⚠️ Conflict: {$user->name} already has a schedule for this key on " . ucfirst($day) . " from " .
-                    \Carbon\Carbon::parse($userConflict->start_time)->format('h:i A') . " to " .
-                    \Carbon\Carbon::parse($userConflict->end_time)->format('h:i A') . ". Please choose a different time or day."
+                    \Carbon\Carbon::parse($userConflict->start_time)->format('Hi') . " to " .
+                    \Carbon\Carbon::parse($userConflict->end_time)->format('Hi') . ". Please choose a different time or day."
                 );
             }
 
@@ -101,8 +101,8 @@ class ScheduleController extends Controller
                 $key = Key::find($validated['key_id']);
                 return back()->withInput()->with('conflict_error',
                     "⚠️ Conflict: Key Slot #{$key->slot_number} ({$key->key_name}) is already assigned to {$keyConflict->user->name} on " . ucfirst($day) . " from " .
-                    \Carbon\Carbon::parse($keyConflict->start_time)->format('h:i A') . " to " .
-                    \Carbon\Carbon::parse($keyConflict->end_time)->format('h:i A') . ". Please choose a different key or time."
+                    \Carbon\Carbon::parse($keyConflict->start_time)->format('Hi') . " to " .
+                    \Carbon\Carbon::parse($keyConflict->end_time)->format('Hi') . ". Please choose a different key or time."
                 );
             }
         }

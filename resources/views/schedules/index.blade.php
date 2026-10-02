@@ -156,18 +156,28 @@
                 @error('days') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <!-- Start Time and End Time Inputs -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Start Time *</label>
-                    <input type="time" name="start_time" value="{{ old('start_time', '08:00') }}" required class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold">
-                    @error('start_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+            <!-- Start Time and End Time Inputs (7:00 AM – 5:00 PM only) -->
+            <div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
+                            Start Time (7:00 AM – 5:00 PM) <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="time" name="start_time" value="{{ old('start_time', '08:00') }}" min="07:00" max="17:00" required class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold">
+                        @error('start_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
+                            End Time (7:00 AM – 5:00 PM) <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="time" name="end_time" value="{{ old('end_time', '09:00') }}" min="07:00" max="17:00" required class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold">
+                        @error('end_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">End Time *</label>
-                    <input type="time" name="end_time" value="{{ old('end_time', '09:00') }}" required class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold">
-                    @error('end_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                <p class="text-[11px] text-[var(--text-muted)] mt-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-info text-[var(--purple-primary)] text-xs"></i>
+                    <span>Allowed schedule window is strictly between <strong>7:00 AM</strong> and <strong>5:00 PM</strong>.</span>
+                </p>
             </div>
 
             <!-- Form Action Buttons -->
@@ -283,13 +293,13 @@
                         <div class="space-y-2.5">
                             @forelse($roomScheds as $schedule)
                                 <div class="flex items-center justify-between gap-4 p-3.5 sm:p-4 rounded-2xl border border-[var(--border-subtle)] bg-white hover:border-[var(--purple-primary)]/40 hover:bg-[var(--purple-soft)]/20 transition-all">
-                                    <!-- Time Column (Military Time, e.g. 1200 to 1300) -->
-                                    <div class="w-24 sm:w-28 flex-shrink-0 text-left">
+                                    <!-- Time Column (12-hour format, e.g. 1:00 PM to 2:00 PM) -->
+                                    <div class="w-28 sm:w-32 flex-shrink-0 text-left">
                                         <p class="font-mono font-extrabold text-xs sm:text-sm text-[var(--text-heading)] leading-tight">
-                                            {{ \Carbon\Carbon::parse($schedule->start_time)->format('Hi') }}
+                                            {{ \Carbon\Carbon::parse($schedule->start_time)->format('g:i A') }}
                                         </p>
                                         <p class="font-mono text-[11px] font-semibold text-[var(--text-muted)] mt-0.5">
-                                            to {{ \Carbon\Carbon::parse($schedule->end_time)->format('Hi') }}
+                                            to {{ \Carbon\Carbon::parse($schedule->end_time)->format('g:i A') }}
                                         </p>
                                     </div>
 
@@ -332,7 +342,7 @@
                                                     deleteUserRole = '{{ ucfirst($schedule->user->role ?? 'User') }}';
                                                     deleteKeyName = '{{ addslashes($schedule->key->key_name ?? 'Key') }}';
                                                     deleteSlotNum = '{{ $schedule->key->slot_number ?? '?' }}';
-                                                    deleteDayTime = '{{ $full }} · {{ \Carbon\Carbon::parse($schedule->start_time)->format('Hi') }} – {{ \Carbon\Carbon::parse($schedule->end_time)->format('Hi') }}'"
+                                                    deleteDayTime = '{{ $full }} · {{ \Carbon\Carbon::parse($schedule->start_time)->format('g:i A') }} – {{ \Carbon\Carbon::parse($schedule->end_time)->format('g:i A') }}'"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-rose-600 hover:text-white transition-all">
                                             <i class="fa-solid fa-trash-can text-[11px]"></i> <span>Remove</span>
                                         </button>

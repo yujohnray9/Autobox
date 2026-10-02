@@ -2,12 +2,71 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Key;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
     public function index(Request $request)
+    {
+        $query = $this->buildFilteredQuery($request);
+
+        $transactions = $query->latest()->paginate(20)->withQueryString();
+        $keys = Key::orderBy('slot_number')->get();
+
+        return view('transactions.index', compact('transactions', 'keys'));
+    }
+
+    public function export(Request $request)
+    {
+        $transactions = $this->buildFilteredQuery($request)->latest()->get();
+
+        $filename = "autobox_transactions_" . date('Y-m-d_H-i-s') . ".csv";
+
+        return response()->streamDownload(function () use ($transactions) {
+            $handle = fopen('php://output', 'w');
+
+            // CSV Header with Transaction Date column included
+            fputcsv($handle, [
+                'ID',
+                'Transaction Date',
+                'User Name',
+                'Employee ID',
+                'Key Name',
+                'Room',
+                'Slot',
+                'Action',
+                'Status',
+                'Borrowed At',
+                'Returned At',
+                'Notes',
+            ]);
+
+            foreach ($transactions as $t) {
+                fputcsv($handle, [
+                    $t->id,
+                    $t->created_at ? $t->created_at->format('Y-m-d h:i A') : 'N/A',
+                    $t->user->name ?? 'N/A',
+                    $t->user->employee_id ?? 'N/A',
+                    $t->key->key_name ?? 'N/A',
+                    $t->key->room_name ?? 'N/A',
+                    $t->key->slot_number ?? 'N/A',
+                    strtoupper($t->action),
+                    strtoupper($t->status),
+                    $t->borrowed_at ? $t->borrowed_at->format('Y-m-d h:i A') : 'N/A',
+                    $t->returned_at ? $t->returned_at->format('Y-m-d h:i A') : 'Not Returned Yet',
+                    $t->notes ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    protected function buildFilteredQuery(Request $request)
     {
         $query = Transaction::with(['user', 'key']);
 
@@ -19,49 +78,40 @@ class TransactionController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")->orWhere('employee_id', 'like', "%{$search}%");
-            })->orWhereHas('key', function ($q) use ($search) {
-                $q->where('key_name', 'like', "%{$search}%")->orWhere('room_name', 'like', "%{$search}%");
+        if ($request->filled('key_id')) {
+            $query->where('key_id', $request->key_id);
+        }
+
+        if ($request->filled('date')) {
+            $date = $request->date;
+            $query->where(function ($q) use ($date) {
+                $q->whereDate('created_at', $date)
+                  ->orWhereDate('borrowed_at', $date)
+                  ->orWhereDate('returned_at', $date);
             });
         }
 
-        $transactions = $query->latest()->paginate(20);
-
-        return view('transactions.index', compact('transactions'));
-    }
-
-    public function export()
-    {
-        $transactions = Transaction::with(['user', 'key'])->latest()->get();
-
-        $filename = "autobox_transactions_" . date('Y-m-d_H-i-s') . ".csv";
-
-        $handle = fopen('php://output', 'w');
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-
-        fputcsv($handle, ['ID', 'User Name', 'Employee ID', 'Key Name', 'Room', 'Slot', 'Action', 'Status', 'Borrowed At', 'Returned At', 'Notes']);
-
-        foreach ($transactions as $t) {
-            fputcsv($handle, [
-                $t->id,
-                $t->user->name ?? 'N/A',
-                $t->user->employee_id ?? 'N/A',
-                $t->key->key_name ?? 'N/A',
-                $t->key->room_name ?? 'N/A',
-                $t->key->slot_number ?? 'N/A',
-                strtoupper($t->action),
-                strtoupper($t->status),
-                $t->borrowed_at ? $t->borrowed_at->format('Y-m-d H:i:s') : 'N/A',
-                $t->returned_at ? $t->returned_at->format('Y-m-d H:i:s') : 'N/A',
-                $t->notes,
-            ]);
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($uq) use ($search) {
+                    $uq->where('name', 'like', "%{$search}%")
+                       ->orWhere('employee_id', 'like', "%{$search}%");
+                })
+                ->orWhereHas('key', function ($kq) use ($search) {
+                    $kq->where('key_name', 'like', "%{$search}%")
+                       ->orWhere('room_name', 'like', "%{$search}%")
+                       ->orWhere('slot_number', 'like', "%{$search}%");
+                })
+                ->orWhere('action', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhere('notes', 'like', "%{$search}%")
+                ->orWhere('created_at', 'like', "%{$search}%")
+                ->orWhere('borrowed_at', 'like', "%{$search}%")
+                ->orWhere('returned_at', 'like', "%{$search}%");
+            });
         }
 
-        fclose($handle);
-        exit;
+        return $query;
     }
 }

@@ -131,14 +131,14 @@
                     @error('days') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Time Window -->
+                <!-- Time Window (7:00 AM – 5:00 PM only) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest flex items-center gap-1">
-                            <i class="fa-regular fa-clock text-emerald-500 text-xs"></i> START TIME <span class="text-rose-500">*</span>
+                            <i class="fa-regular fa-clock text-emerald-500 text-xs"></i> START TIME (7:00 AM – 5:00 PM) <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
-                            <input type="time" name="start_time" value="{{ old('start_time', '08:00') }}" required
+                            <input type="time" name="start_time" value="{{ old('start_time', '08:00') }}" min="07:00" max="17:00" required
                                 class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
                         </div>
                         @error('start_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -146,10 +146,10 @@
 
                     <div>
                         <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest flex items-center gap-1">
-                            <i class="fa-regular fa-clock text-rose-500 text-xs"></i> END TIME <span class="text-rose-500">*</span>
+                            <i class="fa-regular fa-clock text-rose-500 text-xs"></i> END TIME (7:00 AM – 5:00 PM) <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
-                            <input type="time" name="end_time" value="{{ old('end_time', '17:00') }}" required
+                            <input type="time" name="end_time" value="{{ old('end_time', '17:00') }}" min="07:00" max="17:00" required
                                 class="w-full rounded-xl border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 text-sm font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
                         </div>
                         @error('end_time') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -158,7 +158,7 @@
 
                 <div class="flex items-center gap-2 text-[11px] text-[var(--text-muted)] pt-1">
                     <i class="fa-solid fa-circle-info text-[var(--purple-primary)] text-xs"></i>
-                    <span>The hardware QR scanner will authorize key unlock during this scheduled time window.</span>
+                    <span>The hardware QR scanner will authorize key unlock during this scheduled time window (strictly between 7:00 AM and 5:00 PM).</span>
                 </div>
             </div>
 

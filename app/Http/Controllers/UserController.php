@@ -41,8 +41,13 @@ class UserController extends Controller
             'days'            => 'required_if:assign_schedule,1|nullable|array',
             'days.*'          => 'in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'day_of_week'     => 'nullable|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
-            'start_time'      => 'required_if:assign_schedule,1|nullable|date_format:H:i',
-            'end_time'        => 'required_if:assign_schedule,1|nullable|date_format:H:i|after:start_time',
+            'start_time'      => 'required_if:assign_schedule,1|nullable|date_format:H:i|after_or_equal:07:00|before:17:00',
+            'end_time'        => 'required_if:assign_schedule,1|nullable|date_format:H:i|after:start_time|before_or_equal:17:00',
+        ], [
+            'start_time.after_or_equal' => 'Schedule start time must be at or after 7:00 AM (07:00).',
+            'start_time.before'         => 'Schedule start time must be before 5:00 PM (17:00).',
+            'end_time.after'            => 'Schedule end time must be after the start time.',
+            'end_time.before_or_equal'  => 'Schedule end time must be at or before 5:00 PM (17:00).',
         ]);
 
         if (empty($validated['employee_id'])) {

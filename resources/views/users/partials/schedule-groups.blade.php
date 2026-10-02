@@ -1,6 +1,6 @@
 {{-- resources/views/users/partials/schedule-groups.blade.php
      Usage: @include('users.partials.schedule-groups', ['user' => $user])
-     Combines multiple time slots for the same room and day(s) into compact rows in military time (e.g., 0800–1000, 1200–1300) --}}
+     Combines multiple time slots for the same room and day(s) into compact rows (e.g., 08:00 AM – 10:00 AM, 01:00 PM – 02:00 PM) --}}
 
 @php
     $order = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
@@ -27,8 +27,8 @@
         return implode(', ', $parts);
     };
 
-    $formatMilitary = function ($start, $end) {
-        return \Carbon\Carbon::parse($start)->format('Hi') . '–' . \Carbon\Carbon::parse($end)->format('Hi');
+    $formatTimeWindow = function ($start, $end) {
+        return \Carbon\Carbon::parse($start)->format('h:i A') . ' – ' . \Carbon\Carbon::parse($end)->format('h:i A');
     };
 
     // Group schedules by Room (key_id)
@@ -52,7 +52,7 @@
             foreach ($order as $dayName) {
                 if (!isset($dayGroups[$dayName])) continue;
                 $dayItems = $dayGroups[$dayName]->sortBy('start_time');
-                $timeString = $dayItems->map(fn ($s) => $formatMilitary($s->start_time, $s->end_time))->unique()->implode(', ');
+                $timeString = $dayItems->map(fn ($s) => $formatTimeWindow($s->start_time, $s->end_time))->unique()->implode(', ');
                 $timeToDays[$timeString][] = $dayName;
             }
         @endphp
@@ -75,7 +75,7 @@
                 </span>
             </div>
 
-            <!-- Combined Day & Military Time Slots -->
+            <!-- Combined Day & Time Slots -->
             <div class="space-y-1">
                 @foreach($timeToDays as $timeRanges => $daysList)
                     <div class="text-[11px] text-slate-700 flex items-center gap-2 font-medium flex-wrap">

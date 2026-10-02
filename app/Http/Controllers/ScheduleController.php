@@ -38,8 +38,13 @@ class ScheduleController extends Controller
             'days'        => 'nullable|array',
             'days.*'      => 'in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
             'day_of_week' => 'nullable|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
-            'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i|after:start_time',
+            'start_time'  => 'required|date_format:H:i|after_or_equal:07:00|before:17:00',
+            'end_time'    => 'required|date_format:H:i|after:start_time|before_or_equal:17:00',
+        ], [
+            'start_time.after_or_equal' => 'Schedule start time must be at or after 7:00 AM (07:00).',
+            'start_time.before'         => 'Schedule start time must be before 5:00 PM (17:00).',
+            'end_time.after'            => 'Schedule end time must be after the start time.',
+            'end_time.before_or_equal'  => 'Schedule end time must be at or before 5:00 PM (17:00).',
         ]);
 
         // Determine days
@@ -84,8 +89,8 @@ class ScheduleController extends Controller
                 $user = User::find($validated['user_id']);
                 return back()->withInput()->with('conflict_error',
                     "⚠️ Conflict: {$user->name} already has a schedule for this key on " . ucfirst($day) . " from " .
-                    \Carbon\Carbon::parse($userConflict->start_time)->format('Hi') . " to " .
-                    \Carbon\Carbon::parse($userConflict->end_time)->format('Hi') . ". Please choose a different time or day."
+                    \Carbon\Carbon::parse($userConflict->start_time)->format('g:i A') . " to " .
+                    \Carbon\Carbon::parse($userConflict->end_time)->format('g:i A') . ". Please choose a different time or day."
                 );
             }
 
@@ -101,8 +106,8 @@ class ScheduleController extends Controller
                 $key = Key::find($validated['key_id']);
                 return back()->withInput()->with('conflict_error',
                     "⚠️ Conflict: Key Slot #{$key->slot_number} ({$key->key_name}) is already assigned to {$keyConflict->user->name} on " . ucfirst($day) . " from " .
-                    \Carbon\Carbon::parse($keyConflict->start_time)->format('Hi') . " to " .
-                    \Carbon\Carbon::parse($keyConflict->end_time)->format('Hi') . ". Please choose a different key or time."
+                    \Carbon\Carbon::parse($keyConflict->start_time)->format('g:i A') . " to " .
+                    \Carbon\Carbon::parse($keyConflict->end_time)->format('g:i A') . ". Please choose a different key or time."
                 );
             }
         }

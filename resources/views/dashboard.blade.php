@@ -6,7 +6,65 @@
 <div class="space-y-6">
 
     <!-- ═══════════════════════════════════
-         TOP ROW — MOCKUP STAT CARDS (4 COLUMNS)
+         DASHBOARD PERIOD FILTER BAR
+         ═══════════════════════════════════ -->
+    <div class="mockup-card p-4 flex items-center justify-between flex-wrap gap-4" x-data="{ customOpen: {{ $period === 'custom' ? 'true' : 'false' }} }">
+        <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-[var(--purple-soft)] text-[var(--purple-primary)] flex items-center justify-center text-sm font-extrabold flex-shrink-0">
+                <i class="fa-solid fa-calendar-days"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Activity Filter:</span>
+                    <span class="text-xs font-extrabold text-[var(--purple-primary)] bg-[var(--purple-soft)] px-2.5 py-0.5 rounded-full">{{ $periodLabel }}</span>
+                </div>
+                <p class="text-[11px] text-[var(--text-muted)] font-medium mt-0.5">Filters security attempts and key activity logs (physical hardware status remains live real-time)</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 flex-wrap">
+            <a href="{{ route('dashboard', ['period' => 'today']) }}"
+               class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all {{ $period === 'today' ? 'bg-[var(--purple-primary)] text-white shadow-sm' : 'bg-[var(--app-bg)] text-[var(--text-muted)] hover:text-[var(--text-heading)] hover:bg-slate-200' }}">
+                Today
+            </a>
+            <a href="{{ route('dashboard', ['period' => 'month']) }}"
+               class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all {{ $period === 'month' ? 'bg-[var(--purple-primary)] text-white shadow-sm' : 'bg-[var(--app-bg)] text-[var(--text-muted)] hover:text-[var(--text-heading)] hover:bg-slate-200' }}">
+                This Month
+            </a>
+            <a href="{{ route('dashboard', ['period' => 'year']) }}"
+               class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all {{ $period === 'year' ? 'bg-[var(--purple-primary)] text-white shadow-sm' : 'bg-[var(--app-bg)] text-[var(--text-muted)] hover:text-[var(--text-heading)] hover:bg-slate-200' }}">
+                This Year
+            </a>
+            <button type="button" @click="customOpen = !customOpen"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all inline-flex items-center gap-1.5 {{ $period === 'custom' ? 'bg-[var(--purple-primary)] text-white shadow-sm' : 'bg-[var(--app-bg)] text-[var(--text-muted)] hover:text-[var(--text-heading)] hover:bg-slate-200' }}">
+                <i class="fa-solid fa-sliders text-[10px]"></i> Custom
+            </button>
+        </div>
+
+        <!-- Custom Date Range Picker (Accordion) -->
+        <div x-show="customOpen" x-cloak class="w-full pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between flex-wrap gap-3">
+            <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-3 flex-wrap">
+                <input type="hidden" name="period" value="custom">
+                <div class="flex items-center gap-2 text-xs">
+                    <label class="font-bold text-[var(--text-muted)]">From:</label>
+                    <input type="date" name="start_date" value="{{ $startDate ?? now()->subDays(7)->format('Y-m-d') }}" required
+                           class="px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] text-xs font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30">
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                    <label class="font-bold text-[var(--text-muted)]">To:</label>
+                    <input type="date" name="end_date" value="{{ $endDate ?? now()->format('Y-m-d') }}" required
+                           class="px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] text-xs font-semibold text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30">
+                </div>
+                <button type="submit" class="px-4 py-1.5 rounded-xl text-xs font-extrabold text-white bg-[var(--purple-primary)] hover:bg-[var(--purple-dark)] transition-colors shadow-sm">
+                    Apply Filter
+                </button>
+                <a href="{{ route('dashboard') }}" class="text-xs font-bold text-slate-500 hover:underline">Reset</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TOP ROW — MOCKUP STAT CARDS (4 COLUMNS - PHYSICAL LIVE)
          ═══════════════════════════════════ -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
@@ -83,6 +141,108 @@
                 <span class="stat-tag stat-tag-negative shadow-sm">
                     <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Alert
                 </span>
+            </div>
+        </div>
+    </div>
+
+    @if($pendingOfflineCount > 0)
+        <!-- PENDING OFFLINE DATA BANNER -->
+        <a href="{{ route('offline.index') }}" id="dashboard-offline-banner"
+           class="flex items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-extrabold text-[var(--text-heading)]">{{ $pendingOfflineCount }} offline record(s) could not be synced automatically</p>
+                    <p class="text-xs text-[var(--text-muted)] font-medium">Open Offline Records and press Retry Sync to save them to the online database.</p>
+                </div>
+            </div>
+            <span class="text-xs font-extrabold text-sky-700 flex items-center gap-1 flex-shrink-0 group-hover:translate-x-0.5 transition-transform">
+                Review <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </span>
+        </a>
+    @endif
+
+    <!-- ═══════════════════════════════════
+         SECURITY ROW — UNAUTHORIZED ACCESS ATTEMPTS
+         ═══════════════════════════════════ -->
+    <div class="mockup-card security-attempts-card" id="unauthorized-attempts-card">
+        <div class="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-[var(--border-subtle)]">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg flex-shrink-0 relative">
+                    <i class="fa-solid fa-user-shield"></i>
+                    @if($unauthorizedToday > 0)
+                        <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 ring-2 ring-white animate-pulse"></span>
+                    @endif
+                </div>
+                <div>
+                    <h2 class="mockup-card-title text-base">Unauthorized Access Attempts</h2>
+                    <p class="text-xs text-[var(--text-muted)] font-medium mt-0.5">Unregistered QR codes, unknown persons, and unauthorized scan attempts</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-[11px] font-bold text-slate-500 bg-[var(--app-bg)] px-2.5 py-1 rounded-lg border border-[var(--border-subtle)]">
+                    Period: <b class="text-[var(--text-heading)]">{{ $periodLabel }}</b>
+                </span>
+                <a href="{{ route('access-logs.index') }}" class="text-xs font-extrabold text-[var(--purple-primary)] hover:underline flex items-center gap-1">
+                    <span>Full Audit Log</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-5 pt-4">
+            <!-- Summary counters -->
+            <div class="grid grid-cols-3 lg:grid-cols-1 gap-3">
+                <div class="p-3 rounded-2xl bg-rose-50 border border-rose-100">
+                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-rose-700">
+                        {{ $period === 'today' ? 'Today' : 'In Selected Period' }}
+                    </p>
+                    <p class="text-2xl font-heading font-extrabold text-rose-600" id="unauthorized-period-count">{{ $unauthorizedInPeriod }}</p>
+                </div>
+                <div class="p-3 rounded-2xl bg-amber-50 border border-amber-100">
+                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-amber-700">Today</p>
+                    <p class="text-2xl font-heading font-extrabold text-amber-600" id="unauthorized-today-count">{{ $unauthorizedToday }}</p>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-600">Unknown QR In Period</p>
+                    <p class="text-2xl font-heading font-extrabold text-slate-700">{{ $unknownQrInPeriod }}</p>
+                </div>
+            </div>
+
+            <!-- Recent attempts list -->
+            <div class="lg:col-span-3">
+                <div class="flex items-center justify-between pb-2 mb-2 text-[11px] text-slate-500 font-bold border-b border-dashed border-slate-200">
+                    <span>Filtered Activity ({{ $periodLabel }})</span>
+                    <span>{{ count($recentUnauthorized) }} record(s)</span>
+                </div>
+                <ul id="unauthorized-attempts-list" class="divide-y divide-[var(--border-subtle)] rounded-2xl border border-[var(--border-subtle)] overflow-hidden">
+                    @forelse($recentUnauthorized as $attempt)
+                        <li class="flex items-start gap-3 p-3 bg-white hover:bg-rose-50/40 transition-colors">
+                            <div class="w-8 h-8 rounded-full {{ $attempt['is_unknown'] ? 'bg-slate-800 text-white' : 'bg-rose-100 text-rose-700' }} flex items-center justify-center text-xs font-extrabold flex-shrink-0">
+                                @if($attempt['is_unknown']) <i class="fa-solid fa-user-secret"></i> @else {{ strtoupper(substr($attempt['who'], 0, 1)) }} @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-xs font-extrabold text-[var(--text-heading)]">{{ $attempt['who'] }}</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 text-rose-700">{{ $attempt['category'] }}</span>
+                                </div>
+                                <p class="text-[11px] text-[var(--text-muted)] font-medium mt-0.5 truncate" title="{{ $attempt['reason'] }}">{{ $attempt['reason'] }}</p>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-[10px] font-bold text-[var(--text-heading)]">{{ $attempt['time'] }}</p>
+                                <p class="text-[9px] text-[var(--text-muted)]">{{ $attempt['ago'] }}</p>
+                            </div>
+                        </li>
+                    @empty
+                        <li class="p-8 text-center bg-white" id="unauthorized-empty-state">
+                            <i class="fa-solid fa-shield-halved text-3xl text-emerald-400"></i>
+                            <p class="text-sm font-extrabold text-[var(--text-heading)] mt-2">No unauthorized users detected</p>
+                            <p class="text-xs text-[var(--text-muted)]">No unregistered QR codes or unknown access attempts recorded.</p>
+                        </li>
+                    @endforelse
+                </ul>
             </div>
         </div>
     </div>
@@ -367,12 +527,12 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('dashboardBarChart');
-        if (!ctx) return;
 
         const dayLabels      = {!! json_encode($dayLabels ?? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']) !!};
         const schedulePerDay = {!! json_encode($schedulePerDay ?? []) !!};
 
-        window.dashboardChartInstance = new Chart(ctx, {
+        // Chart only exists when there are schedules; the rest of this script must still run.
+        if (ctx) window.dashboardChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: dayLabels,
@@ -450,13 +610,56 @@
                 })
                 .listen('.AccessLogged', (e) => {
                     console.log('[Pusher Echo] Access Logged:', e);
-                    if (e.action === 'security_alert') {
-                        if (typeof showToast === 'function') {
-                            showToast(`SECURITY ALERT: ${e.userName} — ${e.reason}`, 'error');
-                        }
-                    }
+                    // Security toasts are handled globally by the header alert bell (layouts/app).
                 });
         }
+
+        // ═══════════════════════════════════
+        // LIVE UNAUTHORIZED ATTEMPTS LIST (fed by the global alert poller)
+        // ═══════════════════════════════════
+        const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        document.addEventListener('autobox:new-alerts', (ev) => {
+            const list = document.getElementById('unauthorized-attempts-list');
+            const counter = document.getElementById('unauthorized-today-count');
+            if (!list) return;
+
+            // Only unauthorized users (is_unknown = true) on this card
+            const unauthorizedOnly = (ev.detail.alerts || []).filter(a => a.is_unknown);
+            if (!unauthorizedOnly.length) return;
+
+            document.getElementById('unauthorized-empty-state')?.remove();
+
+            // Oldest first so the newest ends up on top
+            [...unauthorizedOnly].reverse().forEach(a => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start gap-3 p-3 bg-rose-50 transition-colors duration-1000';
+                li.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-extrabold flex-shrink-0">
+                        <i class="fa-solid fa-user-secret"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-extrabold text-[var(--text-heading)]">${escapeHtml(a.who)}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 text-rose-700">${escapeHtml(a.category)}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-rose-600 text-white">New</span>
+                        </div>
+                        <p class="text-[11px] text-[var(--text-muted)] font-medium mt-0.5 truncate" title="${escapeHtml(a.reason)}">${escapeHtml(a.reason)}</p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <p class="text-[10px] font-bold text-[var(--text-heading)]">${escapeHtml(a.time)}</p>
+                        <p class="text-[9px] text-[var(--text-muted)]">just now</p>
+                    </div>`;
+                list.prepend(li);
+                setTimeout(() => li.classList.replace('bg-rose-50', 'bg-white'), 4000);
+            });
+
+            while (list.children.length > 8) list.lastElementChild.remove();
+            if (counter) {
+                const currentCount = parseInt(counter.textContent || '0', 10);
+                counter.textContent = currentCount + unauthorizedOnly.length;
+            }
+        });
 
         // ═══════════════════════════════════
         // LIVE 10-MINUTE RETURN GRACE COUNTDOWN

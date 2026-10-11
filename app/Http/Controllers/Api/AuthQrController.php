@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Key;
 use App\Models\Transaction;
 use App\Models\AccessLog;
+use App\Models\OfflineRecord;
 use App\Models\Schedule;
 use App\Events\SliderStateChanged;
 use App\Events\KeyStatusUpdated;
@@ -16,10 +17,12 @@ use App\Mail\QrMultipleScansUserWarning;
 use App\Mail\KeyUnreturnedUserNotice;
 use App\Mail\KeyUnreturnedAdminAlert;
 use App\Mail\KeyPhysicallyRemovedAlert;
+use App\Services\OfflineSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AuthQrController extends Controller
 {
@@ -52,6 +55,10 @@ class AuthQrController extends Controller
                 'ip_address' => $ip,
             ]);
 
+            $this->safeBroadcast(function () {
+                AccessLogged::dispatch('Unknown QR Code', 'scan', 'denied', 'Unauthorized attempt: invalid or inactive QR code', null, null);
+            });
+
             return response()->json([
                 'success' => false,
                 'status'  => 'DENIED',
@@ -77,43 +84,32 @@ class AuthQrController extends Controller
                 ], 404);
             }
 
-            $existingBorrow->update([
-                'returned_at' => now(),
-            ]);
-
-            Transaction::create([
-                'user_id'     => $user->id,
-                'key_id'      => $key->id,
-                'action'      => 'return',
-                'status'      => 'success',
-                'notes'       => 'Returned via QR Scan',
-                'returned_at' => now(),
-            ]);
-
-            $key->update(['status' => 'available']);
+            // IMPORTANT: The QR scan only AUTHORIZES the return (opens the slot).
+            // The key stays "borrowed" until the slot's IR sensor confirms the key was
+            // physically inserted and the Pi calls /api/confirm-action.
+            $pendingToken = $this->createPendingAction('return', $user, $key, $qrToken, $ip, $existingBorrow->id);
 
             AccessLog::create([
                 'user_id'    => $user->id,
                 'qr_token'   => $qrToken,
                 'action'     => 'return',
                 'result'     => 'granted',
-                'reason'     => "Key returned to Slot #{$key->slot_number}",
+                'reason'     => "Slot #{$key->slot_number} opened for return — awaiting IR confirmation",
                 'ip_address' => $ip,
             ]);
 
-            $this->safeBroadcast(function () use ($key, $user) {
-                KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'available', $key->key_name, $key->room_name, null);
-                AccessLogged::dispatch($user->name, 'return', 'granted', "Returned to Slot #{$key->slot_number}", $key->key_name, $key->room_name);
-            });
-
             return response()->json([
-                'success'     => true,
-                'status'      => 'GRANTED',
-                'action'      => 'RETURN',
-                'slot_number' => $key->slot_number,
-                'key_name'    => $key->key_name,
-                'user_name'   => $user->name,
-                'message'     => "Access Granted: Return Key to Slot #{$key->slot_number}",
+                'success'       => true,
+                'status'        => 'GRANTED',
+                'action'        => 'RETURN',
+                'slot_number'   => $key->slot_number,
+                'key_id'        => $key->id,
+                'user_id'       => $user->id,
+                'key_name'      => $key->key_name,
+                'user_name'     => $user->name,
+                'pending_token' => $pendingToken,
+                'requires_ir_confirmation' => true,
+                'message'       => "Access Granted: Return Key to Slot #{$key->slot_number}",
             ]);
         }
 
@@ -239,39 +235,165 @@ class AuthQrController extends Controller
             ], 409);
         }
 
-        Transaction::create([
-            'user_id'     => $user->id,
-            'key_id'      => $key->id,
-            'action'      => 'borrow',
-            'status'      => 'success',
-            'notes'       => 'Borrowed via QR Scan',
-            'borrowed_at' => now(),
-        ]);
-
-        $key->update(['status' => 'borrowed']);
+        // The QR scan only AUTHORIZES the borrow (unlocks the slot). The key is marked
+        // "borrowed" only after the IR sensor confirms it was physically taken out.
+        $pendingToken = $this->createPendingAction('borrow', $user, $key, $qrToken, $ip);
 
         AccessLog::create([
             'user_id'    => $user->id,
             'qr_token'   => $qrToken,
             'action'     => 'borrow',
             'result'     => 'granted',
-            'reason'     => "Key Slot #{$key->slot_number} unlocked for borrowing",
+            'reason'     => "Key Slot #{$key->slot_number} unlocked for borrowing — awaiting IR confirmation",
             'ip_address' => $ip,
         ]);
 
-        $this->safeBroadcast(function () use ($key, $user) {
-            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'borrowed', $key->key_name, $key->room_name, $user->name);
-            AccessLogged::dispatch($user->name, 'borrow', 'granted', "Borrowed Slot #{$key->slot_number}", $key->key_name, $key->room_name);
+        return response()->json([
+            'success'       => true,
+            'status'        => 'GRANTED',
+            'action'        => 'BORROW',
+            'slot_number'   => $key->slot_number,
+            'key_id'        => $key->id,
+            'user_id'       => $user->id,
+            'key_name'      => $key->key_name,
+            'user_name'     => $user->name,
+            'pending_token' => $pendingToken,
+            'requires_ir_confirmation' => true,
+            'message'       => "Access Granted: Unlock Slot #{$key->slot_number}",
+        ]);
+    }
+
+    /**
+     * Store an authorized-but-not-yet-confirmed borrow/return until the Pi reports the IR result.
+     */
+    protected function createPendingAction(string $action, User $user, Key $key, string $qrToken, string $ip, ?int $borrowTxId = null): string
+    {
+        $token = Str::random(40);
+        Cache::put('autobox_pending_action_' . $token, [
+            'action'       => $action,
+            'user_id'      => $user->id,
+            'key_id'       => $key->id,
+            'qr_token'     => $qrToken,
+            'ip'           => $ip,
+            'borrow_tx_id' => $borrowTxId,
+            'authorized_at'=> now()->toDateTimeString(),
+        ], now()->addMinutes(15));
+
+        return $token;
+    }
+
+    /**
+     * Pi reports the IR sensor result after a QR-authorized borrow/return.
+     *  - detected = true  -> key physically taken (borrow) / inserted (return) -> commit the transaction
+     *  - detected = false -> nothing happened physically -> key status is NOT changed
+     */
+    public function confirmAction(Request $request)
+    {
+        $request->validate([
+            'pending_token' => 'required|string',
+            'detected'      => 'required|boolean',
+            'detected_at'   => 'nullable|date',
+        ]);
+
+        $pending = Cache::pull('autobox_pending_action_' . $request->pending_token);
+        if (!$pending) {
+            return response()->json([
+                'success' => false,
+                'status'  => 'EXPIRED',
+                'message' => 'Pending action not found or already confirmed',
+            ], 410);
+        }
+
+        $user = User::find($pending['user_id']);
+        $key  = Key::find($pending['key_id']);
+        if (!$user || !$key) {
+            return response()->json(['success' => false, 'message' => 'User or key no longer exists'], 404);
+        }
+
+        $at       = $request->filled('detected_at') ? \Carbon\Carbon::parse($request->detected_at) : now();
+        $detected = $request->boolean('detected');
+        $action   = $pending['action'];
+        $slot     = $key->slot_number;
+
+        if (!$detected) {
+            $reason = $action === 'return'
+                ? "Return NOT completed: IR sensor did not detect the key in Slot #{$slot}. Key remains borrowed."
+                : "Borrow cancelled: key was not removed from Slot #{$slot}.";
+
+            AccessLog::create([
+                'user_id'    => $user->id,
+                'qr_token'   => $pending['qr_token'],
+                'action'     => $action,
+                'result'     => 'denied',
+                'reason'     => $reason,
+                'ip_address' => $pending['ip'],
+            ]);
+
+            $this->safeBroadcast(function () use ($user, $action, $reason, $key) {
+                AccessLogged::dispatch($user->name, $action, 'denied', $reason, $key->key_name, $key->room_name);
+            });
+
+            return response()->json([
+                'success'   => true,
+                'committed' => false,
+                'status'    => $key->status,
+                'message'   => $reason,
+            ]);
+        }
+
+        if ($action === 'borrow') {
+            Transaction::create([
+                'user_id'     => $user->id,
+                'key_id'      => $key->id,
+                'action'      => 'borrow',
+                'status'      => 'success',
+                'notes'       => 'Borrowed via QR Scan (IR confirmed key removed)',
+                'borrowed_at' => $at,
+            ]);
+            $key->update(['status' => 'borrowed']);
+            $reason = "Key taken from Slot #{$slot} (IR confirmed)";
+            $borrowerName = $user->name;
+        } else {
+            $openBorrow = Transaction::where('user_id', $user->id)
+                ->where('key_id', $key->id)
+                ->where('action', 'borrow')
+                ->whereNull('returned_at')
+                ->latest()
+                ->first();
+            $openBorrow?->update(['returned_at' => $at]);
+
+            Transaction::create([
+                'user_id'     => $user->id,
+                'key_id'      => $key->id,
+                'action'      => 'return',
+                'status'      => 'success',
+                'notes'       => 'Returned via QR Scan (IR confirmed key inserted)',
+                'returned_at' => $at,
+            ]);
+            $key->update(['status' => 'available']);
+            $reason = "Key returned to Slot #{$slot} (IR confirmed)";
+            $borrowerName = null;
+        }
+
+        AccessLog::create([
+            'user_id'    => $user->id,
+            'qr_token'   => $pending['qr_token'],
+            'action'     => $action,
+            'result'     => 'granted',
+            'reason'     => $reason,
+            'ip_address' => $pending['ip'],
+        ]);
+
+        $this->safeBroadcast(function () use ($key, $user, $action, $reason, $borrowerName) {
+            KeyStatusUpdated::dispatch($key->id, $key->slot_number, $key->status, $key->key_name, $key->room_name, $borrowerName);
+            AccessLogged::dispatch($user->name, $action, 'granted', $reason, $key->key_name, $key->room_name);
         });
 
         return response()->json([
-            'success'     => true,
-            'status'      => 'GRANTED',
-            'action'      => 'BORROW',
-            'slot_number' => $key->slot_number,
-            'key_name'    => $key->key_name,
-            'user_name'   => $user->name,
-            'message'     => "Access Granted: Unlock Slot #{$key->slot_number}",
+            'success'   => true,
+            'committed' => true,
+            'status'    => $key->status,
+            'message'   => $reason,
         ]);
     }
 
@@ -390,6 +512,17 @@ class AuthQrController extends Controller
             $activeBorrow = self::resolveLastTransaction($key);
 
             $isUnauthorizedRemoval = $request->input('reason') === 'unauthorized_removal';
+
+            AccessLog::create([
+                'user_id'    => null,
+                'qr_token'   => 'HARDWARE_IR_SENSOR',
+                'action'     => 'missing',
+                'result'     => 'denied',
+                'reason'     => $isUnauthorizedRemoval
+                    ? "Key physically removed from Slot #{$key->slot_number} WITHOUT a QR scan (last holder: " . ($borrower?->name ?? 'unknown') . ")"
+                    : "Key reported missing from Slot #{$key->slot_number}",
+                'ip_address' => $request->ip(),
+            ]);
 
             if ($isUnauthorizedRemoval) {
                 // IR sensor detected physical removal without QR scan — send dedicated theft/intrusion alert
@@ -636,6 +769,10 @@ class AuthQrController extends Controller
             ];
         }
 
+        // Include offline events that are uploaded but not yet synced by the admin,
+        // so the Pi keeps an accurate picture of which keys are physically out.
+        $keyMap = app(OfflineSyncService::class)->overlayPendingOnKeyMap($keyMap);
+
         return response()->json([
             'success'   => true,
             'timestamp' => now()->toDateTimeString(),
@@ -645,126 +782,55 @@ class AuthQrController extends Controller
     }
 
     /**
-     * Ingest batched offline transactions and access logs from Raspberry Pi.
+     * Receive batched offline transactions and access logs from the Raspberry Pi.
+     *
+     * Records are saved to offline_records (for the admin's review history) and then
+     * IMMEDIATELY applied to the live tables, so borrows made while offline are known
+     * to the server right away (returns work, overdue keys get flagged on time).
      */
-    public function syncOfflineLogs(Request $request)
+    public function syncOfflineLogs(Request $request, OfflineSyncService $sync)
     {
         $request->validate([
             'logs'   => 'required|array',
             'logs.*' => 'required|array',
         ]);
 
-        $logs = $request->input('logs');
-        $syncedCount = 0;
+        $result = $sync->stage($request->input('logs'), $request->ip());
 
-        foreach ($logs as $item) {
-            $type = $item['type'] ?? null;
-            $timestamp = isset($item['timestamp']) ? \Carbon\Carbon::parse($item['timestamp']) : now();
+        // Apply everything still pending (the new upload + anything left over from an earlier failure)
+        $applied = ['synced' => 0, 'skipped' => 0];
+        if (OfflineRecord::pending()->exists()) {
+            $applied = $sync->applyPending(null);
 
-            if ($type === 'transaction') {
-                $userId     = $item['user_id'] ?? null;
-                $keyId      = $item['key_id'] ?? null;
-                $slotNumber = $item['slot_number'] ?? null;
-                $action     = $item['action'] ?? null;
-                $notes      = $item['notes'] ?? 'Recorded via Offline Mode';
-
-                $key = null;
-                if ($keyId) {
-                    $key = Key::find($keyId);
-                } elseif ($slotNumber) {
-                    $key = Key::where('slot_number', $slotNumber)->first();
-                }
-
-                if ($key && $userId) {
-                    $user = User::find($userId);
-
-                    if ($action === 'borrow' && $user && $user->role !== 'admin') {
-                        Transaction::create([
-                            'user_id'     => $userId,
-                            'key_id'      => $key->id,
-                            'action'      => 'borrow',
-                            'status'      => 'success',
-                            'notes'       => $notes,
-                            'borrowed_at' => $timestamp,
-                            'created_at'  => $timestamp,
-                            'updated_at'  => $timestamp,
-                        ]);
-
-                        $key->update(['status' => 'borrowed']);
-
-                        $this->safeBroadcast(function () use ($key, $user) {
-                            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'borrowed', $key->key_name, $key->room_name, $user?->name);
-                        });
-                    } elseif ($action === 'return') {
-                        $existingBorrow = Transaction::where('user_id', $userId)
-                            ->where('key_id', $key->id)
-                            ->where('action', 'borrow')
-                            ->whereNull('returned_at')
-                            ->latest()
-                            ->first();
-
-                        if ($existingBorrow) {
-                            $existingBorrow->update([
-                                'returned_at' => $timestamp,
-                            ]);
-                        }
-
-                        Transaction::create([
-                            'user_id'     => $userId,
-                            'key_id'      => $key->id,
-                            'action'      => 'return',
-                            'status'      => 'success',
-                            'notes'       => $notes,
-                            'returned_at' => $timestamp,
-                            'created_at'  => $timestamp,
-                            'updated_at'  => $timestamp,
-                        ]);
-
-                        $key->update(['status' => 'available']);
-
-                        $this->safeBroadcast(function () use ($key) {
-                            KeyStatusUpdated::dispatch($key->id, $key->slot_number, 'available', $key->key_name, $key->room_name, null);
-                        });
-                    }
-                    $syncedCount++;
-                }
-            } elseif ($type === 'access_log') {
-                $userId    = $item['user_id'] ?? null;
-                $qrToken   = $item['qr_token'] ?? 'OFFLINE_SCAN';
-                $action    = $item['action'] ?? 'scan';
-                $result    = $item['result'] ?? 'granted';
-                $reason    = $item['reason'] ?? 'Offline Scan Event';
-                $ipAddress = $item['ip_address'] ?? $request->ip();
-
-                AccessLog::create([
-                    'user_id'    => $userId,
-                    'qr_token'   => $qrToken,
-                    'action'     => $action,
-                    'result'     => $result,
-                    'reason'     => $reason,
-                    'ip_address' => $ipAddress,
-                    'created_at' => $timestamp,
-                    'updated_at' => $timestamp,
-                ]);
-
-                $userName = 'Unknown User';
-                if ($userId) {
-                    $user = User::find($userId);
-                    $userName = $user?->name ?? 'User #' . $userId;
-                }
-
-                $this->safeBroadcast(function () use ($userName, $action, $result, $reason) {
-                    AccessLogged::dispatch($userName, $action, $result, $reason, null, null);
-                });
-
-                $syncedCount++;
+            // Offline borrows that are already past their schedule + 10-min grace get flagged right away
+            try {
+                \App\Console\Commands\CheckUnreturnedKeys::scanExpiredBorrows();
+            } catch (\Throwable $e) {
+                Log::warning('[OFFLINE SYNC] Overdue scan after sync failed: ' . $e->getMessage());
             }
+        }
+
+        if ($result['staged'] > 0) {
+            Cache::put('autobox_offline_last_upload', now()->toDateTimeString(), now()->addDays(30));
+
+            $deniedCount = OfflineRecord::whereIn('id', $result['ids'])->where('result', 'denied')->count();
+            $summary = "Lock box reconnected: {$applied['synced']} offline record(s) synced automatically"
+                . ($deniedCount ? ", including {$deniedCount} denied attempt(s)" : '')
+                . ($applied['skipped'] ? " ({$applied['skipped']} need review)" : '');
+
+            $this->safeBroadcast(function () use ($summary) {
+                AccessLogged::dispatch('AUTOBOX Device', 'offline_upload', 'granted', $summary, null, null);
+            });
         }
 
         return response()->json([
             'success'      => true,
-            'message'      => "Synced {$syncedCount} offline record(s) successfully",
-            'synced_count' => $syncedCount,
+            'message'      => "Received {$result['staged']} offline record(s) ({$result['duplicates']} duplicate(s) ignored); synced {$applied['synced']}, skipped {$applied['skipped']}.",
+            'synced_count' => $result['staged'] + $result['duplicates'],
+            'staged'       => $result['staged'],
+            'duplicates'   => $result['duplicates'],
+            'applied'      => $applied['synced'],
+            'skipped'      => $applied['skipped'],
         ]);
     }
 }

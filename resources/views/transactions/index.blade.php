@@ -14,11 +14,15 @@
             </h2>
             <p class="text-xs text-[var(--text-muted)] mt-0.5">Complete history of all key borrow and return activities.</p>
         </div>
-        <div class="flex items-center gap-2.5">
-            <a href="{{ route('transactions.export', request()->query()) }}"
-               title="Export filtered transactions to CSV"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-md">
-                <i class="fa-solid fa-file-csv text-xs"></i> Export CSV
+        <div x-data="{ isExporting: false }">
+            <a href="{{ route('transactions.export', array_merge(request()->query(), ['format' => 'xlsx'])) }}"
+               @click="isExporting = true; setTimeout(() => isExporting = false, 2500)"
+               :class="{ 'opacity-80 pointer-events-none': isExporting }"
+               title="Export filtered transactions to Excel"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition-all shadow-md">
+                <i x-show="!isExporting" class="fa-solid fa-file-excel text-xs"></i>
+                <i x-show="isExporting" x-cloak class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                <span x-text="isExporting ? 'Exporting...' : 'Export Excel'">Export Excel</span>
             </a>
         </div>
     </div>
@@ -28,10 +32,10 @@
         <form method="GET" action="{{ route('transactions.index') }}" class="flex items-center gap-2.5 flex-wrap">
             <!-- Keyword / General Search Input -->
             <div class="relative flex-1 min-w-[200px]">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                <i class="fa-solid fa-magnifying-glass absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search user, ID, room, notes, or date..."
-                       class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[var(--border-subtle)] bg-white text-xs font-semibold text-[var(--text-heading)] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 transition-all">
+                       class="w-full pl-10.5 pr-3.5 py-2.5 rounded-xl border border-[var(--border-subtle)] bg-white text-xs font-semibold text-[var(--text-heading)] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 transition-all">
             </div>
 
             <!-- Room / Key Filter Dropdown -->

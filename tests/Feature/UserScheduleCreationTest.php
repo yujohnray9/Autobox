@@ -31,6 +31,7 @@ class UserScheduleCreationTest extends TestCase
         $userData = [
             'name'            => 'Prof. Schedule Test',
             'email'           => 'prof_sched_' . uniqid() . '@autobox.edu.ph',
+            'gender'          => 'male',
             'role'            => 'faculty',
             'department'      => 'Computer Science',
             'employee_id'     => 'EMP-2024-' . rand(500, 999),
@@ -109,6 +110,7 @@ class UserScheduleCreationTest extends TestCase
         $conflictData = [
             'name' => 'Conflicting Faculty',
             'email' => 'conflict@autobox.edu.ph',
+            'gender' => 'female',
             'role' => 'faculty',
             'employee_id' => 'EMP-2024-101',
             'assign_schedule' => '1',
@@ -138,6 +140,7 @@ class UserScheduleCreationTest extends TestCase
         $userData = [
             'name' => 'Pure Staff',
             'email' => 'staff_nosched@autobox.edu.ph',
+            'gender' => 'female',
             'role' => 'staff',
             'employee_id' => 'EMP-2024-102',
         ];
@@ -148,6 +151,65 @@ class UserScheduleCreationTest extends TestCase
         $createdUser = User::where('email', $userData['email'])->first();
         $this->assertNotNull($createdUser);
         $this->assertNotNull($createdUser->qr_token);
+        $this->assertCount(0, Schedule::where('user_id', $createdUser->id)->get());
+    }
+
+    public function test_user_created_without_assign_schedule_toggle_ignores_conflicting_key_fields(): void
+    {
+        $admin = User::first() ?? User::create([
+            'name' => 'Admin Test',
+            'email' => 'admin_nosched_override@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $key = Key::first() ?? Key::create([
+            'key_name' => 'Room 1',
+            'room_name' => 'Room 1',
+            'slot_number' => 1,
+            'status' => 'available',
+        ]);
+
+        // Pre-existing schedule that would conflict if evaluated
+        $existing = User::create([
+            'name' => 'Existing Block',
+            'email' => 'existing_block@autobox.edu.ph',
+            'role' => 'faculty',
+            'employee_id' => 'EMP-2024-998',
+            'password' => bcrypt('password'),
+            'qr_token' => 'token-998',
+            'is_active' => true,
+        ]);
+        Schedule::create([
+            'user_id' => $existing->id,
+            'key_id' => $key->id,
+            'day_of_week' => 'monday',
+            'start_time' => '08:00:00',
+            'end_time' => '12:00:00',
+            'is_active' => true,
+        ]);
+
+        // Submit form without assign_schedule (or assign_schedule = 0) even if key/time were submitted
+        $userData = [
+            'name'            => 'Staff No Schedule Checked',
+            'email'           => 'staff_uncheck@autobox.edu.ph',
+            'gender'          => 'male',
+            'role'            => 'staff',
+            'employee_id'     => 'EMP-2024-999',
+            // assign_schedule NOT sent
+            'key_id'          => $key->id,
+            'days'            => ['monday'],
+            'start_time'      => '08:00',
+            'end_time'        => '12:00',
+        ];
+
+        $response = $this->actingAs($admin)->post(route('users.store'), $userData);
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionMissing('conflict_error');
+
+        $createdUser = User::where('email', $userData['email'])->first();
+        $this->assertNotNull($createdUser);
         $this->assertCount(0, Schedule::where('user_id', $createdUser->id)->get());
     }
 
@@ -202,6 +264,62 @@ class UserScheduleCreationTest extends TestCase
         $this->assertStringContainsString('Tue', $content);
         $this->assertStringContainsString('10:00 AM', $content);
         $this->assertStringContainsString('01:00 PM', $content);
+    }
+
+    public function test_can_create_male_and_female_users(): void
+    {
+        $admin = User::first() ?? User::create([
+            'name' => 'Admin Test',
+            'email' => 'admin_gender_test@test.com',
+            'gender' => 'male',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        // Create Male User
+        $maleData = [
+            'name'        => 'Male Faculty Member',
+            'email'       => 'male_user_' . uniqid() . '@autobox.edu.ph',
+            'gender'      => 'male',
+            'role'        => 'faculty',
+            'department'  => 'Computer Science',
+            'employee_id' => 'EMP-2024-' . rand(500, 999),
+        ];
+
+        $resMale = $this->actingAs($admin)->post(route('users.store'), $maleData);
+        $resMale->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('users', [
+            'email'  => $maleData['email'],
+            'gender' => 'male',
+        ]);
+
+        // Create Female User
+        $femaleData = [
+            'name'        => 'Female Staff Member',
+            'email'       => 'female_user_' . uniqid() . '@autobox.edu.ph',
+            'gender'      => 'female',
+            'role'        => 'staff',
+            'department'  => 'Information Technology',
+            'employee_id' => 'EMP-2024-' . rand(500, 999),
+        ];
+
+        // Create Technician User
+        $technicianData = [
+            'name'        => 'Hardware Technician',
+            'email'       => 'technician_' . uniqid() . '@autobox.edu.ph',
+            'gender'      => 'male',
+            'role'        => 'technician',
+            'department'  => 'Electronics & IoT Lab',
+            'employee_id' => 'EMP-2024-' . rand(500, 999),
+        ];
+
+        $resTech = $this->actingAs($admin)->post(route('users.store'), $technicianData);
+        $resTech->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('users', [
+            'email' => $technicianData['email'],
+            'role'  => 'technician',
+        ]);
     }
 }
 

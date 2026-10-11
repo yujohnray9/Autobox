@@ -17,8 +17,8 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
-        $response->assertSee('g-recaptcha');
-        $response->assertSee('https://www.google.com/recaptcha/api.js');
+        $response->assertSee('puzzleVerifyContainer');
+        $response->assertSee('Drag the slider to fit the puzzle piece');
     }
 
     public function test_valid_login_redirects_to_otp_and_sends_email(): void

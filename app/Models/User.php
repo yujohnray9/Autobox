@@ -12,7 +12,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'gender', 'password',
         'role', 'department', 'employee_id',
         'qr_token', 'is_active',
         'login_otp_code', 'login_otp_expires_at',
@@ -27,6 +27,7 @@ class User extends Authenticatable
             'password'             => 'hashed',
             'is_active'            => 'boolean',
             'login_otp_expires_at' => 'datetime',
+            'login_otp_code'       => 'encrypted',
         ];
     }
 
@@ -86,5 +87,20 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function isTechnician(): bool
+    {
+        return $this->role === 'technician';
+    }
+
+    public function isFaculty(): bool
+    {
+        return $this->role === 'faculty';
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->role === 'staff';
     }
 }

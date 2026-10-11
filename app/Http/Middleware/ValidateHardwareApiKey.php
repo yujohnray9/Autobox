@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -51,6 +52,7 @@ class ValidateHardwareApiKey
             $expectedSignature = hash_hmac('sha256', $dataToSign, (string) $expectedKey);
 
             if (hash_equals($expectedSignature, (string) $signature)) {
+                $this->recordHeartbeat($request);
                 return $next($request);
             }
 
@@ -77,6 +79,7 @@ class ValidateHardwareApiKey
         }
 
         if ($providedKey && hash_equals((string) $expectedKey, (string) $providedKey)) {
+            $this->recordHeartbeat($request);
             return $next($request);
         }
 
@@ -92,5 +95,20 @@ class ValidateHardwareApiKey
             'status'  => 'UNAUTHORIZED',
             'message' => 'Unauthorized hardware access. Valid HMAC signature or API key required.',
         ], 401);
+    }
+
+    /**
+     * Remember when the lock box device last talked to the server (shown on the Offline Records page).
+     */
+    protected function recordHeartbeat(Request $request): void
+    {
+        try {
+            Cache::put('autobox_device_last_seen', [
+                'at' => now()->toDateTimeString(),
+                'ip' => $request->ip(),
+            ], now()->addDays(30));
+        } catch (\Throwable $e) {
+            // Never block hardware requests because of cache issues
+        }
     }
 }

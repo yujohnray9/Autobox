@@ -10,11 +10,15 @@
     </a>
 
     @if(session('conflict_error'))
-    <div class="mb-5 flex items-start gap-3 px-5 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 shadow-sm">
-        <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 flex-shrink-0 text-base"></i>
-        <div>
-            <p class="font-extrabold text-sm text-amber-200">Schedule Conflict Warning</p>
-            <p class="text-xs font-medium mt-0.5 leading-relaxed text-amber-300/90">{{ session('conflict_error') }}</p>
+    <div class="mb-5 flex items-start gap-3.5 px-5 py-4 rounded-2xl shadow-sm" style="background-color: #fefce8; border: 1px solid #fef08a; border-left: 4px solid #f59e0b;">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style="background-color: #fef08a;">
+            <svg class="w-4 h-4" style="color: #b45309;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+            </svg>
+        </div>
+        <div class="flex-1">
+            <h4 class="font-bold text-sm tracking-tight" style="color: #713f12;">Schedule Conflict Warning</h4>
+            <p class="text-xs font-semibold mt-1 leading-relaxed" style="color: #854d0e;">{{ session('conflict_error') }}</p>
         </div>
     </div>
     @endif
@@ -56,6 +60,17 @@
                     </div>
 
                     <div>
+                        <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Gender <span class="text-rose-500">*</span></label>
+                        <select name="gender" id="genderSelect" required
+                            class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                            <option value="" disabled {{ old('gender') ? '' : 'selected' }}>-- Select Gender --</option>
+                            <option value="male" {{ old('gender') === 'male' ? 'selected' : '' }}>Male</option>
+                            <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Female</option>
+                        </select>
+                        @error('gender') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
                         <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Employee / ID Number</label>
                         <input type="text" name="employee_id" value="{{ old('employee_id') }}"
                             class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all"
@@ -69,6 +84,7 @@
                             class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
                             <option value="faculty" {{ old('role', 'faculty') === 'faculty' ? 'selected' : '' }}>Faculty</option>
                             <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Staff</option>
+                            <option value="technician" {{ old('role') === 'technician' ? 'selected' : '' }}>Technician</option>
                             <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                         </select>
                         @error('role') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -125,12 +141,12 @@
                         <h3 class="text-xs font-extrabold uppercase tracking-widest text-[var(--text-heading)]">Assign Access Schedule & Key Slot</h3>
                     </div>
                     <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="assign_schedule" id="assignScheduleToggle" value="1" {{ old('assign_schedule', '1') == '1' ? 'checked' : '' }} class="rounded border-[var(--border-subtle)] text-[var(--purple-primary)] focus:ring-[var(--purple-primary)]/30">
+                        <input type="checkbox" name="assign_schedule" id="assignScheduleToggle" value="1" {{ old('assign_schedule') == '1' ? 'checked' : '' }} class="rounded border-[var(--border-subtle)] text-[var(--purple-primary)] focus:ring-[var(--purple-primary)]/30">
                         <span class="text-xs font-bold text-[var(--text-body)]">Enable Key Schedule</span>
                     </label>
                 </div>
 
-                <div id="scheduleFieldsContainer" class="space-y-4 bg-[var(--app-bg)]/60 border border-[var(--border-subtle)] rounded-2xl p-5">
+                <div id="scheduleFieldsContainer" class="space-y-4 bg-[var(--app-bg)]/60 border border-[var(--border-subtle)] rounded-2xl p-5" style="{{ old('assign_schedule') == '1' ? '' : 'display: none;' }}">
                     <!-- Key Slot Selector -->
                     <div>
                         <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">
@@ -344,12 +360,20 @@
 
         function updateScheduleVisibility() {
             if (toggle && container) {
-                if (toggle.checked) {
-                    container.classList.remove('opacity-40', 'pointer-events-none');
-                } else {
-                    container.classList.add('opacity-40', 'pointer-events-none');
-                }
+                const isChecked = toggle.checked;
+                container.style.display = isChecked ? 'block' : 'none';
+
+                // Disable inputs when unchecked so browser does not send empty or default values
+                const fields = container.querySelectorAll('select, input');
+                fields.forEach(el => {
+                    el.disabled = !isChecked;
+                });
             }
+        }
+
+        if (toggle) {
+            toggle.addEventListener('change', updateScheduleVisibility);
+            updateScheduleVisibility();
         }
 
         const roleSelect = document.getElementById('roleSelect');

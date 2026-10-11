@@ -30,7 +30,8 @@ class UserController extends Controller
         $validated = $request->validate([
             'name'            => 'required|string|max:255',
             'email'           => 'required|string|email|max:255|unique:users',
-            'role'            => 'required|in:admin,faculty,staff',
+            'gender'          => 'required|in:male,female',
+            'role'            => 'required|in:admin,faculty,staff,technician',
             'password'        => 'required_if:role,admin|nullable|string|min:6|confirmed',
             'department'      => 'nullable|string|max:255',
             'employee_id'     => 'nullable|string|unique:users,employee_id|regex:/^EMP-\d{4}-\d{3,}$/',
@@ -69,8 +70,8 @@ class UserController extends Controller
             $days = [$validated['day_of_week']];
         }
 
-        // Check for schedule conflict if schedule is assigned
-        $hasSchedule = ($request->has('assign_schedule') || !empty($validated['key_id'])) && !empty($validated['key_id']) && !empty($days) && !empty($validated['start_time']) && !empty($validated['end_time']);
+        // Check for schedule conflict only if assign_schedule is explicitly enabled
+        $hasSchedule = $request->boolean('assign_schedule') && !empty($validated['key_id']) && !empty($days) && !empty($validated['start_time']) && !empty($validated['end_time']);
 
         if ($hasSchedule) {
             foreach ($days as $day) {
@@ -103,6 +104,7 @@ class UserController extends Controller
             $user = User::create([
                 'name'        => $validated['name'],
                 'email'       => $validated['email'],
+                'gender'      => $validated['gender'],
                 'role'        => $validated['role'],
                 'department'  => $validated['department'] ?? null,
                 'employee_id' => $validated['employee_id'],
@@ -144,11 +146,12 @@ class UserController extends Controller
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'email'       => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'role'        => 'required|in:admin,faculty,staff',
+            'gender'      => 'required|in:male,female',
+            'role'        => 'required|in:admin,faculty,staff,technician',
             'password'    => 'nullable|string|min:6|confirmed',
             'department'  => 'nullable|string|max:255',
             'employee_id' => 'required|string|unique:users,employee_id,' . $user->id,
-            'is_active'   => 'boolean',
+            'is_active'   => 'nullable|boolean',
         ]);
 
         if ($validated['role'] === 'admin' && $request->filled('password')) {
@@ -157,7 +160,11 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        $validated['is_active'] = $request->has('is_active');
+        if ($request->has('is_active')) {
+            $validated['is_active'] = $request->boolean('is_active');
+        } else {
+            unset($validated['is_active']);
+        }
 
         $user->update($validated);
 

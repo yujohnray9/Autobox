@@ -17,7 +17,7 @@ class ScheduleController extends Controller
             ->get()
             ->groupBy(fn ($s) => strtolower($s->day_of_week));
 
-        $users = User::where('is_active', true)->where('role', '!=', 'admin')->orderBy('name')->get();
+        $users = User::where('role', '!=', 'admin')->orderBy('name')->get();
         $keys  = Key::orderBy('slot_number')->get();
 
         return view('schedules.index', compact('schedulesByDay', 'users', 'keys'));
@@ -25,7 +25,7 @@ class ScheduleController extends Controller
 
     public function create()
     {
-        $users = User::where('is_active', true)->where('role', '!=', 'admin')->orderBy('name')->get();
+        $users = User::where('role', '!=', 'admin')->orderBy('name')->get();
         $keys  = Key::orderBy('slot_number')->get();
         return view('schedules.create', compact('users', 'keys'));
     }
@@ -66,6 +66,7 @@ class ScheduleController extends Controller
                 "⚠️ Admins cannot be assigned a schedule. Admins already have unrestricted access to all key slots."
             );
         }
+
 
         // CHANGED: strict overlap check. Two windows overlap only if
         // existing.start < new.end AND existing.end > new.start.

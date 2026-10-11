@@ -258,7 +258,7 @@ class GraceCountdownAndKeyNotReturnedScanTest extends TestCase
                 'lcd_line2'  => 'Return Yet',
             ]);
 
-        // Now User 1 returns the key
+        // Now User 1 scans to return the key
         $payload1 = ['qr_token' => 'QR_USER_1'];
         $returnResponse = $this->postJson('/api/authenticate-qr', $payload1, $this->authHeaders($payload1));
 
@@ -267,7 +267,17 @@ class GraceCountdownAndKeyNotReturnedScanTest extends TestCase
                 'success' => true,
                 'status'  => 'GRANTED',
                 'action'  => 'RETURN',
+                'requires_ir_confirmation' => true,
             ]);
+
+        // Scanning alone must NOT mark the key as returned
+        $key->refresh();
+        $this->assertEquals('borrowed', $key->status);
+
+        // IR sensor confirms the key was physically inserted
+        $confirm1 = ['pending_token' => $returnResponse->json('pending_token'), 'detected' => true];
+        $this->postJson('/api/confirm-action', $confirm1, $this->authHeaders($confirm1))
+            ->assertOk()->assertJson(['committed' => true]);
 
         $key->refresh();
         $this->assertEquals('available', $key->status);
@@ -282,6 +292,9 @@ class GraceCountdownAndKeyNotReturnedScanTest extends TestCase
                 'action'      => 'BORROW',
                 'slot_number' => 2,
             ]);
+
+        $confirm2 = ['pending_token' => $borrowResponse->json('pending_token'), 'detected' => true];
+        $this->postJson('/api/confirm-action', $confirm2, $this->authHeaders($confirm2))->assertOk();
 
         $key->refresh();
         $this->assertEquals('borrowed', $key->status);

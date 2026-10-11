@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['hardware.firewall', 'hardware.key', 'throttle:60,1'])->group(function () {
     Route::post('/authenticate-qr', [AuthQrController::class, 'authenticate']);
+    Route::post('/confirm-action', [AuthQrController::class, 'confirmAction']);
     Route::get('/keys', [AuthQrController::class, 'getKeyStatuses']);
     Route::post('/key-missing', [AuthQrController::class, 'reportMissing']);
     Route::post('/slider-event', [AuthQrController::class, 'reportSliderEvent']);

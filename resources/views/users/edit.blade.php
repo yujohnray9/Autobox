@@ -48,6 +48,17 @@
                 </div>
 
                 <div>
+                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Gender <span class="text-rose-500">*</span></label>
+                    <select name="gender" id="genderEditSelect" required
+                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
+                        <option value="" disabled {{ old('gender', $user->gender) ? '' : 'selected' }}>-- Select Gender --</option>
+                        <option value="male" {{ old('gender', $user->gender) === 'male' ? 'selected' : '' }}>Male</option>
+                        <option value="female" {{ old('gender', $user->gender) === 'female' ? 'selected' : '' }}>Female</option>
+                    </select>
+                    @error('gender') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
                     <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Employee / Student ID <span class="text-rose-500">*</span></label>
                     <input type="text" name="employee_id" value="{{ old('employee_id', $user->employee_id) }}" required
                         class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
@@ -60,9 +71,22 @@
                         class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
                         <option value="faculty" {{ old('role', $user->role) === 'faculty' ? 'selected' : '' }}>Faculty</option>
                         <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Staff</option>
+                        <option value="technician" {{ old('role', $user->role) === 'technician' ? 'selected' : '' }}>Technician</option>
                         <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
                     </select>
                     @error('role') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Account Status</label>
+                    <div class="h-[42px] flex items-center">
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" {{ old('is_active', $user->is_active) ? 'checked' : '' }}
+                                class="w-4 h-4 rounded border-slate-300 text-[var(--purple-primary)] focus:ring-[var(--purple-primary)]/30">
+                            <span class="text-xs font-bold text-[var(--text-heading)]">Active Account</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="md:col-span-2">

@@ -72,6 +72,13 @@
 
                     <span class="capitalize font-bold text-purple-800">{{ $user->role }}</span>
 
+                    @if($user->gender)
+                        <span>&bull;</span>
+                        <span class="capitalize font-bold {{ $user->gender === 'female' ? 'text-pink-600' : 'text-blue-600' }}">
+                            <i class="fa-solid {{ $user->gender === 'female' ? 'fa-venus' : 'fa-mars' }} text-[10px]"></i> {{ $user->gender }}
+                        </span>
+                    @endif
+
                     @if($user->department)
                         <span>&bull;</span>
                         <span class="text-slate-700">{{ $user->department }}</span>
@@ -172,6 +179,13 @@
                 <span class="capitalize font-bold text-[var(--purple-primary)]">
                     {{ $user->role }}
                 </span>
+
+                @if($user->gender)
+                    &middot;
+                    <span class="capitalize font-bold {{ $user->gender === 'female' ? 'text-pink-500' : 'text-blue-500' }}">
+                        <i class="fa-solid {{ $user->gender === 'female' ? 'fa-venus' : 'fa-mars' }} text-[10px]"></i> {{ $user->gender }}
+                    </span>
+                @endif
 
                 @if($user->department)
                     &middot;

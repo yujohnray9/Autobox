@@ -122,7 +122,7 @@ class TransactionSearchAndExportTest extends TestCase
 
     public function test_csv_export_contains_transaction_date_and_formatted_dates(): void
     {
-        $response = $this->actingAs($this->admin)->get(route('transactions.export'));
+        $response = $this->actingAs($this->admin)->get(route('transactions.export', ['format' => 'csv']));
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
 
@@ -138,5 +138,12 @@ class TransactionSearchAndExportTest extends TestCase
         $this->assertStringContainsString('2026-10-02', $content);
         $this->assertStringContainsString('Science Lab', $content);
         $this->assertStringContainsString('Audio Visual Room', $content);
+    }
+
+    public function test_xlsx_export_returns_valid_excel_stream(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('transactions.export', ['format' => 'xlsx']));
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 }

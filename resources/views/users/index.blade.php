@@ -34,10 +34,12 @@
                 <thead>
                     <tr class="border-b border-[var(--border-subtle)]">
                         <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">User</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Gender</th>
                         <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Employee ID</th>
                         <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Role</th>
                         <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Assigned Schedule</th>
-                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">QR Code</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                        <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider text-center">QR Code</th>
                         <th class="px-5 py-3 text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
@@ -55,10 +57,29 @@
                                     </div>
                                 </div>
                             </td>
+                            <td class="px-5 py-3.5">
+                                @if($user->gender === 'male')
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                        <i class="fa-solid fa-mars text-[10px]"></i> Male
+                                    </span>
+                                @elseif($user->gender === 'female')
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-pink-500/10 text-pink-500 border border-pink-500/20">
+                                        <i class="fa-solid fa-venus text-[10px]"></i> Female
+                                    </span>
+                                @else
+                                    <span class="text-xs text-[var(--text-muted)] italic">N/A</span>
+                                @endif
+                            </td>
                             <td class="px-5 py-3.5 text-sm font-mono font-semibold text-[var(--purple-primary)]">{{ $user->employee_id ?? '—' }}</td>
                             <td class="px-5 py-3.5">
                                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider
-                                    {{ $user->role === 'admin' ? 'bg-[var(--purple-primary)] text-white' : 'bg-[var(--border-subtle)] text-[var(--text-body)]' }}">
+                                    @if($user->role === 'admin')
+                                        bg-[var(--purple-primary)] text-white
+                                    @elseif($user->role === 'technician')
+                                        bg-amber-500/10 text-amber-600 border border-amber-500/20
+                                    @else
+                                        bg-[var(--border-subtle)] text-[var(--text-body)]
+                                    @endif">
                                     {{ $user->role }}
                                 </span>
                             </td>
@@ -94,12 +115,14 @@
                                     <span class="text-xs text-[var(--text-muted)] font-semibold">Not generated</span>
                                 @endif
                             </td>
+                            <td class="px-5 py-3.5 text-center">
+                                <a href="{{ route('users.qr', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white transition-all shadow-sm" title="View & Print Badge">
+                                    <i class="fa-solid fa-qrcode"></i> Badge
+                                </a>
+                            </td>
                             <td class="px-5 py-3.5">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('users.qr', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[var(--purple-soft)] text-[var(--purple-primary)] hover:bg-[var(--purple-primary)] hover:text-white transition-all shadow-sm">
-                                        <i class="fa-solid fa-qrcode"></i> Badge
-                                    </a>
-                                    <a href="{{ route('users.edit', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 hover:bg-[var(--purple-primary)] hover:text-white transition-all shadow-sm">
+                                    <a href="{{ route('users.edit', $user) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 hover:bg-[var(--purple-primary)] hover:text-white transition-all shadow-sm" title="Edit User">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     <button type="button"
@@ -119,7 +142,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-5 py-12 text-center text-[var(--text-muted)] text-sm">
+                            <td colspan="8" class="px-5 py-12 text-center text-[var(--text-muted)] text-sm">
                                 <i class="fa-solid fa-users text-4xl block mb-3 opacity-20"></i>
                                 No users registered yet.
                             </td>
@@ -207,4 +230,3 @@
     </div>
 </div>
 @endsection
-

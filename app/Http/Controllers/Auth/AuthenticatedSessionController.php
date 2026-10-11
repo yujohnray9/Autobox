@@ -12,16 +12,22 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Display the login view with interactive slide challenge seed.
      */
     public function create(): View
     {
-        return view('auth.login');
+        $seed = Str::random(32);
+        session(['slide_challenge_seed' => $seed]);
+
+        return view('auth.login', [
+            'slideSeed' => $seed,
+        ]);
     }
 
     /**

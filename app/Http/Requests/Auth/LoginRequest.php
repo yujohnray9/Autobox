@@ -37,51 +37,47 @@ class LoginRequest extends FormRequest
             'password' => ['required', 'string'],
         ];
 
-        if (!app()->environment('testing') && !empty(config('services.recaptcha.secret_key'))) {
-            $rules['g-recaptcha-response'] = ['required', 'string'];
+        if (!app()->environment('testing')) {
+            $rules['slide_token'] = ['required', 'string'];
         }
 
         return $rules;
     }
 
     /**
-     * Verify Google reCAPTCHA response if configured.
+     * Verify the interactive slide-to-verify challenge and invisible honeypot bot trap.
+     * Offline-capable with zero external dependencies.
      */
-    public function verifyRecaptcha(): void
+    public function verifySlideCaptcha(): void
     {
         if (app()->environment('testing')) {
             return;
         }
 
-        $secret = config('services.recaptcha.secret_key');
-        if (empty($secret)) {
-            return;
-        }
-
-        $recaptchaResponse = $this->input('g-recaptcha-response');
-        if (empty($recaptchaResponse)) {
+        // 1. Invisible Honeypot check (catches automated scraper/spambots that auto-fill inputs)
+        if (!empty($this->input('autobox_security_hp'))) {
             throw ValidationException::withMessages([
-                'g-recaptcha-response' => 'Please check the "I\'m not a robot" box before submitting.',
+                'slide_verify' => 'Automated bot activity detected. Access denied.',
             ]);
         }
 
-        try {
-            $response = \Illuminate\Support\Facades\Http::asForm()->timeout(6)->post('https://www.google.com/recaptcha/api/siteverify', [
-                'secret'   => $secret,
-                'response' => $recaptchaResponse,
-                'remoteip' => $this->ip(),
-            ]);
+        // 2. Slide verification token signature check
+        $seed = session('slide_challenge_seed');
+        $expectedToken = !empty($seed) ? hash('sha256', $seed . csrf_token() . 'human') : null;
+        $submittedToken = $this->input('slide_token');
 
-            if (!$response->successful() || !$response->json('success')) {
-                throw ValidationException::withMessages([
-                    'g-recaptcha-response' => 'reCAPTCHA verification failed. Please try again.',
-                ]);
-            }
-        } catch (\Throwable $e) {
-            if ($e instanceof ValidationException) {
-                throw $e;
-            }
-            \Illuminate\Support\Facades\Log::warning('[reCAPTCHA] Failed to contact Google verification server: ' . $e->getMessage());
+        if (empty($submittedToken) || empty($expectedToken) || !hash_equals($expectedToken, (string) $submittedToken)) {
+            throw ValidationException::withMessages([
+                'slide_verify' => 'Please complete the slide verification before submitting.',
+            ]);
+        }
+
+        // 3. Human interaction timing check (minimum 180ms to drag across, max 10 minutes)
+        $duration = (int) $this->input('slide_duration', 0);
+        if ($duration < 180 || $duration > 600000) {
+            throw ValidationException::withMessages([
+                'slide_verify' => 'Unusual slide timing detected. Please slide again.',
+            ]);
         }
     }
 
@@ -93,7 +89,7 @@ class LoginRequest extends FormRequest
     public function validateCredentials(): \App\Models\User
     {
         $this->ensureIsNotRateLimited();
-        $this->verifyRecaptcha();
+        $this->verifySlideCaptcha();
 
         if (! Auth::validate($this->only('email', 'password'))) {
             RateLimiter::hit($this->throttleKey());

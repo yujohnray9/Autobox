@@ -13,7 +13,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'gender', 'password',
-        'role', 'department', 'employee_id',
+        'role', 'position', 'department', 'employee_id',
         'qr_token', 'is_active',
         'login_otp_code', 'login_otp_expires_at',
     ];
@@ -87,11 +87,6 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
-    }
-
-    public function isTechnician(): bool
-    {
-        return $this->role === 'technician';
     }
 
     public function isFaculty(): bool

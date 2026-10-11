@@ -304,12 +304,13 @@ class UserScheduleCreationTest extends TestCase
             'employee_id' => 'EMP-2024-' . rand(500, 999),
         ];
 
-        // Create Technician User
+        // Create Technician User with Position
         $technicianData = [
             'name'        => 'Hardware Technician',
             'email'       => 'technician_' . uniqid() . '@autobox.edu.ph',
             'gender'      => 'male',
-            'role'        => 'technician',
+            'role'        => 'staff',
+            'position'    => 'Laboratory Technician',
             'department'  => 'Electronics & IoT Lab',
             'employee_id' => 'EMP-2024-' . rand(500, 999),
         ];
@@ -317,8 +318,9 @@ class UserScheduleCreationTest extends TestCase
         $resTech = $this->actingAs($admin)->post(route('users.store'), $technicianData);
         $resTech->assertSessionHasNoErrors();
         $this->assertDatabaseHas('users', [
-            'email' => $technicianData['email'],
-            'role'  => 'technician',
+            'email'    => $technicianData['email'],
+            'role'     => 'staff',
+            'position' => 'Laboratory Technician',
         ]);
     }
 }

@@ -23,6 +23,7 @@ class AdminUserSeeder extends Seeder
                 'gender'               => 'male',
                 'password'             => Hash::make('password123'),
                 'role'                 => 'admin',
+                'position'             => 'Lead Administrator',
                 'department'           => 'CCSICT',
                 'employee_id'          => 'EMP-2024-007',
                 'qr_token'             => $existing?->qr_token ?? Str::uuid()->toString(),

@@ -72,6 +72,11 @@
 
                     <span class="capitalize font-bold text-purple-800">{{ $user->role }}</span>
 
+                    @if($user->position)
+                        <span>&bull;</span>
+                        <span class="font-bold text-purple-900">{{ $user->position }}</span>
+                    @endif
+
                     @if($user->gender)
                         <span>&bull;</span>
                         <span class="capitalize font-bold {{ $user->gender === 'female' ? 'text-pink-600' : 'text-blue-600' }}">
@@ -179,6 +184,13 @@
                 <span class="capitalize font-bold text-[var(--purple-primary)]">
                     {{ $user->role }}
                 </span>
+
+                @if($user->position)
+                    &middot;
+                    <span class="font-bold text-[var(--text-heading)]">
+                        {{ $user->position }}
+                    </span>
+                @endif
 
                 @if($user->gender)
                     &middot;

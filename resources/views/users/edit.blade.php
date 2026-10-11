@@ -71,10 +71,17 @@
                         class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
                         <option value="faculty" {{ old('role', $user->role) === 'faculty' ? 'selected' : '' }}>Faculty</option>
                         <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Staff</option>
-                        <option value="technician" {{ old('role', $user->role) === 'technician' ? 'selected' : '' }}>Technician</option>
                         <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
                     </select>
                     @error('role') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Position / Designation</label>
+                    <input type="text" name="position" value="{{ old('position', $user->position) }}"
+                        class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all"
+                        placeholder="e.g. Technician, Laboratory Custodian, Instructor">
+                    @error('position') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
@@ -239,6 +246,9 @@
                     <p class="text-xs text-[var(--text-muted)] truncate">{{ $user->email }}</p>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-purple-100 text-purple-700">{{ ucfirst($user->role) }}</span>
+                        @if($user->position)
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200 text-slate-700">{{ $user->position }}</span>
+                        @endif
                         <span class="text-[11px] font-mono text-[var(--text-muted)]">ID: <span class="font-bold text-[var(--text-heading)]">{{ $user->employee_id ?? 'N/A' }}</span></span>
                     </div>
                 </div>

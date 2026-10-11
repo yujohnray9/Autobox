@@ -84,10 +84,17 @@
                             class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all">
                             <option value="faculty" {{ old('role', 'faculty') === 'faculty' ? 'selected' : '' }}>Faculty</option>
                             <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Staff</option>
-                            <option value="technician" {{ old('role') === 'technician' ? 'selected' : '' }}>Technician</option>
                             <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                         </select>
                         @error('role') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-[var(--text-muted)] mb-1.5 uppercase tracking-widest">Position / Designation</label>
+                        <input type="text" name="position" value="{{ old('position') }}"
+                            class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--text-heading)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--purple-primary)]/30 focus:border-[var(--purple-primary)] transition-all"
+                            placeholder="e.g. Technician, Laboratory Custodian, Instructor">
+                        @error('position') <p class="text-rose-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="md:col-span-2">

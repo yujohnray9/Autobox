@@ -54,6 +54,12 @@
                                     <div>
                                         <p class="font-bold text-[var(--text-heading)] text-sm">{{ $user->name }}</p>
                                         <p class="text-xs text-[var(--text-muted)]">{{ $user->email }}</p>
+                                        @if($user->position)
+                                            <p class="text-[11px] text-[var(--purple-primary)] font-semibold mt-0.5 inline-flex items-center gap-1">
+                                                <i class="fa-solid fa-briefcase text-[10px]"></i>
+                                                <span>{{ $user->position }}</span>
+                                            </p>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -73,13 +79,7 @@
                             <td class="px-5 py-3.5 text-sm font-mono font-semibold text-[var(--purple-primary)]">{{ $user->employee_id ?? '—' }}</td>
                             <td class="px-5 py-3.5">
                                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider
-                                    @if($user->role === 'admin')
-                                        bg-[var(--purple-primary)] text-white
-                                    @elseif($user->role === 'technician')
-                                        bg-amber-500/10 text-amber-600 border border-amber-500/20
-                                    @else
-                                        bg-[var(--border-subtle)] text-[var(--text-body)]
-                                    @endif">
+                                    {{ $user->role === 'admin' ? 'bg-[var(--purple-primary)] text-white' : 'bg-[var(--border-subtle)] text-[var(--text-body)]' }}">
                                     {{ $user->role }}
                                 </span>
                             </td>

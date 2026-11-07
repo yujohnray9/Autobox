@@ -316,21 +316,25 @@ class AuthQrController extends Controller
         $slot     = $key->slot_number;
 
         if (!$detected) {
+            $roomName = $key->room_name ?: "Room {$slot}";
+            $dateStr = now()->format('M d, Y');
             $reason = $action === 'return'
-                ? "Return NOT completed: IR sensor did not detect the key in Slot #{$slot}. Key remains borrowed."
-                : "Borrow cancelled: key was not removed from Slot #{$slot}.";
+                ? "Return NOT completed: IR sensor did not detect the key in Slot #{$slot} ({$roomName}). Key remains borrowed."
+                : "Absent / Key Not Retrieved: User did not get or use key for {$roomName} ({$key->key_name}, Slot #{$slot}) on {$dateStr}. Borrow cancelled (Key not removed from slot).";
+
+            $logAction = ($action === 'borrow') ? 'absent' : $action;
 
             AccessLog::create([
                 'user_id'    => $user->id,
                 'qr_token'   => $pending['qr_token'],
-                'action'     => $action,
+                'action'     => $logAction,
                 'result'     => 'denied',
                 'reason'     => $reason,
                 'ip_address' => $pending['ip'],
             ]);
 
-            $this->safeBroadcast(function () use ($user, $action, $reason, $key) {
-                AccessLogged::dispatch($user->name, $action, 'denied', $reason, $key->key_name, $key->room_name);
+            $this->safeBroadcast(function () use ($user, $logAction, $reason, $key) {
+                AccessLogged::dispatch($user->name, $logAction, 'denied', $reason, $key->key_name, $key->room_name);
             });
 
             return response()->json([

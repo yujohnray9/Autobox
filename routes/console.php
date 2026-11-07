@@ -9,5 +9,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+
 Schedule::command('autobox:check-unreturned')->everyMinute();
+Schedule::command('autobox:check-unattended')->everyMinute();
+
 

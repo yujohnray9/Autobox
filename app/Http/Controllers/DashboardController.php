@@ -8,6 +8,7 @@ use App\Models\Schedule;
 use App\Models\AccessLog;
 use App\Models\OfflineRecord;
 use App\Console\Commands\CheckUnreturnedKeys;
+use App\Console\Commands\CheckUnattendedSchedules;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +22,13 @@ class DashboardController extends Controller
             CheckUnreturnedKeys::scanExpiredBorrows();
         } catch (\Throwable $e) {
             Log::warning("[DASHBOARD] Auto-scan unreturned keys error: " . $e->getMessage());
+        }
+
+        // Auto-scan for unattended class schedules (absent users who didn't scan or get key)
+        try {
+            CheckUnattendedSchedules::scanUnattendedSchedules();
+        } catch (\Throwable $e) {
+            Log::warning("[DASHBOARD] Auto-scan unattended schedules error: " . $e->getMessage());
         }
 
         // ── Period Filter (Activity & Security metrics) ────

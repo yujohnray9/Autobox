@@ -9,6 +9,7 @@ use App\Mail\KeyUnreturnedUserNotice;
 use App\Mail\KeyUnreturnedAdminAlert;
 use App\Http\Controllers\Api\AuthQrController;
 use App\Console\Commands\CheckUnreturnedKeys;
+use App\Console\Commands\CheckUnattendedSchedules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,13 @@ class KeyController extends Controller
             CheckUnreturnedKeys::scanExpiredBorrows();
         } catch (\Throwable $e) {
             Log::warning("[KEY CONTROLLER] Auto-scan unreturned keys error: " . $e->getMessage());
+        }
+
+        // Auto-scan for unattended class schedules
+        try {
+            CheckUnattendedSchedules::scanUnattendedSchedules();
+        } catch (\Throwable $e) {
+            Log::warning("[KEY CONTROLLER] Auto-scan unattended schedules error: " . $e->getMessage());
         }
 
         $keys = Key::orderBy('slot_number')->paginate(15);

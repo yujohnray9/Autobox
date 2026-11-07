@@ -69,6 +69,16 @@
                     </button>
                 </form>
 
+                <!-- Scan Absent Schedules Action -->
+                <form method="POST" action="{{ route('access-logs.check-unattended') }}" class="inline">
+                    @csrf
+                    <button type="submit" title="Scan class schedules for absent users who did not scan or retrieve their scheduled key"
+                            class="px-3 py-2 rounded-xl text-xs font-bold text-amber-900 bg-amber-200 hover:bg-amber-300 border border-amber-300 flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-user-xmark text-[11px]"></i>
+                        <span>Scan Absent Schedules</span>
+                    </button>
+                </form>
+
                 <!-- Reseal / Restore Chain -->
                 <form method="POST" action="{{ route('access-logs.restore-tamper') }}" class="inline">
                     @csrf
@@ -101,21 +111,32 @@
                         @php
                             $cleanReason = preg_replace('/[\x{1F600}-\x{1F64F}\x{1F300}-\x{1F5FF}\x{1F680}-\x{1F6FF}\x{1F1E0}-\x{1F1FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{FE00}-\x{FE0F}]/u', '', $log->reason);
                             $cleanReason = trim($cleanReason);
-                            $isSecurityAlert = $log->action === 'security_alert' || str_contains(strtoupper($log->reason), 'SECURITY ALERT') || str_contains(strtoupper($log->reason), 'TAMPER');
+                            $isAbsent = $log->action === 'absent' || str_contains(strtoupper($log->reason), 'ABSENT') || str_contains(strtoupper($log->reason), 'NOT ATTEND');
+                            $isSecurityAlert = !$isAbsent && ($log->action === 'security_alert' || str_contains(strtoupper($log->reason), 'SECURITY ALERT') || str_contains(strtoupper($log->reason), 'TAMPER'));
                         @endphp
-                        <tr class="hover:bg-[var(--purple-soft)] transition-colors {{ $isSecurityAlert ? 'bg-rose-50/70' : '' }}">
+                        <tr class="transition-colors {{ $isAbsent ? 'bg-amber-50/75 hover:bg-amber-100/50' : ($isSecurityAlert ? 'bg-rose-50/70 hover:bg-rose-100/50' : 'hover:bg-[var(--purple-soft)]') }}">
                             <td class="px-5 py-3.5">
-                                <p class="font-bold text-[var(--text-heading)] text-sm flex items-center gap-1.5">
-                                    @if($isSecurityAlert)
+                                <p class="font-bold text-[var(--text-heading)] text-sm flex items-center gap-1.5 flex-wrap">
+                                    @if($isAbsent)
+                                        <i class="fa-solid fa-user-xmark text-amber-600 text-xs"></i>
+                                    @elseif($isSecurityAlert)
                                         <i class="fa-solid fa-triangle-exclamation text-rose-500 text-xs"></i>
                                     @endif
                                     {{ $log->user->name ?? 'Unknown User' }}
+                                    @if($isAbsent)
+                                        <span class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-300">Absent</span>
+                                    @endif
                                 </p>
                                 <p class="text-xs text-[var(--text-muted)]">{{ $log->user->employee_id ?? 'Unregistered' }}</p>
                             </td>
                             <td class="px-5 py-3.5 text-xs font-mono text-[var(--text-muted)] truncate max-w-[130px]">{{ $log->qr_token }}</td>
                             <td class="px-5 py-3.5 text-sm">
-                                @if($isSecurityAlert)
+                                @if($isAbsent)
+                                    <span class="inline-flex items-start gap-1.5 text-amber-900 font-semibold bg-amber-100/90 px-2.5 py-1.5 rounded-lg border border-amber-300 text-xs leading-relaxed">
+                                        <i class="fa-solid fa-calendar-xmark text-amber-700 text-xs mt-0.5 flex-shrink-0"></i>
+                                        <span>{{ $cleanReason }}</span>
+                                    </span>
+                                @elseif($isSecurityAlert)
                                     <span class="inline-flex items-center gap-1.5 text-rose-700 font-bold bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 text-xs">
                                         <svg class="w-3.5 h-3.5 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -127,7 +148,12 @@
                                 @endif
                             </td>
                             <td class="px-5 py-3.5">
-                                @if($log->result === 'granted')
+                                @if($isAbsent)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                                        <i class="fa-solid fa-xmark text-amber-700"></i>
+                                        Absent / No-Show
+                                    </span>
+                                @elseif($log->result === 'granted')
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
                                         <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>

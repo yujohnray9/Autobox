@@ -40,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('access-logs/integrity', [AccessLogController::class, 'checkIntegrity'])->name('access-logs.integrity');
     Route::post('access-logs/simulate-tamper', [AccessLogController::class, 'simulateTamper'])->name('access-logs.simulate-tamper');
     Route::post('access-logs/restore-tamper', [AccessLogController::class, 'restoreTamper'])->name('access-logs.restore-tamper');
+    Route::post('access-logs/check-unattended', [AccessLogController::class, 'checkUnattended'])->name('access-logs.check-unattended');
 
     // Reports
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

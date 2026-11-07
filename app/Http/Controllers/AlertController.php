@@ -59,6 +59,7 @@ class AlertController extends Controller
         return match (true) {
             $log->action === 'security_alert'                     => 'Repeated Scans',
             $log->action === 'missing'                            => 'Key Removed Without Scan',
+            $log->action === 'absent' || str_contains($reason, 'absent') || str_contains($reason, 'not attend') => 'Absent / Class Unattended',
             $log->user_id === null                                => 'Unregistered QR',
             str_contains($reason, 'schedule')                     => 'Outside Schedule',
             str_contains($reason, 'not return')                   => 'Key Not Yet Returned',

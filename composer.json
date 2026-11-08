@@ -12,6 +12,7 @@
         "laravel/tinker": "^2.10.1",
         "phpoffice/phpspreadsheet": "^5.10",
         "pusher/pusher-php-server": "*",
+        "resend/resend-php": "^1.18",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "symfony/http-client": "^7.2",
         "symfony/mailjet-mailer": "^7.2"

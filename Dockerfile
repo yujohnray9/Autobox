@@ -72,6 +72,7 @@ RUN mkdir -p \
 
 ENV APP_ENV=production
 ENV APP_DEBUG=false
+ENV LOG_CHANNEL=stderr
 ENV SERVER_NAME=:8080
 
 EXPOSE 8080

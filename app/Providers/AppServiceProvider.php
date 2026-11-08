@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\Mailer\Bridge\Mailjet\Transport\MailjetTransportFactory;
+use Symfony\Component\Mailer\Transport\Dsn;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +22,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Mail::extend('mailjet', function () {
+            return (new MailjetTransportFactory())->create(
+                new Dsn(
+                    'mailjet+api',
+                    'default',
+                    config('services.mailjet.key'),
+                    config('services.mailjet.secret')
+                )
+            );
+        });
+
         \Illuminate\Auth\Notifications\ResetPassword::toMailUsing(function ($notifiable, $token) {
             $resetUrl = url(route('password.reset', [
                 'token' => $token,

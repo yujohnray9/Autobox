@@ -33,75 +33,14 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 2. Create Faculty / Staff Users
-        $faculty1 = User::firstOrCreate(
-            ['email' => 'juan.delacruz@autobox.edu.ph'],
-            [
-                'name'        => 'Prof. Juan Dela Cruz',
-                'gender'      => 'male',
-                'password'    => Hash::make('password'),
-                'role'        => 'faculty',
-                'position'    => 'Assistant Professor',
-                'department'  => 'Computer Science',
-                'employee_id' => 'EMP-2024-002',
-                'qr_token'    => Str::uuid()->toString(),
-                'is_active'   => true,
-            ]
-        );
-
-        $faculty2 = User::firstOrCreate(
-            ['email' => 'maria.santos@autobox.edu.ph'],
-            [
-                'name'        => 'Engr. Maria Santos',
-                'gender'      => 'female',
-                'password'    => Hash::make('password'),
-                'role'        => 'faculty',
-                'position'    => 'Associate Professor',
-                'department'  => 'Information Technology',
-                'employee_id' => 'EMP-2024-003',
-                'qr_token'    => Str::uuid()->toString(),
-                'is_active'   => true,
-            ]
-        );
-
-        $staff1 = User::firstOrCreate(
-            ['email' => 'robert.reyes@autobox.edu.ph'],
-            [
-                'name'        => 'Mr. Robert Reyes',
-                'gender'      => 'male',
-                'password'    => Hash::make('password'),
-                'role'        => 'staff',
-                'position'    => 'Laboratory Custodian',
-                'department'  => 'Laboratory Custodian',
-                'employee_id' => 'EMP-2024-004',
-                'qr_token'    => Str::uuid()->toString(),
-                'is_active'   => true,
-            ]
-        );
-
-        $tech1 = User::firstOrCreate(
-            ['email' => 'tech.diaz@autobox.edu.ph'],
-            [
-                'name'        => 'Engr. Marcos Diaz',
-                'gender'      => 'male',
-                'password'    => Hash::make('password'),
-                'role'        => 'staff',
-                'position'    => 'Hardware & Laboratory Technician',
-                'department'  => 'Hardware & IoT Maintenance',
-                'employee_id' => 'EMP-2024-005',
-                'qr_token'    => Str::uuid()->toString(),
-                'is_active'   => true,
-            ]
-        );
-
         // 3. Create Only 3 Keys (Room 1, Room 2, Room 3)
         $keys = [
             ['key_name' => 'Room 1', 'room_name' => 'Room 1', 'description' => 'Programming & Multi-Media Lab', 'slot_number' => 1, 'status' => 'available'],
             ['key_name' => 'Room 2', 'room_name' => 'Room 2', 'description' => 'Networking & Cisco Lab', 'slot_number' => 2, 'status' => 'available'],
             ['key_name' => 'Room 3', 'room_name' => 'Room 3', 'description' => 'Hardware & IoT Lab', 'slot_number' => 3, 'status' => 'available'],
         ];
-
-        $createdKeys = [];
+        
+         $createdKeys = [];
         foreach ($keys as $k) {
             $createdKeys[] = Key::firstOrCreate(
                 ['slot_number' => $k['slot_number']],
@@ -109,103 +48,6 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // 4. Create Schedules
-        $defaultSchedules = [
-            [
-                'user_id'     => $faculty2->id,
-                'key_id'      => $createdKeys[0]->id,
-                'day_of_week' => 'monday',
-                'start_time'  => '08:00',
-                'end_time'    => '10:00',
-                'is_active'   => true,
-            ],
-            [
-                'user_id'     => $faculty2->id,
-                'key_id'      => $createdKeys[0]->id,
-                'day_of_week' => 'wednesday',
-                'start_time'  => '13:00',
-                'end_time'    => '15:00',
-                'is_active'   => true,
-            ],
-            [
-                'user_id'     => $faculty2->id,
-                'key_id'      => $createdKeys[0]->id,
-                'day_of_week' => 'friday',
-                'start_time'  => '13:00',
-                'end_time'    => '15:00',
-                'is_active'   => true,
-            ],
-            [
-                'user_id'     => $faculty1->id,
-                'key_id'      => $createdKeys[1]->id,
-                'day_of_week' => 'tuesday',
-                'start_time'  => '09:00',
-                'end_time'    => '11:00',
-                'is_active'   => true,
-            ],
-            [
-                'user_id'     => $faculty1->id,
-                'key_id'      => $createdKeys[1]->id,
-                'day_of_week' => 'thursday',
-                'start_time'  => '14:00',
-                'end_time'    => '16:00',
-                'is_active'   => true,
-            ],
-        ];
 
-        foreach ($defaultSchedules as $sched) {
-            Schedule::firstOrCreate(
-                [
-                    'user_id'     => $sched['user_id'],
-                    'key_id'      => $sched['key_id'],
-                    'day_of_week' => $sched['day_of_week'],
-                    'start_time'  => $sched['start_time'],
-                ],
-                $sched
-            );
-        }
-
-        // 5. Create Historical (Returned) Transactions
-        if (Transaction::where('user_id', $faculty1->id)->where('key_id', $createdKeys[0]->id)->doesntExist()) {
-            Transaction::create([
-                'user_id'     => $faculty1->id,
-                'key_id'      => $createdKeys[0]->id, // Lab 1 Key
-                'action'      => 'return',
-                'status'      => 'success',
-                'notes'       => 'Returned key after lab class',
-                'borrowed_at' => now()->subHours(5),
-                'returned_at' => now()->subHours(1),
-            ]);
-        }
-
-        // 6. Access Logs
-        if (AccessLog::where('qr_token', $faculty1->qr_token)->doesntExist()) {
-            AccessLog::create([
-                'user_id'    => $faculty1->id,
-                'qr_token'   => $faculty1->qr_token,
-                'action'     => 'scan',
-                'result'     => 'granted',
-                'reason'     => 'Valid QR Token & Active Account',
-                'ip_address' => '192.168.1.105',
-            ]);
-        }
-
-        if (AccessLog::where('qr_token', 'INVALID-TOKEN-999')->doesntExist()) {
-            AccessLog::create([
-                'user_id'    => null,
-                'qr_token'   => 'INVALID-TOKEN-999',
-                'action'     => 'scan',
-                'result'     => 'denied',
-                'reason'     => 'Unregistered QR Code',
-                'ip_address' => '192.168.1.105',
-            ]);
-        }
-
-        // 7. Seed Other Modules & Demo Data
-        $this->call([
-            UserGenderSeeder::class,
-            UnauthorizedAccessDemoSeeder::class,
-            OfflineRecordDemoSeeder::class,
-        ]);
     }
 }

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AUTOBOX — Reset Admin Password</title>
-    <link rel="icon" type="image/jpeg" href="{{ asset('build/assets/logo.jpg') }}">
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpg') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +41,7 @@
         <!-- Logo Card -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white shadow-xl shadow-violet-300/40 p-1 mb-4 border-2 border-violet-100 ring-4 ring-violet-500/10">
-                <img src="{{ asset('build/assets/logo.jpg') }}" alt="AutoBox CCSICT Logo" class="w-full h-full object-contain rounded-full">
+                <img src="{{ asset('images/logo.jpg') }}" alt="AutoBox CCSICT Logo" class="w-full h-full object-contain rounded-full">
             </div>
             <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">AUTO<span class="text-gradient">BOX</span></h1>
             <p class="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-widest">Key Access & Monitoring System</p>

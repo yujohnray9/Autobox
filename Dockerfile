@@ -32,11 +32,16 @@ FROM node:22-bookworm-slim AS frontend
 
 WORKDIR /app
 
+ARG VITE_PUSHER_APP_KEY
+ARG VITE_PUSHER_APP_CLUSTER
+ENV VITE_PUSHER_APP_KEY=$VITE_PUSHER_APP_KEY
+ENV VITE_PUSHER_APP_CLUSTER=$VITE_PUSHER_APP_CLUSTER
+
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN npm run build && cp public/images/logo.jpg public/build/assets/logo.jpg
 
 # Final application image
 FROM dunglas/frankenphp:php8.2-trixie
@@ -71,4 +76,4 @@ ENV SERVER_NAME=:8080
 
 EXPOSE 8080
 
-CMD ["frankenphp", "php-server", "--root", "public"]
+CMD ["sh", "-c", "php artisan schedule:work & exec frankenphp php-server --root public"]

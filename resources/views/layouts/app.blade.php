@@ -6,12 +6,16 @@
 
     <title>{{ config('app.name', 'AUTOBOX') }} — Key Access & Real-Time Monitoring</title>
     <meta name="description" content="AUTOBOX CCSICT — Physical key management, access control, and real-time monitoring dashboard.">
-    <link rel="icon" type="image/jpeg" href="{{ asset('build/assets/logo.jpg') }}">
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpg') }}">
 
-    <!-- Enforce Light Theme -->
+    <!-- Enforce Light Theme & Runtime Pusher Config -->
     <script>
         document.documentElement.classList.remove('dark');
         localStorage.setItem('autobox_theme', 'light');
+        window.PUSHER_CONFIG = {
+            key: @json(config('broadcasting.connections.pusher.key') ?: env('VITE_PUSHER_APP_KEY')),
+            cluster: @json(config('broadcasting.connections.pusher.options.cluster') ?: env('VITE_PUSHER_APP_CLUSTER', 'ap1'))
+        };
     </script>
 
     <!-- Google Fonts: Outfit (headings) + Plus Jakarta Sans (body) -->
@@ -54,7 +58,7 @@
             </button>
             <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-white shadow overflow-hidden p-0.5 flex items-center justify-center border border-white/50 flex-shrink-0">
-                    <img src="{{ asset('build/assets/logo.jpg') }}" alt="AutoBox Logo" class="w-full h-full object-contain rounded-full">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="AutoBox Logo" class="w-full h-full object-contain rounded-full">
                 </div>
                 <div class="leading-tight">
                     <span class="font-heading font-extrabold text-base tracking-tight text-white block">AUTOBOX</span>
@@ -100,7 +104,7 @@
             <div class="px-2 py-3 mb-4 flex items-center justify-between border-b border-white/10 pb-4">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
                     <div class="sidebar-brand-logo w-10 h-10 rounded-full bg-white shadow-lg overflow-hidden p-0.5 flex items-center justify-center border-2 border-white/50 flex-shrink-0">
-                        <img src="{{ asset('build/assets/logo.jpg') }}" alt="AutoBox Logo" class="w-full h-full object-contain rounded-full">
+                        <img src="{{ asset('images/logo.jpg') }}" alt="AutoBox Logo" class="w-full h-full object-contain rounded-full">
                     </div>
                     <div>
                         <span class="font-heading font-extrabold text-xl tracking-tight text-white block leading-none">AUTOBOX</span>
@@ -197,7 +201,7 @@
             <div class="px-2 py-3 mb-4 flex items-center justify-between">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
                     <div class="sidebar-brand-logo w-11 h-11 rounded-full bg-white shadow-lg overflow-hidden p-0.5 flex items-center justify-center border-2 border-white/50 flex-shrink-0">
-                        <img src="{{ asset('build/assets/logo.jpg') }}" alt="AutoBox Logo" class="w-full h-full object-contain rounded-full">
+                        <img src="{{ asset('images/logo.jpg') }}" alt="AutoBox Logo" class="w-full h-full object-contain rounded-full">
                     </div>
                     <div>
                         <span class="font-heading font-extrabold text-2xl tracking-tight text-white group-hover:text-purple-100 transition-colors block leading-none">AUTOBOX</span>

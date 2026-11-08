@@ -32,7 +32,7 @@
         <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
             <div class="flex items-center gap-2.5 text-left">
                 <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white shadow-sm flex items-center justify-center p-0.5 flex-shrink-0">
-                    <img src="{{ asset('build/assets/logo.jpg') }}" alt="CCSICT Logo" class="w-full h-full object-contain rounded-full">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="CCSICT Logo" class="w-full h-full object-contain rounded-full">
                 </div>
 
                 <div>

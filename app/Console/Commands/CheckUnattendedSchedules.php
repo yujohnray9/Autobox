@@ -85,7 +85,27 @@ class CheckUnattendedSchedules extends Command
             // 15-minute grace threshold past schedule start_time
             $graceThreshold = $startTime->copy()->addMinutes(15);
 
-            // If not forced and not a day-override, skip if class start + 15 min hasn't arrived yet
+            // Respect newly created or updated schedules on the same day:
+            // 1) If the schedule was created/updated today AFTER the schedule's end_time already passed, skip today.
+            // 2) If the schedule was created/updated today while in progress (after start_time), give 15 minutes from creation/update time.
+            $lastModified = $schedule->updated_at ?? $schedule->created_at;
+            if (!$force && empty($dayOverride) && $lastModified && $lastModified->isToday()) {
+                if ($lastModified->greaterThanOrEqualTo($endTime)) {
+                    if ($cli) {
+                        $cli->line("  [CREATED AFTER END] Slot #{$key->slot_number} ({$key->room_name}) schedule was created/updated at {$lastModified->format('h:i A')}, after end time ({$endTime->format('h:i A')}). Skipping for today.");
+                    }
+                    continue;
+                }
+
+                if ($lastModified->greaterThan($startTime)) {
+                    $modifiedGrace = $lastModified->copy()->addMinutes(15);
+                    if ($modifiedGrace->greaterThan($graceThreshold)) {
+                        $graceThreshold = $modifiedGrace;
+                    }
+                }
+            }
+
+            // If not forced and not a day-override, skip if grace threshold hasn't arrived yet
             if (!$force && empty($dayOverride)) {
                 if ($now->lessThan($graceThreshold)) {
                     if ($cli) {
